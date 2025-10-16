@@ -1,0 +1,274 @@
+import React from "react";
+import "../profile-nav.css";
+import { loginUser, registerUser } from "../api/api";
+
+/* ================= Theme ================= */
+
+function useTheme() {
+  const [theme, setTheme] = React.useState(
+    () => document.documentElement.getAttribute("data-theme") || "dark"
+  );
+
+  React.useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    try { localStorage.setItem("theme", theme); } catch {}
+  }, [theme]);
+
+  const toggle = () => setTheme(t => (t === "dark" ? "light" : "dark"));
+  return { theme, toggle };
+}
+
+/* ================= Navigation Header ================= */
+
+function PfNav({ theme, onToggleTheme, onGoWorkstation, onGoGraph, onGoHistory }) {
+  return (
+    <header className="pf-nav pf-nav-pretty ws-card">
+      <div className="pf-brand">
+        <div className="ws-brand">
+          <span className="logo"><img src="logo.png" alt="CogniVerse logo" /></span>
+        </div>
+        <div className="pf-divider" />
+        <nav className="pf-tabs" aria-label="Primary">
+          <button className="pf-tab" onClick={onGoWorkstation}>Workstation</button>
+          <button className="pf-tab" onClick={onGoGraph}>Graph</button>
+          <button className="pf-tab ghost" onClick={onGoHistory}>History</button>
+        </nav>
+      </div>
+
+      <div className="pf-right">
+        <button
+          type="button"
+          className={`ws-theme-switch ${theme}`}
+          onClick={onToggleTheme}
+          aria-label="Toggle theme"
+        />
+        <div className="pf-user" role="button" tabIndex={0} aria-label="User profile">
+          <div className="avatar">A</div>
+          <div className="meta">
+            <div className="name">Alex</div>
+            <div className="role">Pro</div>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+/* ============== Reveal Animation Wrapper ============== */
+
+function Reveal({ as: Tag = "div", variant = "fade-up", delay = 0, className = "", children, ...rest }) {
+  const ref = React.useRef(null);
+  React.useEffect(() => {
+    const el = ref.current; if (!el) return;
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { el.classList.add("is-visible"); io.disconnect(); }
+    }, { threshold: 0.16 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return (
+    <Tag
+      ref={ref}
+      className={`reveal ${variant} ${className}`}
+      style={{ transitionDelay: `${delay}ms` }}
+      {...rest}
+    >
+      {children}
+    </Tag>
+  );
+}
+
+/* ===== Icons ===== */
+const IcGoogle = (p) => (
+  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" {...p}>
+    <path fill="#EA4335" d="M12 10v4h5.7c-.25 1.45-1.72 4.25-5.7 4.25A6.75 6.75 0 1 1 12 5.25c1.93 0 3.23.83 3.98 1.55l2.7-2.6C17.47 2.7 15.03 1.75 12 1.75 5.93 1.75 1 6.68 1 12.75S5.93 23.75 12 23.75c6.07 0 10.5-4.27 10.5-10.3 0-.7-.08-1.23-.18-1.75H12z"/>
+  </svg>
+);
+const IcGithub = (p) => (
+  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" {...p}>
+    <path fill="currentColor" d="M12 2C6.48 2 2 6.6 2 12.26c0 4.51 2.87 8.33 6.84 9.68.5.1.68-.22.68-.49v-1.73c-2.78.62-3.37-1.2-3.37-1.2-.46-1.2-1.14-1.52-1.14-1.52-.94-.66.07-.65.07-.65 1.04.08 1.59 1.08 1.59 1.08.93 1.63 2.45 1.16 3.04.89.09-.69.36-1.16.66-1.43-2.22-.26-4.56-1.15-4.56-5.14 0-1.14.39-2.07 1.03-2.8-.1-.26-.45-1.3.1-2.7 0 0 .85-.28 2.8 1.07a9.3 9.3 0 0 1 5.1 0c1.95-1.35 2.8-1.07 2.8-1.07.55 1.4.2 2.44.1 2.7.64.73 1.03 1.66 1.03 2.8 0 3.99-2.34 4.88-4.57 5.14.37.33.7.96.7 1.94v2.87c0 .27.18.6.69.49A10.28 10.28 0 0 0 22 12.26C22 6.6 17.52 2 12 2z"/>
+  </svg>
+);
+const IcApple = (p) => (
+  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" {...p}>
+    <path fill="currentColor" d="M16.36 1.64c.03 1-.37 1.98-1.1 2.7-.73.73-1.7 1.12-2.7 1.1-.03-1 .37-1.98 1.1-2.7.73-.73 1.7-1.12 2.7-1.1zM20.5 17.3c-.37.86-.83 1.64-1.38 2.35-.72.94-1.49 1.4-2.26 1.4-.6 0-1.2-.18-1.83-.36-.57-.17-1.16-.35-1.77-.35-.65 0-1.28.18-1.87.35-.6.18-1.18.36-1.77.36-.82 0-1.62-.45-2.36-1.35-.62-.75-1.16-1.6-1.6-2.53-.56-1.18-.84-2.32-.84-3.42 0-1.26.29-2.34.87-3.25.44-.7 1.02-1.27 1.76-1.7.73-.43 1.51-.64 2.33-.64.58 0 1.2.17 1.86.35.55.16 1.15.34 1.8.34.62 0 1.2-.18 1.76-.34.68-.18 1.3-.35 1.88-.35.74 0 1.42.17 2.04.5.62.34 1.12.78 1.5 1.33-.59.36-1.06.82-1.4 1.37-.43.68-.64 1.44-.64 2.27 0 .9.24 1.71.72 2.44.48.73 1.08 1.26 1.8 1.6-.15.38-.31.75-.49 1.12z"/>
+  </svg>
+);
+
+/* ======================== Page ======================== */
+
+export default function AuthPage() {
+  const { theme, toggle } = useTheme();
+  const [tab, setTab] = React.useState("login"); // 'login' | 'signup'
+  const [message, setMessage] = React.useState("");
+
+  const goWorkstation = () => (window.location.href = "/workstation");
+  const goGraph = () => (window.location.href = "/graph");
+  const goHistory = () => (window.location.href = "/history");
+
+  const hero = tab === "login"
+    ? {
+        eyebrow: "Welcome back",
+        title: "Sign in to continue",
+        body: "Pick up your simulations, track teams, and resume where you left off."
+      }
+    : {
+        eyebrow: "Join CogniVerse",
+        title: "Create your account",
+        body: "Set up your workspace and start simulating real-world team dynamics."
+      };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const payload = Object.fromEntries(fd.entries());
+
+    try {
+      if (tab === "login") {
+       const res = await loginUser({
+  identifier: payload.email,
+  password: payload.password,
+});
+
+console.log("✅ Login success:", res);
+setMessage(`Welcome back, ${payload.email || "friend"}!`);
+
+// store tokens locally for later
+localStorage.setItem("access_token", res.access_token);
+localStorage.setItem("refresh_token", res.refresh_token);
+
+// optional small delay before redirect
+setTimeout(() => {
+  window.location.href = "/workstation";
+}, 800);
+
+      } else {
+        const res = await registerUser({
+          username: payload.name || payload.email.split("@")[0],
+          email: payload.email,
+          password: payload.password,
+        });
+        console.log("✅ Register success:", res);
+        setMessage(`Account created for ${payload.email || "you"} ✔`);
+      }
+    } catch (err) {
+      console.error("❌ Auth failed:", err.response?.data || err);
+      setMessage(err.response?.data?.detail || "Something went wrong");
+    }
+  };
+
+  return (
+    <div className="app auth-page">
+      <PfNav
+        theme={theme}
+        onToggleTheme={toggle}
+        onGoWorkstation={goWorkstation}
+        onGoGraph={goGraph}
+        onGoHistory={goHistory}
+      />
+
+      <main>
+        <section className="auth-wrap container">
+          <div className="auth-grid">
+            {/* Left Section */}
+            <section className="auth-hero ws-card">
+              <Reveal className="auth-hero card" variant="fade-right">
+                <p key={`eyebrow-${tab}`} className="eyebrow swap-text">{hero.eyebrow}</p>
+                <h1 key={`title-${tab}`} className="swap-text">{hero.title}</h1>
+                <p key={`body-${tab}`} className="muted swap-text">{hero.body}</p>
+
+                <div className="illus" aria-hidden="true">
+                  <div className="orb o1" />
+                  <div className="orb o2" />
+                  <div className="orb o3" />
+                </div>
+              </Reveal>
+            </section>
+
+            {/* Right Section */}
+            <section className="auth-form ws-card">
+              <Reveal className="auth-card card" variant="fade-left" delay={60}>
+                <div className="tabs" role="tablist" aria-label="Auth tabs" data-tab={tab}>
+                  <div className="ink" aria-hidden="true" />
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={tab === "login"}
+                    className={tab === "login" ? "active" : ""}
+                    onClick={() => setTab("login")}
+                  >
+                    Log in
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={tab === "signup"}
+                    className={tab === "signup" ? "active" : ""}
+                    onClick={() => setTab("signup")}
+                  >
+                    Sign up
+                  </button>
+                </div>
+
+                <form key={tab} onSubmit={handleSubmit} className="form" noValidate>
+                  <label htmlFor="email" className="fade-item" style={{ animationDelay: "40ms" }}>Email or username</label>
+                  <input id="email" name="email" type="text" placeholder="you@company.com" required className="fade-item" style={{ animationDelay: "80ms" }} />
+
+                  <label htmlFor="password" className="fade-item" style={{ animationDelay: "120ms" }}>Password</label>
+                  <input id="password" name="password" type="password" placeholder="••••••••" required className="fade-item" style={{ animationDelay: "160ms" }} />
+
+                  <div className={`collapsible ${tab === "signup" ? "open" : ""} fade-item`} style={{ animationDelay: "200ms" }}>
+                    <div className="collapsible-inner">
+                      <label htmlFor="name">Your name</label>
+                      <input id="name" name="name" type="text" placeholder="Jane Doe" />
+                    </div>
+                  </div>
+
+                  <div className="row between fade-item" style={{ animationDelay: "240ms" }}>
+                    <label className="chk">
+                      <input type="checkbox" name="remember" />
+                      <span>Remember me</span>
+                    </label>
+                    <a className="link" href="#forgot">Forgot password?<span className="arr">→</span></a>
+                  </div>
+
+                  <button className="btn primary fade-item" type="submit" style={{ animationDelay: "280ms" }}>
+                    {tab === "login" ? "Log in" : "Create account"}
+                  </button>
+
+                  {message && (
+                    <p className="toast fade-item" style={{ animationDelay: "300ms" }} role="status" aria-live="polite">
+                      {message}
+                    </p>
+                  )}
+
+                  <div className="or fade-item" style={{ animationDelay: "320ms" }}>
+                    <span>or continue with</span>
+                  </div>
+
+                  <div className="social fade-item" style={{ animationDelay: "360ms" }}>
+                    <button type="button" className="btn ghost"><IcGoogle /><span>Google</span></button>
+                    <button type="button" className="btn ghost"><IcGithub /><span>GitHub</span></button>
+                    <button type="button" className="btn ghost"><IcApple /><span>Apple</span></button>
+                  </div>
+
+                  <p className="swap fade-item" style={{ animationDelay: "400ms" }}>
+                    {tab === "login" ? (
+                      <>Don&apos;t have an account? <button type="button" onClick={() => setTab("signup")} className="link">Sign up<span className="arr">→</span></button></>
+                    ) : (
+                      <>Already have an account? <button type="button" onClick={() => setTab("login")} className="link">Log in<span className="arr">→</span></button></>
+                    )}
+                  </p>
+                </form>
+              </Reveal>
+            </section>
+          </div>
+        </section>
+      </main>
+
+      <footer className="footer">
+        <p>© CogniVerse</p>
+      </footer>
+    </div>
+  );
+}

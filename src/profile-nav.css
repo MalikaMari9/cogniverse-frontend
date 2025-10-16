@@ -1,0 +1,159 @@
+/* ===== Nav : dark mode overrides ===== */
+:root{
+  /* tweak freely */
+  --navDarkBg: linear-gradient(180deg, #1b1f2e .0, #141826 .85);
+  --navDarkBorder: rgba(255,255,255,.10);
+  --navDarkText: #E9EEF7;
+
+  --navDarkTabBg: rgba(255,255,255,.08);
+  --navDarkTabBgHover: rgba(255,255,255,.14);
+  --navDarkTabBorder: rgba(255,255,255,.16);
+}
+
+/* pill container */
+[data-theme="dark"] .sc-nav-pretty{
+  background: var(--navDarkBg);
+  color: var(--navDarkText);
+  border-color: var(--navDarkBorder);
+  box-shadow: 0 6px 18px rgba(0,0,0,.35) inset,
+              0 1px 0 rgba(255,255,255,.04);
+}
+
+/* divider line inside the bar */
+[data-theme="dark"] .sc-divider{
+  background: currentColor;
+  opacity: .22;
+}
+
+/* tabs */
+[data-theme="dark"] .sc-tab{
+  background: var(--navDarkTabBg);
+  border-color: var(--navDarkTabBorder);
+  color: var(--navDarkText);
+}
+
+/* hover/active/selected state (optional) */
+[data-theme="dark"] .sc-tab:hover{
+  background: var(--navDarkTabBgHover);
+  border-color: rgba(255,255,255,.24);
+}
+
+[data-theme="dark"] .sc-tab:active{
+  transform: translateY(1px);
+  filter: brightness(1.05);
+}
+
+/* if your tabs have an .active class */
+[data-theme="dark"] .sc-tab.active{
+  background: rgba(122,92,244,.22);            /* soft indigo */
+  border-color: rgba(122,92,244,.45);
+  box-shadow: 0 0 0 1px rgba(122,92,244,.25) inset;
+}
+
+/* logo/icon inside the bar uses currentColor */
+.sc-nav-pretty svg{ fill: currentColor; }
+[data-theme="dark"] .sc-nav-pretty svg{ opacity: .95; }
+
+
+/* ============= Profile Top Nav (pf- namespaced) ============= */
+.pf-nav{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; }
+
+/* Pretty, animated “glass” bar */
+.pf-nav-pretty{
+  position: relative;
+  border-radius: 16px;
+  border: 1px solid var(--pf-nav-border, rgba(255,255,255,.12));
+  overflow: hidden;               /* clip animated film to rounded corners */
+  isolation: isolate;             /* keep ::before under children */
+  backdrop-filter: saturate(120%) blur(8px);
+}
+
+/* moving gradient film (dark by default) */
+.pf-nav-pretty::before{
+  content:"";
+  position:absolute; inset:0; z-index:-1; border-radius:inherit;
+  --pf-film:
+    radial-gradient(1200px 600px at -20% -40%, rgba(122,92,244,.18), transparent 60%),
+    radial-gradient(1000px 600px at 120% 140%, rgba(48,215,233,.16), transparent 55%),
+    linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.05));
+  background: var(--pf-film);
+  background-size: 200% 200%, 200% 200%, 100% 100%;
+  animation: pfNavSweep 12s ease-in-out infinite alternate;
+}
+
+/* brand + tabs */
+.pf-brand{ display:flex; align-items:center; gap:12px; }
+.pf-brand .logo{
+  width:34px; height:34px; border-radius:8px; display:grid; place-items:center; font-weight:900; letter-spacing:.2px;
+  background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+  border: 1px solid rgba(255,255,255,.12);
+}
+.pf-divider{ width:1px; height:24px; background: currentColor; opacity:.16; border-radius:1px; }
+.pf-tabs{ display:flex; gap:8px; }
+
+/* pill tabs */
+.pf-tab{
+  padding:8px 12px; border-radius:10px; font-weight:700; letter-spacing:.2px;
+  background: rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12);
+  transition: transform .2s ease, background .25s ease, border-color .25s ease, box-shadow .25s ease;
+}
+.pf-tab:hover{
+  transform: translateY(-1px);
+  background: rgba(255,255,255,.12);
+  border-color: rgba(255,255,255,.18);
+  box-shadow: 0 8px 24px rgba(0,0,0,.22);
+}
+.pf-tab.ghost{ background: transparent; }
+
+/* right cluster (theme switch + user) */
+.pf-right{ display:flex; align-items:center; gap:14px; }
+.pf-user{
+  display:flex; align-items:center; gap:10px; padding:6px 8px;
+  border-radius:12px; background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.12); cursor:pointer;
+}
+.pf-user .avatar{
+  width:32px; height:32px; border-radius:50%;
+  display:grid; place-items:center; font-weight:800;
+  background:linear-gradient(135deg,#7A5CF4,#30D7E9); color:#fff;
+}
+.pf-user .meta{ line-height:1.1 }
+.pf-user .name{ font-weight:700; font-size:13px; opacity:.95 }
+.pf-user .role{ font-size:11px; opacity:.7 }
+
+/* Light mode: soften glass + recolor film (matches Scenario’s approach) */
+[data-theme="light"] .pf-nav-pretty{ --pf-nav-border: rgba(0,0,0,.12); }
+[data-theme="light"] .pf-nav-pretty::before{
+  --pf-film:
+    radial-gradient(1200px 600px at -15% -30%, rgba(122,92,244,.15), transparent 60%),
+    radial-gradient(1000px 600px at 115% 135%, rgba(48,215,233,.14), transparent 55%),
+    linear-gradient(180deg, rgba(0,0,0,.04), rgba(0,0,0,.02));
+  background: var(--pf-film);
+  background-size: 200% 200%, 200% 200%, 100% 100%;
+}
+[data-theme="light"] .pf-tab{
+  background: rgba(0,0,0,.05);
+  border-color: rgba(0,0,0,.10);
+}
+[data-theme="light"] .pf-tab:hover{
+  background: rgba(0,0,0,.08);
+  border-color: rgba(0,0,0,.16);
+  box-shadow: 0 10px 26px rgba(24,38,64,.14);
+}
+[data-theme="light"] .pf-user{
+  background: rgba(0,0,0,.06);
+  border-color: rgba(0,0,0,.12);
+}
+
+/* animation */
+@keyframes pfNavSweep{
+  0%   { background-position: 0% 40%, 100% 60%, 0% 0%; }
+  50%  { background-position: 50% 60%, 50% 40%, 0% 0%; }
+  100% { background-position: 100% 40%, 0% 60%, 0% 0%; }
+}
+
+/* accessibility: respect reduced motion */
+@media (prefers-reduced-motion: reduce){
+  .pf-nav-pretty::before{ animation: none; }
+}
+

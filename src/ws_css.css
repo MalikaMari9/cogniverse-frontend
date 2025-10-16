@@ -1,0 +1,1403 @@
+
+
+/* Force sidebar-aware centering for the Add/Edit modal only */
+.ws-card.ws-modal.ws-center-over-content{
+  position: fixed;
+  /* same math as rel: center of (viewport - sidebar) */
+  left: var(--content-center-left, calc(var(--sidebar-w, 0px) + (100svw - var(--sidebar-w, 0px))/2));
+  top: 50%;
+  transform: translate(-50%, -50%) !important;
+  right: auto !important;
+  z-index: 600;
+
+  /* fluid width that never invades the sidebar */
+  --dlg-gutter-l: clamp(8px, 2vw, 18px);
+  --dlg-gutter-r: clamp(32px, 6vw, 72px);
+  --dlg-max-inline: calc(100svw - var(--sidebar-w, 0px) - var(--dlg-gutter-l) - var(--dlg-gutter-r));
+  --modal-maxw: clamp(480px, 56svw, 760px);
+
+  width: min(clamp(260px, 64svw, var(--modal-maxw)), var(--dlg-max-inline)) !important;
+  max-height: min(78svh, 580px);
+  overflow: auto;
+}
+@media (900px <= width <= 1280px){
+  .ws-card.ws-modal.ws-center-over-content{ --dlg-gutter-r: clamp(40px, 7vw, 84px); }
+}
+@media (max-width: 420px){
+  :root{ --modal-maxw: 480px; }
+}
+
+/* hide native number spinners */
+.rel-num[type="number"]::-webkit-outer-spin-button,
+.rel-num[type="number"]::-webkit-inner-spin-button{ -webkit-appearance: none; margin: 0; }
+.rel-num[type="number"]{ -moz-appearance: textfield; }
+
+/* stepper wrapper */
+.rel-stepper{
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* input with room for buttons */
+.rel-stepper .rel-num{
+  padding-right: 48px;                 /* space for the stacked buttons */
+  width: 110px;                        /* a bit wider for balance */
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(18,22,30,.75);
+  color: #E9EEF7;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
+}
+[data-theme="light"] .rel-stepper .rel-num{
+  background: rgba(255,255,255,.92); color:#0f1320; border-color: rgba(0,0,0,.12);
+}
+
+/* vertical +/- buttons */
+.rel-step{
+  position: absolute; right: 6px;
+  width: 32px; height: 18px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+  color: #E9EEF7;
+  border-radius: 8px;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: transform .08s ease, background .15s ease, border-color .15s ease;
+}
+.rel-step:hover{ background: rgba(255,255,255,.12); }
+.rel-step:active{ transform: translateY(1px); }
+
+.rel-step.up{  top: 6px; }
+.rel-step.down{ bottom: 6px; }
+
+/* chevron icons */
+.rel-step.up::before,
+.rel-step.down::before{
+  content:"";
+  width: 8px; height: 8px;
+  border: 2px solid currentColor;
+  border-left: 0; border-bottom: 0;
+}
+.rel-step.up::before{ transform: rotate(-45deg); }
+.rel-step.down::before{ transform: rotate(135deg); }
+
+[data-theme="light"] .rel-step{
+  background: rgba(0,0,0,.06); color:#0f1320; border-color: rgba(0,0,0,.12);
+}
+
+/* center the weight rows (from earlier) */
+.rel-weight{
+  display:flex; align-items:center; gap:10px;
+  width: fit-content; margin: 6px auto; justify-content: center;
+}
+
+
+
+/* --- Edge weight arrows (robust, consolidated) --- */
+.rel-panel .rel-dir{
+  display:flex; align-items:center; gap:10px;
+  margin: 6px 0;
+}
+
+/* arrow length = flex-basis + min-width */
+.rel-panel .rel-line{
+  display:block;
+  flex: 1 1 560px;     /* ← default desired length; increase for longer (e.g., 640px) */
+  min-width: 450px;    /* ← shortest allowed on small screens */
+  height: 2px;
+  background: currentColor;
+  position: relative;
+  opacity:.9;
+}
+
+.rel-panel .rel-line::after{
+  content:"";
+  position:absolute; top:50%;
+  width:10px; height:10px;
+  border:2px solid currentColor;
+  border-left:0; border-bottom:0;
+  transform-origin:50% 50%;
+}
+
+.rel-panel .rel-to-right::after{ right:-1px; transform: translateY(-50%) rotate(45deg); }
+.rel-panel .rel-to-left::after { left:-1px;  transform: translateY(-50%) rotate(-135deg); }
+
+[data-theme="dark"]  .rel-panel .rel-line{ background: rgba(255,255,255,.9); }
+[data-theme="light"] .rel-panel .rel-line{ background: rgba(15,18,32,.9); }
+
+/* weight rows + chips + inputs (unchanged) */
+.rel-weight{ display:flex; align-items:center; gap:10px;
+  width: fit-content;          /* shrink to contents */
+  margin: 6px auto;            /* <-- centers the whole row */
+  justify-content: center;     /* keeps chip + input centered as a group */ }
+.rel-chip{
+  font-size:12px; font-weight:800; letter-spacing:.6px;
+  padding:6px 10px; border-radius:8px;
+  background:rgba(0,0,0,.35); color:#e8ecf6; border:1px solid rgba(255,255,255,.12);
+}
+[data-theme="light"] .rel-chip{ background:rgba(0,0,0,.08); color:#0f1320; border-color:rgba(0,0,0,.1); }
+
+.rel-num{
+  width:92px; height:36px; padding:6px 10px; border-radius:10px; outline:none;
+  border:1px solid rgba(0,0,0,.12); background:rgba(255,255,255,.92); color:#0f1320;
+  text-align:right; font-variant-numeric:tabular-nums;
+}
+[data-theme="dark"] .rel-num{ background:rgba(18,22,30,.92); color:#E9EEF7; border-color:rgba(255,255,255,.14); }
+.rel-num:focus{ box-shadow:0 0 0 3px rgba(122,92,244,.24); border-color:#7A5CF4; }
+
+/* stack spacing when arrows are between weights */
+.rel-arrows{ display:flex; flex-direction:column; gap:8px; margin: 6px 0 10px; }
+
+/* responsive floor so arrows don’t overflow on tiny screens */
+@media (max-width: 520px){
+  .rel-panel .rel-line{ flex-basis: 360px; min-width: 160px; }
+}
+
+
+
+
+:root{
+  --dlg-max-inline: calc(100svw - var(--sidebar-w) - 32px);
+}
+
+
+
+/* ---------- shared vars (single source of truth) ---------- */
+:root{
+  --sidebar-w: 0px;
+  --content-w: calc(100svw - var(--sidebar-w));
+  --modal-shift-frac: 0.22;
+  --modal-maxw: 560px;
+  --modal-minw: 260px;
+  --dlg-gutter-l: clamp(8px, 2vw, 18px);
+  --dlg-gutter-r: clamp(18px, 3vw, 28px);
+  --dlg-top-gap: clamp(12px, 2vh, 24px);
+}
+
+/* Center dialogs in the content area (viewport minus sidebar) */
+:root{
+  --dlg-margin: 24px;
+  --content-center-left: calc(var(--sidebar-w) + ((100svw - var(--sidebar-w)) / 2));
+  --dlg-max-inline: calc(100svw - var(--sidebar-w) - var(--dlg-margin));
+}
+
+/* z-layer authority */
+.ws-backdrop-content,
+.rel-backdrop{ z-index: 300 !important; }
+.rel-center-over-content,
+.ws-agent-view,
+.rel-node-dialog,
+.rel-panel{ z-index: 420 !important; }
+
+/* modals shouldn't lift on hover like generic cards */
+.ws-modal:hover{
+  box-shadow: var(--shadow);
+ transform: translate(-50%, -50%);   /* keep the centering on hover */
+}
+
+
+/* ---------- FLUID positioning over the content area ---------- */
+/* Use this wrapper for BOTH the node details and the weight panel */
+
+.rel-center-over-content{
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + var(--dlg-top-gap));
+
+  /* width math */
+  --modal-width: clamp(
+    var(--modal-minw),
+    calc(var(--content-w) - (var(--dlg-gutter-l) + var(--dlg-gutter-r))),
+    var(--modal-maxw)
+  );
+  --nudge: clamp(0px, calc(var(--content-w) * var(--modal-shift-frac)), 400px);
+
+  left: calc(var(--sidebar-w) + ((var(--content-w) - var(--modal-width)) / 2) - var(--nudge));
+  right: var(--dlg-gutter-r);
+  width: var(--modal-width);
+  transform: none;
+}
+
+/* Add/Edit modal uses rel-node centering — no right anchor */
+.ws-center-over-content{
+  position: fixed;
+  left: var(--content-center-left, calc(var(--sidebar-w) + (100svw - var(--sidebar-w))/2));
+  top: 50%;
+  transform: translate(-50%, -50%);
+  right: auto; /* important: never anchor by right */
+  z-index: 600;
+  /* Available inline width minus sidebar + gutters */
+  --dlg-gutter-l: clamp(8px, 2vw, 18px);
+  --dlg-gutter-r: clamp(32px, 6vw, 72px);
+  --dlg-max-inline: calc(100svw - var(--sidebar-w) - var(--dlg-gutter-l) - var(--dlg-gutter-r));
+  /* Fluid caps */
+  --modal-maxw: clamp(480px, 56svw, 760px);
+  width: min(clamp(260px, 64svw, var(--modal-maxw)), var(--dlg-max-inline));
+  max-height: min(78svh, 580px);
+  overflow: auto;
+}
+
+/* mid-range bump for gutter like rel */
+@media (900px <= width <= 1280px){
+  .ws-center-over-content{ --dlg-gutter-r: clamp(40px, 7vw, 84px); }
+}
+
+/* tiny phones: lower desktop cap */
+@media (max-width: 420px){
+  :root{ --modal-maxw: 480px; }
+}
+
+/* sticky action bar so buttons are always reachable */
+.ws-modal-actions{
+  position: sticky;
+  bottom: 0;
+  background: linear-gradient(to top, rgba(0,0,0,.28), transparent 16px);
+}
+
+
+
+/* === Backdrop that DOES NOT cover the sidebar === */
+.ws-backdrop-content{
+  position: fixed;
+  inset: 0 0 0 var(--sidebar-w);
+  z-index: 380;
+}
+
+html[data-theme="light"] .ws-backdrop-content,
+body[data-theme="light"] .ws-backdrop-content,
+.ws-backdrop-content[data-theme="light"]{
+  background: rgba(6,10,20,.30) !important;
+  backdrop-filter: blur(2px) saturate(115%) !important;
+  -webkit-backdrop-filter: blur(2px) saturate(115%) !important;
+}
+
+/* Dark */
+html[data-theme="dark"]  .ws-backdrop-content,
+body[data-theme="dark"]  .ws-backdrop-content,
+.ws-backdrop-content[data-theme="dark"]{
+  background: rgba(6,10,20,.50) !important;
+  backdrop-filter: blur(3px) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(3px) saturate(120%) !important;
+}
+
+
+/* Keep dialogs above the blur */
+.rel-node-dialog,
+.ws-agent-view,
+.rel-center-over-content{ z-index: 420; }
+
+
+
+/* ---------- Card sizing / contrast ---------- */
+/* Both cards pick up width from the wrapper */
+.ws-modal.ws-agent-view,
+.rel-panel{
+  width: 100%;
+  max-width: none;
+  min-width: var(--modal-minw);
+  box-sizing: border-box;
+  max-height: calc(100svh - var(--dlg-top-gap) - env(safe-area-inset-bottom) - 24px);
+  overflow: auto;
+  padding: clamp(12px, 1.8vw, 16px);
+  border-radius: clamp(12px, 1.6vw, 16px);
+  background: rgba(15,18,24,.96);
+  color:#e9eef7;
+  border: 1px solid rgba(255,255,255,.14);
+  box-shadow: 0 22px 46px rgba(0,0,0,.35);
+  font-size: clamp(13px, 1.6svw, 16px);
+}
+
+[data-theme="light"] .ws-modal.ws-agent-view,
+[data-theme="light"] .rel-panel{
+  background: rgba(255,255,255,.98);
+  color:#0f1220;
+  border-color: rgba(0,0,0,.12);
+}
+.ws-modal.ws-agent-view h3{ letter-spacing:.2px; }
+
+/* (Optional) very small phones: lower the desktop cap a bit */
+@media (max-width: 420px){
+  :root{ --modal-maxw: 480px; }
+}
+
+
+/* Weight panel: add more right breathing room and trim max width */
+.rel-panel.rel-center-over-content{
+  /* push the right edge in a bit more */
+  --dlg-gutter-r: clamp(32px, 6vw, 72px);   /* was ~22–34px */
+
+  /* (optional) also trim its desktop cap so it’s a touch narrower overall */
+  --modal-maxw: clamp(480px, 52svw, 760px);
+}
+
+/* If you want an extra bump only in the “middle” sizes */
+@media (900px <= width <= 1280px){
+  .rel-panel.rel-center-over-content{
+    --dlg-gutter-r: clamp(40px, 7vw, 84px);
+  }
+}
+
+
+
+
+
+/* ===== Relationships Graph ===== */
+.rel-wrap{ position: relative; min-height: 560px; }
+
+.rel-svg{
+  display: block; width: 100%;
+  background: radial-gradient(1200px 600px at 40% 40%, rgba(255,255,255,.04), transparent);
+}
+
+/* lines */
+.rel-edge{
+  stroke: #0e111a;
+  stroke-width: 10;
+}
+[data-theme="dark"] .rel-edge{ stroke: rgba(255,255,255,.85); }
+
+/* nodes */
+.rel-node{
+  fill: #181232;            /* deep purple dot from your wire */
+  stroke: #0e111a;
+  stroke-width: 2;
+}
+[data-theme="dark"] .rel-node{ stroke: rgba(255,255,255,.2); }
+
+.rel-label{
+  font-size: 14px;
+  text-anchor: middle;
+  fill: rgba(0,0,0,.7);
+}
+[data-theme="dark"] .rel-label{ fill: rgba(255,255,255,.85); }
+
+/* node tooltip */
+.rel-tip{
+  position: fixed;          /* never clip on scroll containers */
+  transform: translate(12px, -50%);
+  max-width: 320px; padding: 12px 14px;
+  border-radius: 14px; z-index: 200;
+  background: rgba(16,20,28,.94);
+  color: #e9eef7;
+  border: 1px solid rgba(255,255,255,.14);
+  box-shadow: 0 18px 40px rgba(0,0,0,.45);
+  backdrop-filter: saturate(120%) blur(6px);
+  line-height: 1.42;
+}
+[data-theme='light'] .rel-tip{
+  background: rgba(255,255,255,.96);
+  color:#0f1220; border-color: rgba(0,0,0,.12);
+}
+
+/* edge relationship panel */
+.rel-panel{
+  position: fixed;          /* place at line midpoint from JS */
+  transform: translate(-50%, -50%);
+  width: min(560px, 86vw);
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: rgba(210,210,210,.92);
+  color: #12151d;
+  border: 1px solid rgba(0,0,0,.12);
+  box-shadow: 0 22px 46px rgba(0,0,0,.28);
+  backdrop-filter: blur(6px);
+  z-index: 220;
+}
+[data-theme="dark"] .rel-panel{
+  background: rgba(24,26,34,.96);
+  color:#e9eef7; border-color: rgba(255,255,255,.14);
+}
+
+.rel-panel-title{
+  display:inline-block;
+  font-weight: 800; letter-spacing:.5px;
+  padding: 6px 10px; border-radius: 8px;
+  background: #394252; color:#fff; margin-bottom: 10px;
+}
+
+.rel-arrows{
+  display:flex; align-items:center; justify-content:space-between;
+  gap: 12px; margin: 4px 0 10px;
+}
+.rel-arrows .rel-arrow{
+  flex: 1 1 auto; height: 2px; position: relative; background: currentColor;
+}
+.rel-arrows .rel-arrow::before,
+.rel-arrows .rel-arrow::after{
+  content:""; position:absolute; top:50%; width: 8px; height: 8px;
+  border-right: 2px solid currentColor; border-top: 2px solid currentColor;
+  transform: translateY(-50%) rotate(45deg);
+}
+.rel-arrows .rel-arrow::before{ left: -2px; transform: translateY(-50%) rotate(-135deg); }
+.rel-arrows .rel-arrow::after{ right: -2px; }
+
+.rel-row{
+  display:grid; grid-template-columns: 76px 1fr 52px; align-items:center;
+  gap: 10px; margin: 6px 0;
+}
+.rel-row input[type="range"]{ width:100%; }
+.rel-row output{ text-align:right; font-variant-numeric: tabular-nums; }
+
+.rel-actions{
+  position: sticky; bottom: 12px; display:flex; justify-content:flex-end; gap:10px; margin-top: 6px;
+}
+
+/* Labels */
+.rel-label{ font-size: 14px; fill: rgba(255,255,255,.92); pointer-events:none; }
+[data-theme='light'] .rel-label{ fill: rgba(15,18,32,.85); }
+.rel-label.left{ text-shadow: 0 1px 2px rgba(0,0,0,.35); }
+.rel-label.right{ text-shadow: 0 1px 2px rgba(0,0,0,.35); }
+
+/* Emoji fallback inside node */
+.rel-emoji{ font-size: 16px; dominant-baseline: middle; }
+
+/* Edges (visible) */
+.rel-edge{
+  stroke: rgba(255,255,255,.85);
+  stroke-width: 10;
+  stroke-linecap: round;
+}
+[data-theme='light'] .rel-edge{ stroke: rgba(20,24,36,.82); }
+
+/* Thick invisible hit-line for clicks */
+.rel-edge-hit{
+  stroke: transparent;
+  stroke-width: 24;       /* big click target */
+  cursor: pointer;
+}
+
+/* Tooltip (same as before) */
+/* .rel-tip { … } remains as you had */
+
+/* Relationship panel */
+.rel-panel{ position: fixed; transform: translate(-50%, -50%); z-index: 220; }
+/* close button */
+.rel-close{
+  position: absolute; top: 8px; right: 8px;
+  border: 1px solid rgba(255,255,255,.2);
+  background: rgba(0,0,0,.25);
+  color: #fff; border-radius: 8px; width: 28px; height: 28px;
+}
+[data-theme='light'] .rel-close{
+  background: rgba(0,0,0,.06); color: #111; border-color: rgba(0,0,0,.12);
+}
+
+/* Make labels ignore pointer so clicks land on edges/nodes */
+.rel-label { pointer-events: none; }
+
+/* Slightly larger nodes already sized in JSX; this refines the ring */
+.rel-node { stroke-width: 2; }
+
+/* Click targets for edges (so it opens on click not hover) */
+.rel-edge-hit{
+  stroke: transparent;
+  stroke-width: 24;     /* big click area */
+  cursor: pointer;
+}
+
+/* Tooltip is positioned from JS; no change needed aside from z-index */
+.rel-tip{ z-index: 200; }
+
+/* Relationship panel center + close button */
+.rel-panel{ z-index: 220; } 
+.rel-close{
+  position: absolute; top: 8px; right: 8px;
+  width: 28px; height: 28px; border-radius: 8px;
+}
+
+/* Huge click/hover target for nodes (invisible) */
+.rel-node-hit{
+  fill: transparent;
+  pointer-events: all;      /* capture hover/click */
+  cursor: pointer;
+}
+
+/* Keep the visible node interactive too */
+.rel-node{ cursor: pointer; }
+
+
+/* ===== Nodes ===== */
+.rel-node{
+  fill: #181232;
+  stroke: #0e111a; stroke-width: 2;
+}
+[data-theme='light'] .rel-node{
+  fill: #ffffff;                   /* darker dot on light bg */
+  stroke: rgba(0,0,0,.28);
+}
+
+/* Icon inside node (SVG uses currentColor) */
+.rel-node-icon{ color: #cfe1ff; }  /* default for dark */
+[data-theme='light'] .rel-node-icon{ color: #6b87ff; }
+
+/* If you use image avatars, give them a subtle inner ring so they don't disappear */
+.rel-node-img{
+  rx: 18; ry: 18; /* clipPath already used; this is a no-op for most browsers */
+}
+
+/* ===== Labels ===== */
+.rel-label{
+  font-size: 14px;
+  fill: rgba(233,238,247,.92);       /* dark theme text */
+  pointer-events: none;
+  paint-order: stroke;               /* draw stroke under fill */
+  stroke: rgba(0,0,0,.25);
+  stroke-width: 3px;                 /* subtle halo = readable on lines/stars */
+}
+[data-theme='light'] .rel-label{
+  fill: rgba(15,18,32,.88);
+  stroke: rgb(255, 255, 255);     /* light halo on light bg */
+}
+
+/* Keeps your left/right classes (shadow optional) */
+.rel-label.left, .rel-label.right{ text-shadow: 0 1px 2px rgba(0,0,0,.25); }
+
+/* ===== Tooltip/Panel z-index (unchanged, just ensuring) ===== */
+.rel-tip{ z-index: 200; }
+.rel-panel{ z-index: 220; }
+
+/* ==== FINAL TOUCHES — append below ==== */
+
+/* 1) Make the graph its own stacking context so tooltips/panels always win */
+.rel-wrap { isolation: isolate; }
+
+/* 2) Node hover/focus ring for better target feedback */
+.rel-node:hover,
+.rel-node:focus-visible {
+  outline: 0;
+  filter: drop-shadow(0 8px 22px rgba(162, 204, 200, 0.25));
+}
+[data-theme='light'] .rel-node:hover,
+[data-theme='light'] .rel-node:focus-visible {
+  filter: drop-shadow(0 8px 22px rgba(0,0,0,.18));
+}
+
+/* 3) Ensure icons/images pop in both themes */
+.rel-node-icon { color: #cfe1ff; }
+[data-theme='light'] .rel-node-icon { color: #6b87ff; }
+.rel-node-img { /* subtle lift for image avatars */
+  filter: drop-shadow(0 1px 0 rgba(0,0,0,.25));
+}
+[data-theme='light'] .rel-node-img {
+  filter: drop-shadow(0 1px 0 rgb(255, 255, 255));
+}
+
+/* 4) Labels: keep halo strong and readable on busy backgrounds */
+.rel-label {
+  paint-order: stroke;
+  stroke-width: 3px;
+  text-shadow: 0 1px 2px rgba(0,0,0,.25);
+}
+[data-theme='light'] .rel-label {
+  stroke: rgba(255,255,255,.65);
+}
+
+/* 5) Tooltip tweaks for tiny screens (prevents off-screen width) */
+@media (max-width: 420px) {
+  .rel-tip { max-width: 92vw; }
+}
+
+/* 6) Weight panel rows: wider left column so names don’t wrap */
+.rel-row { grid-template-columns: 140px 1fr 52px; }
+
+/* 7) Z-index sanity (tooltips under panel, both above everything) */
+.rel-tip   { z-index: 200; }
+
+/* 8) Click targets (confirm) — keep nodes easy to hit */
+.rel-node-hit { pointer-events: all; cursor: pointer; }
+
+.rel-tip { transform: translate(0,0); }
+
+/* Backdrop shared by dialogs */
+/* Leave the sidebar uncovered when graph dialogs are open */
+.rel-backdrop{
+  position: fixed;
+  inset: 0 0 0 var(--sidebar-w);   /* <-- carve out the sidebar width */
+  background: rgba(6,10,20,.55);
+  backdrop-filter: blur(4px) saturate(120%);
+}
+
+/* lighter dim for light theme */
+[data-theme="light"] .rel-backdrop{
+  background: rgba(6,10,20,.35);
+  backdrop-filter: blur(2px) saturate(115%);
+}
+
+/* keep darker in dark theme */
+[data-theme="dark"] .rel-backdrop{
+  background: rgba(6,10,20,.50);
+  backdrop-filter: blur(3px) saturate(120%);
+}
+
+
+/* If you also have a generic backdrop used elsewhere, keep it full-screen */
+.ws-modal-backdrop{
+  position: fixed;
+  inset: 0;
+  background: rgba(6,10,20,.65);
+  backdrop-filter: blur(4px) saturate(120%);
+}
+
+/* ---- z-index fix: dialogs above the blur ---- */
+.rel-backdrop{ z-index: 300; }                  /* overlay that does the blurring */
+.rel-center-over-content,
+.rel-node-dialog,
+.rel-panel,
+.ws-modal.ws-agent-view{ z-index: 420; }       /* keep all dialogs on top */
+
+
+/* globals for safe spacing against the viewport + sidebar */
+
+
+/* Centered node dialog — scales at every pixel */
+.rel-node-dialog{
+  position: fixed; inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  /* Width rule: clamp first, then also cap by available inline space (viewport - sidebar - margin) */
+  width: min( clamp(260px, 64svw, 560px), var(--dlg-max-inline) );
+  max-width: var(--dlg-max-inline);
+
+  /* Height scales too; scroll inside when needed */
+  max-height: min(78svh, 580px);
+  overflow: auto;
+
+  /* Scalable paddings, radius, typography */
+  padding: clamp(10px, 2svw, 18px);
+  border-radius: clamp(10px, 1.2svw, 16px);
+  font-size: clamp(13px, 1.6svw, 16px);
+  line-height: 1.55;
+
+  /* Never let content force dialog wider */
+  box-sizing: border-box;
+  overflow-wrap: anywhere;      /* breaks long tokens */
+  word-break: break-word;
+  hyphens: auto;
+
+  /* Visuals */
+  background: rgba(24,26,34,.96);
+  color:#e9eef7;
+  border: 1px solid rgba(255,255,255,.14);
+  box-shadow: 0 22px 46px rgba(0,0,0,.28);
+
+  /* Respect notches/safe areas on mobile */
+  padding-left:  max(clamp(10px, 2svw, 18px), env(safe-area-inset-left));
+  padding-right: max(clamp(10px, 2svw, 18px), env(safe-area-inset-right));
+  margin-top:    env(safe-area-inset-top);
+  margin-bottom: env(safe-area-inset-bottom);
+}
+[data-theme="light"] .rel-node-dialog{
+  background: rgba(255,255,255,.96);
+  color:#0f1220; border-color: rgba(0,0,0,.12);
+}
+
+/* Scalable header and close button */
+.rel-node-title h3{ margin:0; font-weight:800; font-size: clamp(16px, 2svw, 20px); }
+.rel-node-sub{ font-size: clamp(11px, 1.4svw, 12px); opacity:.85; }
+
+.rel-close{
+  position:absolute; top:8px; right:8px;
+  width: clamp(28px, 3.2svw, 32px);
+  height: clamp(28px, 3.2svw, 32px);
+  border-radius: 8px;
+  border:1px solid rgba(255,255,255,.20);
+  background: rgba(0,0,0,.25);
+  color:#fff;
+}
+[data-theme='light'] .rel-close{
+  background: rgba(0,0,0,.06); color:#111; border-color: rgba(0,0,0,.12);
+}
+
+/* Make any media inside the dialog fluid */
+.rel-node-dialog img,
+.rel-node-dialog video,
+.rel-node-dialog svg{ max-width: 100%; height: auto; display: block; }
+
+
+/* Graph: stop shrinking below a readable width; allow horizontal scroll */
+.rel-wrap{ position: relative; min-height: 560px; overflow:auto; }
+.rel-svg{
+  display:block;
+  width: clamp(880px, 70svw, 1040px);
+  aspect-ratio: 1040 / 620;
+  margin-inline:auto;
+}
+
+/* Keep edge thickness constant while SVG scales */
+.rel-edge, .rel-edge-hit{ vector-effect: non-scaling-stroke; }
+
+
+
+
+.rel-center-over-content{
+  position: fixed;
+  left: var(--content-center-left);
+  top: 50%;
+}
+
+/* Node detail dialog — fluid and capped by available space */
+
+
+/* Weight panel — same responsive logic */
+.rel-panel{
+  width: min( clamp(300px, 70svw, 680px), var(--dlg-max-inline) );
+  max-width: var(--dlg-max-inline);
+  max-height: min(78svh, 620px);
+  overflow:auto;
+  padding: clamp(12px, 2svw, 20px);
+  border-radius: clamp(10px, 1.2svw, 16px);
+  box-sizing:border-box;
+
+  background: rgba(24,26,34,.96);
+  color:#e9eef7;
+  border: 1px solid rgba(255,255,255,.14);
+  box-shadow: 0 22px 46px rgba(0,0,0,.28);
+}
+[data-theme="light"] .rel-panel{
+  background: rgba(255,255,255,.96);
+  color:#0f1220; border-color: rgba(0,0,0,.12);
+}
+
+/* Dialog header & close */
+.rel-node-head{ display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+.rel-node-avatar{ width:36px; height:36px; border-radius:10px; display:grid; place-items:center; background: rgba(255,255,255,.08); }
+[data-theme='light'] .rel-node-avatar{ background: rgba(0,0,0,.06); }
+.rel-node-title h3{ margin:0; font-weight:800; font-size: clamp(16px, 2svw, 20px); }
+.rel-node-sub{ font-size: clamp(11px, 1.4svw, 12px); opacity:.85; }
+
+.rel-close{
+  position:absolute; top:8px; right:8px;
+  width: clamp(28px, 3.2svw, 32px);
+  height: clamp(28px, 3.2svw, 32px);
+  border-radius: 8px;
+  border:1px solid rgba(255,255,255,.20);
+  background: rgba(0,0,0,.25);
+  color:#fff;
+}
+[data-theme='light'] .rel-close{
+  background: rgba(0,0,0,.06); color:#111; border-color: rgba(0,0,0,.12);
+}
+
+
+
+
+
+/* Scroll container: allow horizontal scroll + room for sticky buttons */
+.rel-wrap{
+  position: relative;
+  min-height: 560px;
+  overflow: auto;
+  scrollbar-gutter: stable both-edges;
+}
+
+/* nicer horizontal scrollbar (keep your theme colors if you like) */
+.rel-wrap::-webkit-scrollbar{ height: 10px; }
+.rel-wrap::-webkit-scrollbar-track{ background: transparent; }
+.rel-wrap::-webkit-scrollbar-thumb{
+  background: linear-gradient(90deg, rgba(255,255,255,.18), rgba(255,255,255,.28));
+  border-radius: 999px;
+}
+[data-theme="light"] .rel-wrap::-webkit-scrollbar-thumb{
+  background: linear-gradient(90deg, rgba(0,0,0,.18), rgba(0,0,0,.28));
+}
+.rel-wrap{ scrollbar-width: thin; }
+[data-theme="dark"]  .rel-wrap{ scrollbar-color: rgba(255,255,255,.28) transparent; }
+[data-theme="light"] .rel-wrap{ scrollbar-color: rgba(0,0,0,.28) transparent; }
+
+/* subtle bottom fade so the bar feels integrated */
+.rel-wrap::after{
+  content:"";
+  position: sticky;
+  bottom: 0;
+  display:block;
+  height: 24px;
+  margin-top: -24px;
+  pointer-events:none;
+  z-index: 15;
+}
+
+
+/* ---- Sticky actions (follow BOTH axes of .rel-wrap) ----
+   Pins the buttons to the RIGHT EDGE of the .rel-wrap scrollport.
+*/
+/* .rel-affix{
+  position: sticky;
+  bottom: 12px;                          
+  margin-left: 90%;                           
+  width: max-content;
+  z-index: 240;
+  pointer-events: none;                  
+}
+
+.rel-affix-inner{
+  display:flex; gap:10px;
+  padding: 6px 8px;
+  border-radius: 14px;
+  backdrop-filter: blur(6px);
+  pointer-events: auto;                 
+} */
+
+/* === Affix buttons anchored to the viewport’s right/bottom === */
+.rel-affix{
+  position: fixed;
+  right: max(env(safe-area-inset-right), 16px);
+  bottom: max(env(safe-area-inset-bottom), 16px);
+  left: auto;               /* ensure no left constraint */
+  margin: 0;                /* kill the 90% trick */
+  width: max-content;
+  z-index: 420;             /* above blur overlays */
+  pointer-events: none;     /* outer wrapper ignores clicks */
+  transform: translateZ(0); /* new stacking context, avoids wobble */
+}
+.rel-affix-inner{
+  display: flex; gap: 10px;
+  padding: 6px 8px;
+  border-radius: 14px;
+  backdrop-filter: blur(6px);
+  pointer-events: auto;     /* buttons clickable */
+}
+
+
+/* Graph canvas: readable floor, then center; horizontal scroll appears in .rel-wrap */
+.rel-svg{
+  display:block;
+  width: clamp(880px, 70svw, 1040px);
+  aspect-ratio: 1040 / 620;
+  margin-inline:auto;
+}
+
+/* keep edge thickness constant */
+.rel-edge, .rel-edge-hit{ vector-effect: non-scaling-stroke; }
+
+
+
+
+
+
+
+/* Make the sidebar "View" modal use centered math (no lateral nudge) */
+.ws-agent-view.rel-center-over-content{
+  --modal-shift-frac: 0;   /* overrides the global 0.22 */
+}
+
+/* Modals should not "lift" on hover like cards */
+.ws-modal:hover{ transform: none; box-shadow: var(--shadow); }
+
+/* Ensure z-order matches rel dialogs */
+.ws-backdrop-content{ z-index: 300; }
+.ws-agent-view.rel-center-over-content{ z-index: 420; }
+
+
+
+
+
+
+
+
+
+/* before (example) */
+[data-theme='dark'] .sc-canvas { background: var(--space-gradient); }
+
+/* after */
+.sc-canvas { background: var(--space-gradient); }
+
+/* keep borders/ink color theme-specific if you want */
+[data-theme='dark'] .sc-canvas { border-color: rgba(255,255,255,.10); }
+[data-theme='light'] .sc-canvas { border-color: rgba(0,0,0,.08); }
+
+
+
+
+/* ---------- Global (once) ---------- */
+html, body { height: 100%; overflow-x: hidden; }
+.app.ws-page { min-height: 100svh; }
+
+/* ---------- Scenario page shell ---------- */
+.sc-page{ display:flex; flex-direction:column; gap:12px; }
+
+/* ---- Pretty nav ---- */
+.sc-nav{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; }
+.sc-nav-pretty{
+  backdrop-filter: saturate(120%) blur(8px);
+  background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.05));
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 16px;
+}
+[data-theme="light"] .sc-nav-pretty{
+  background: linear-gradient(180deg, rgba(0,0,0,.04), rgba(0,0,0,.02));
+  border-color: rgba(0,0,0,.1);
+}
+.sc-brand{ display:flex; align-items:center; gap:12px; }
+.sc-brand .logo{ width:34px; height:34px; border-radius:8px; display:grid; place-items:center; font-weight:900; letter-spacing:.2px; }
+.sc-divider{ width:1px; height:24px; background: currentColor; opacity:.16; border-radius:1px; }
+.sc-tabs{ display:flex; gap:8px; }
+.sc-tab{
+  padding:8px 12px; border-radius:10px; font-weight:700; letter-spacing:.2px;
+  background: rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.12);
+}
+.sc-tab.ghost{ background: transparent; }
+[data-theme="light"] .sc-tab{ background: rgba(0,0,0,.05); border-color: rgba(0,0,0,.1); }
+
+/* ---------- Scenario input ---------- */
+.sc-input .sc-input-row{
+  display:grid; grid-template-columns: 84px 1fr auto; gap:10px; align-items:center;
+}
+.sc-input textarea{
+  resize:none; height:38px; padding:8px 10px; border-radius:10px;
+  border:1px solid rgba(0,0,0,.12); background:rgba(255,255,255,.92); color:#0f1220;
+}
+[data-theme='dark'] .sc-input textarea{ background:rgba(17,22,30,.92); color:#E9EEF7; border-color:rgba(255,255,255,.14); }
+
+/* ---------- Grid (row1: canvas+log, row2: roster across) ---------- */
+.sc-main{
+  display:grid;
+  grid-template-columns: 1fr minmax(300px, 360px);
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "canvas log"
+    "roster roster";    /* ← log no longer spans; roster owns row 2 */
+  gap:12px;
+  margin-bottom:12px;
+}
+@media (max-width: 920px){
+  .sc-main{
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    grid-template-areas:
+      "canvas"
+      "log"
+      "roster";
+  }
+}
+.sc-canvas{ grid-area: canvas; }
+.sc-log{ grid-area: log; display:flex; flex-direction:column; }
+
+/* ---------- Canvas pre/post heights (edit these values) ---------- */
+.sc-canvas{
+  --pre-h:  clamp(500px, 66vh, 880px); /* BEFORE Generate (taller) */
+  --post-h: clamp(500px, 52vh, 680px); /* AFTER  Generate  (shorter) */
+  position: relative;
+  overflow: hidden; /* clip nodes/bubbles to the canvas */
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+  border: 1px solid rgba(0,0,0,.06);
+}
+[data-theme='dark'] .sc-canvas{ border-color: rgba(255,255,255,.10); }
+.sc-canvas.pre  { min-height: var(--pre-h); }
+.sc-canvas.post { min-height: var(--post-h); }
+
+.sc-center{ position:absolute; inset:0; display:grid; place-items:center; }
+.sc-spinner, .sc-spinner.big{
+  width:26px; height:26px; border-radius:999px; border:3px solid rgba(0,0,0,.18);
+  border-top-color:transparent; animation: sc-spin .8s linear infinite;
+}
+.sc-spinner.big{ width:64px; height:64px; border-width:5px; }
+@keyframes sc-spin{ to{ transform: rotate(360deg); } }
+[data-theme='dark'] .sc-spinner{ border-color: rgba(255,255,255,.22); }
+
+/* ---------- Nodes ---------- */
+.sc-node{ position:absolute; transform:translate(-50%,-50%); display:flex; align-items:center; gap:8px; user-select:none; }
+.sc-node .sc-chip{
+  width:28px; height:28px; border-radius:999px; display:grid; place-items:center;
+  background: linear-gradient(180deg, rgba(255,255,255,.85), rgba(255,255,255,.65));
+  border: 1px solid rgba(0,0,0,.06); box-shadow: 0 6px 18px rgba(0,0,0,.12);
+}
+[data-theme='dark'] .sc-node .sc-chip{
+  background: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.08));
+  border-color: rgba(255,255,255,.14);
+}
+.sc-node .sc-name{ font-weight:700; text-shadow: 0 1px 2px rgba(0,0,0,.25); }
+
+/* ---------- Bubble (visual only; transform is inline from JS) ---------- */
+.sc-bubble{
+  position: absolute;
+  transform: translate(-50%, -110%);
+  max-width: 320px; padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(16,20,28,.94); color:#E9EEF7;
+  border: 1px solid rgba(255,255,255,.14);
+  box-shadow: 0 16px 40px rgba(0,0,0,.45);
+  pointer-events: none; z-index: 2;
+}
+[data-theme='light'] .sc-bubble{ background:#fff; color:#0f1220; border-color: rgba(0,0,0,.12); }
+
+/* ---------- Log (compact height + pretty scrollbar) ---------- */
+.sc-log.compact{
+  align-self: start;
+  --log-h: clamp(500px, 34vh, 420px);
+  height: var(--log-h);
+  min-height: 0 !important;
+}
+.sc-log-head{ font-weight:900; letter-spacing:.3px; margin-bottom:8px; }
+.sc-log-list{
+  overflow: auto;
+  max-height: calc(var(--log-h) - 40px);
+  display:flex; flex-direction:column; gap:12px;
+  padding-right: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(140,150,170,.6) transparent;
+}
+.sc-log-item .who{ display:flex; align-items:center; gap:8px; opacity:.9; }
+.sc-log-item .who .dot{ width:8px; height:8px; border-radius:999px; background:#ff5d5d; display:inline-block; }
+.sc-log-item .who .turn{ margin-left:auto; font-size:12px; opacity:.7; }
+.sc-log-item p{ margin:6px 0 0; line-height:1.45; }
+.sc-log-list::-webkit-scrollbar{ width: 10px; }
+.sc-log-list::-webkit-scrollbar-track{ background: transparent; }
+.sc-log-list::-webkit-scrollbar-thumb{
+  background: linear-gradient(180deg, rgba(140,150,170,.65), rgba(120,110,220,.55));
+  border-radius: 10px; border: 2px solid transparent; background-clip: padding-box;
+}
+
+/* ---------- Roster: 5 per row on wide screens, then 4/3/2/1 ---------- */
+.sc-roster{
+  margin-top: 2px;
+  grid-area: roster;
+  display:grid;
+  gap:12px;
+  align-items:stretch;
+  grid-template-columns: repeat(5, minmax(200px, 1fr));
+}
+@media (max-width:1400px){ .sc-roster{ grid-template-columns: repeat(4, minmax(200px,1fr)); } }
+@media (max-width:1200px){ .sc-roster{ grid-template-columns: repeat(3, minmax(200px,1fr)); } }
+@media (max-width:920px) { .sc-roster{ grid-template-columns: repeat(2, minmax(200px,1fr)); } }
+@media (max-width:620px) { .sc-roster{ grid-template-columns: 1fr; } }
+
+/* Equal-height stretcher */
+.sc-roster .agent-card-wrap{ display:flex; min-height: 0; }
+.sc-roster .agent-card-wrap > *{
+  flex:1 1 auto;
+  min-height: clamp(460px, 48vh, 520px);
+  display:flex; flex-direction:column;
+}
+
+/* If your AgentCard uses ws-card root, stretch inner content */
+.sc-roster .ws-card{ height:100%; display:flex; flex-direction:column; }
+.sc-roster .ws-card .ws-card-body{ flex:1; display:flex; flex-direction:column; }
+
+/* Hide edit/close in scenario roster only */
+.sc-roster .agent-card .ws-icon-btn,
+.sc-roster .agent-card [aria-label="Edit"],
+.sc-roster .agent-card [aria-label="Remove"],
+.sc-roster .agent-card .card-actions,
+.sc-roster .agent-card [aria-label="Close"],
+.sc-roster .agent-card .ws-card-actions,
+.sc-roster .ws-card .ws-icon-btn[aria-label],
+.sc-roster .ws-card [aria-label="Edit"],
+.sc-roster .ws-card [aria-label="Remove"],
+.sc-roster .ws-card [aria-label="Close"]{
+  display:none !important;
+}
+
+/* ---------- Nav right: theme + user ---------- */
+.sc-right{ display:flex; align-items:center; gap:14px; }
+.sc-user{
+  display:flex; align-items:center; gap:10px; padding:6px 8px;
+  border-radius:12px; background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.12); cursor:pointer;
+}
+[data-theme="light"] .sc-user{ background:rgba(0,0,0,.06); border-color:rgba(0,0,0,.12); }
+.sc-user .avatar{
+  width:32px; height:32px; border-radius:50%;
+  display:grid; place-items:center; font-weight:800;
+  background:linear-gradient(135deg,#7A5CF4,#30D7E9); color:#fff;
+}
+.sc-user .meta{ line-height:1.1 }
+.sc-user .name{ font-weight:700; font-size:13px; opacity:.95 }
+.sc-user .role{ font-size:11px; opacity:.7 }
+
+/* ---------- Hide edit/close *only* inside scenario roster ---------- */
+.sc-roster .agent-card .ws-icon-btn,
+.sc-roster .agent-card [aria-label="Edit"],
+.sc-roster .agent-card [aria-label="Remove"],
+.sc-roster .agent-card .card-actions,
+.sc-roster .agent-card [aria-label="Close"],
+.sc-roster .agent-card .ws-card-actions{ display: none !important; }
+.sc-roster .ws-card .ws-icon-btn[aria-label],
+.sc-roster .ws-card [aria-label="Edit"],
+.sc-roster .ws-card [aria-label="Remove"],
+.sc-roster .ws-card [aria-label="Close"]{ display: none !important; }
+/* Scenario page: hide the round emoji/glyph at the far-left of each AgentCard header */
+.sc-roster .ws-card .card-head .ws-circle,
+.sc-roster .ws-card .card-head .agent-avatar,
+.sc-roster .ws-card .card-head .avatar,
+.sc-roster .ws-card .card-head .icon-badge,
+.sc-roster .ws-card .card-head [class*="icon"],
+/* last resort: if the icon is just the first SVG in the header */
+.sc-roster .ws-card .card-head svg:first-of-type {
+  display: none !important;
+}
+
+
+/* ---------- Roster: equal card heights ---------- */
+.sc-roster{ margin-top: 2px; align-items:stretch; }
+.sc-roster .agent-card-wrap{ display:flex; min-height: 0; }
+.sc-roster .agent-card-wrap > *{
+  flex:1 1 auto;                       /* AgentCard fills cell */
+  min-height: clamp(460px, 48vh, 520px); /* uniform, responsive */
+  display:flex; flex-direction:column;
+}
+.sc-roster .ws-card{ height:100%; display:flex; flex-direction:column; }
+.sc-roster .ws-card .ws-card-body{ flex:1; display:flex; flex-direction:column; }
+
+/* ---------- FINAL AUTHORITY height overrides (wins even if older rules linger) ---------- */
+.sc-canvas.pre,
+.sc-main .sc-canvas.pre{
+  height: var(--pre-h) !important;
+  min-height: var(--pre-h) !important;
+}
+.sc-canvas.post,
+.sc-main .sc-canvas.post{
+  height: var(--post-h) !important;
+  min-height: var(--post-h) !important;
+}
+
+/* Ensure compact log always uses its own height */
+.sc-log.compact{
+  height: var(--log-h) !important;
+  min-height: 0 !important;
+}
+
+
+
+
+
+/* (Already hidden in your sheet, but keep this here to be safe in Scenario) */
+.sc-roster .ws-card.agent .ws-agent-head .ws-icon-btn {
+  display: none !important;
+}
+
+
+/* ========= Scenario "Threads" Grid (theme-aware) ========= */
+/* Enables with .sc-grid on .sc-canvas */
+.sc-canvas.sc-grid{
+  position: relative;
+  overflow: hidden;            /* keep the grid inside rounded card */
+  background: transparent;     /* we’ll paint the background with layers below */
+  isolation: isolate;          /* so blend modes don’t leak out */
+}
+
+/* Base: a soft vignette + subtle backdrop to keep nodes readable */
+.sc-canvas.sc-grid::backdrop,
+.sc-canvas.sc-grid::before,
+.sc-canvas.sc-grid::after{ content:""; }
+
+/* Layer 1: scene glow / vignette */
+.sc-canvas.sc-grid::before{
+  position: absolute; inset: -2% -2%;
+  z-index: 0;
+  /* theme base: soft gradient wash */
+  background:
+    radial-gradient(120% 100% at 50% 110%, var(--sc-bg-deep) 0%, transparent 60%) ,
+    radial-gradient(100% 140% at 50% -20%, var(--sc-bg-top) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Layer 2: perspective grid lines (crisp strokes) */
+.sc-canvas.sc-grid::after{
+  position: absolute;
+  left: -10%; right: -10%;
+  top: -10%; bottom: -35%;
+  z-index: 0;
+  /* two repeating gradient layers: vertical and horizontal lines */
+  background:
+    repeating-linear-gradient(to right,
+      var(--sc-grid-stroke) 0 2px, transparent 2px 40px),
+    repeating-linear-gradient(to bottom,
+      var(--sc-grid-stroke) 0 2px, transparent 2px 40px);
+  transform-origin: 50% 15%;
+  transform: perspective(900px) rotateX(62deg) translateZ(0);
+  filter: drop-shadow(0 0 6px var(--sc-grid-glow));
+  mix-blend-mode: screen;      /* makes the neon pop in dark; gentle in light */
+  opacity: var(--sc-grid-opacity, .68);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Optional: subtle “mist” over far horizon for depth (keeps text readable) */
+.sc-canvas.sc-grid ,
+.sc-canvas.sc-grid ,
+.sc-canvas.sc-grid {
+  position: relative;
+  z-index: 1;   /* always above the grid layers */
+}
+
+/* ---- Theme variables ---- */
+:root, [data-theme="light"]{
+  /* Light mode neon (pink/magenta) */
+  --sc-grid-stroke: rgba(248, 64, 120, .45);
+  --sc-grid-glow:   rgba(248, 64, 120, .55);
+  --sc-grid-opacity: .60;
+
+  /* background wash for light */
+  --sc-bg-top:  rgba(90, 120, 255, .10);
+  --sc-bg-deep: rgba(0, 0, 0, .06);
+}
+
+[data-theme="dark"]{
+  /* Dark mode neon (cyan/blue) */
+  --sc-grid-stroke: rgba(90, 180, 255, .35);
+  --sc-grid-glow:   rgba(90, 180, 255, .55);
+  --sc-grid-opacity: .72;
+
+  /* background wash for dark */
+  --sc-bg-top:  rgba(90, 70, 220, .22);
+  --sc-bg-deep: rgba(0, 0, 0, .28);
+}
+
+/* Optional polish: make chips pop a bit more on the grid */
+.sc-canvas.sc-grid .sc-chip{
+  box-shadow:
+    0 8px 24px rgba(0,0,0,.18),
+    0 0 0 1px rgba(255,255,255,.06) inset;
+}
+
+/* Keep bubbles readable atop bright lines */
+.sc-canvas.sc-grid .sc-bubble{
+  backdrop-filter: saturate(120%) blur(6px);
+  background: color-mix(in srgb, var(--sc-bubble-bg, #10141c) 92%, transparent);
+}
+[data-theme="light"] .sc-canvas.sc-grid .sc-bubble{
+  --sc-bubble-bg: #ffffff;
+}
+[data-theme="dark"] .sc-canvas.sc-grid .sc-bubble{
+  --sc-bubble-bg: #10141c;
+}
+
+
+/* ==== Scenario Nav – DARK MODE ==== */
+[data-theme="dark"] .sc-nav-pretty{
+  /* glassy panel */
+  background: linear-gradient(180deg, rgba(10,14,22,.72), rgba(10,14,22,.58));
+  border: 1px solid rgba(255,255,255,.10);
+  box-shadow:
+    0 6px 22px rgba(0,0,0,.45),
+    inset 0 1px 0 rgba(255,255,255,.05);
+  color: #E9EEF7;
+}
+
+[data-theme="dark"] .sc-brand .logo{
+  color:#E9EEF7;
+  background: linear-gradient(180deg, rgba(255,255,255,.1), rgba(255,255,255,.06));
+  border: 1px solid rgba(255,255,255,.12);
+}
+
+[data-theme="dark"] .sc-divider{
+  background: #E9EEF7;
+  opacity:.18;
+}
+
+/* Tabs */
+[data-theme="dark"] .sc-tab{
+  color:#E9EEF7;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.10);
+  backdrop-filter: saturate(120%) blur(6px);
+  transition: background .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+[data-theme="dark"] .sc-tab:hover{
+  background: rgba(255,255,255,.10);
+  border-color: rgba(255,255,255,.16);
+  box-shadow: 0 4px 14px rgba(0,0,0,.35);
+}
+[data-theme="dark"] .sc-tab:focus-visible{
+  outline:none;
+  box-shadow: 0 0 0 3px rgba(122,92,244,.35);
+}
+
+/* “ghost” tab (secondary) */
+[data-theme="dark"] .sc-tab.ghost{
+  background: transparent;
+  border-color: rgba(255,255,255,.10);
+}
+[data-theme="dark"] .sc-tab.ghost:hover{
+  background: rgba(255,255,255,.06);
+}
+
+/* active/current tab */
+.sc-tab.is-active,
+.sc-tab[aria-current="page"]{
+  box-shadow: inset 0 0 0 1px rgba(122,92,244,.55), 0 6px 16px rgba(0,0,0,.28);
+}
+[data-theme="dark"] .sc-tab.is-active,
+[data-theme="dark"] .sc-tab[aria-current="page"]{
+  background: linear-gradient(180deg, rgba(122,92,244,.20), rgba(122,92,244,.10));
+  border-color: rgba(122,92,244,.55);
+}
+
+/* ===== Animated Pretty Nav (light + dark) ===== */
+.sc-nav-pretty{
+  /* shared */
+  position: relative;
+  border-radius: 16px;
+  border: 1px solid var(--nav-border, rgba(255,255,255,.12));
+  overflow: hidden;                 /* clip animated layer to rounded corners */
+  isolation: isolate;               /* ensure ::before sits under children */
+}
+
+/* The moving gradient film */
+.sc-nav-pretty::before{
+  content:"";
+  position:absolute; inset:0;
+  z-index: -1;
+  border-radius: inherit;
+
+  /* default (dark) film */
+  --film: radial-gradient(1200px 600px at -20% -40%, rgba(122,92,244,.18), transparent 60%),
+           radial-gradient(1000px 600px at 120% 140%, rgba(48,215,233,.16), transparent 55%),
+           linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.05));
+  background: var(--film);
+  background-size: 200% 200%, 200% 200%, 100% 100%;
+  animation: scNavSweep 12s ease-in-out infinite alternate;
+}
+
+/* Base tokens: dark */
+.sc-nav-pretty{
+  --nav-border: rgba(255,255,255,.12);
+}
+.sc-tab{
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.12);
+  transition: transform .2s ease, background .25s ease, border-color .25s ease, box-shadow .25s ease;
+}
+.sc-tab:hover{
+  transform: translateY(-1px);
+  background: rgba(255,255,255,.12);
+  border-color: rgba(255,255,255,.18);
+  box-shadow: 0 8px 24px rgba(0,0,0,.22);
+}
+
+/* Light mode variant: softer glass + colored sweep */
+[data-theme="light"] .sc-nav-pretty{
+  --nav-border: rgba(0,0,0,.12);
+}
+[data-theme="light"] .sc-nav-pretty::before{
+  /* swap the film for light */
+  --film: radial-gradient(1200px 600px at -15% -30%, rgba(122,92,244,.15), transparent 60%),
+          radial-gradient(1000px 600px at 115% 135%, rgba(48,215,233,.14), transparent 55%),
+          linear-gradient(180deg, rgba(0,0,0,.04), rgba(0,0,0,.02));
+  background: var(--film);
+  background-size: 200% 200%, 200% 200%, 100% 100%;
+}
+
+/* Tabs in light mode */
+[data-theme="light"] .sc-tab{
+  background: rgba(0,0,0,.05);
+  border-color: rgba(0,0,0,.10);
+}
+[data-theme="light"] .sc-tab:hover{
+  background: rgba(0,0,0,.08);
+  border-color: rgba(0,0,0,.16);
+  box-shadow: 0 10px 26px rgba(24,38,64,.14);
+}
+
+@keyframes scNavSweep{
+  0%   { background-position: 0% 40%, 100% 60%, 0% 0%; }
+  50%  { background-position: 50% 60%, 50% 40%, 0% 0%; }
+  100% { background-position: 100% 40%, 0% 60%, 0% 0%; }
+}
+
+/* Respect motion preferences */
+@media (prefers-reduced-motion: reduce){
+  .sc-nav-pretty::before{ animation: none; }
+}

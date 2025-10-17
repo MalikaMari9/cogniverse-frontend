@@ -24,6 +24,52 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+
+/* ---------- Handle 401 (Token Expiry) ---------- */
+api.interceptors.response.use(
+  (response) => response, // pass through if OK
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Only handle 401s and avoid infinite loops
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      const refresh = localStorage.getItem("refresh_token");
+
+      if (refresh) {
+        try {
+          // Try to refresh the access token
+          const res = await axios.post(
+            `${import.meta.env.VITE_API_URL || "http://localhost:8000"}/auth/refresh`,
+            {},
+            { headers: { Authorization: `Bearer ${refresh}` } }
+          );
+
+          // Save new access token
+          localStorage.setItem("access_token", res.data.access_token);
+
+          // Retry the original request with new token
+          originalRequest.headers.Authorization = `Bearer ${res.data.access_token}`;
+          return api(originalRequest);
+        } catch (err) {
+          console.warn("🔴 Refresh token expired or invalid, logging out...");
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
+          window.location.href = "/login";
+        }
+      } else {
+        console.warn("⚠️ No refresh token found, redirecting to login.");
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        window.location.href = "/login";
+      }
+    }
+
+    // If not a 401 or still fails, reject
+    return Promise.reject(error);
+  }
+);
+
 /* ===============================
    🔐 AUTH ROUTES
 =============================== */
@@ -131,49 +177,119 @@ export async function deleteAgentRelation(id) {
   const res = await api.delete(`/agent-relations/${id}`);
   return res.data;
 }
+/* ===============================
+   🧩 SCENARIO ROUTES
+=============================== */
 
-// ===============================
-// Scenario API
-// ===============================
-export async function getScenarios() {
-  const res = await fetch(`${API_BASE}/scenarios/`);
-  if (!res.ok) throw new Error("Failed to fetch scenarios");
-  return await res.json();
-}
+// Get all scenarios
+export const getScenarios = async () => (await api.get("/scenarios/")).data;
 
-export async function getScenarioById(id) {
-  const res = await fetch(`${API_BASE}/scenarios/${id}`);
-  if (!res.ok) throw new Error("Failed to fetch scenario");
-  return await res.json();
-}
+// Get a single scenario by ID
+export const getScenarioById = async (id) =>
+  (await api.get(`/scenarios/${id}`)).data;
 
-export async function createScenario(data) {
-  const res = await fetch(`${API_BASE}/scenarios/`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) throw new Error("Failed to create scenario");
-  return await res.json();
-}
+// Create a new scenario
+export const createScenario = async (data) =>
+  (await api.post("/scenarios/", data)).data;
 
-export async function updateScenario(id, data) {
-  const res = await fetch(`${API_BASE}/scenarios/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) throw new Error("Failed to update scenario");
-  return await res.json();
-}
+// Update an existing scenario
+export const updateScenario = async (id, data) =>
+  (await api.put(`/scenarios/${id}`, data)).data;
 
-export async function deleteScenario(id) {
-  const res = await fetch(`${API_BASE}/scenarios/${id}`, {
-    method: "DELETE",
-  });
-  if (!res.ok) throw new Error("Failed to delete scenario");
-  return await res.json();
-}
+// Delete a scenario
+export const deleteScenario = async (id) =>
+  (await api.delete(`/scenarios/${id}`)).data;
+
+/* ===============================
+   🧠 RESULT ROUTES
+=============================== */
+
+// Fetch all results
+export const getResults = async () => (await api.get("/results/")).data;
+
+// Fetch a single result by ID
+export const getResultById = async (result_id) =>
+  (await api.get(`/results/${result_id}`)).data;
+
+// Create a new result
+export const createResult = async (data) =>
+  (await api.post("/results/", data)).data;
+
+// Update an existing result
+export const updateResult = async (result_id, data) =>
+  (await api.put(`/results/${result_id}`, data)).data;
+
+// Delete a result
+export const deleteResult = async (result_id) =>
+  (await api.delete(`/results/${result_id}`)).data;
+
+/* ===============================
+   💭 RESULT (Thought) Fetch
+=============================== */
+export const getResultsByAgentScenarioType = async (projectAgentId, scenarioId, resultType) =>
+  (await api.get(`/results/agent/${projectAgentId}/scenario/${scenarioId}/type/${resultType}`)).data;
+
+
+
+/* ===============================
+   🧬 MEMORY ROUTES
+=============================== */
+
+// Create a new memory
+export const createMemory = async (data) =>
+  (await api.post("/memory/", data)).data;
+
+// Get a memory by ID
+export const getMemoryById = async (memory_id) =>
+  (await api.get(`/memory/${memory_id}`)).data;
+
+// List memories by project
+export const listMemoriesByProject = async (project_id) =>
+  (await api.get(`/memory/project/${project_id}`)).data;
+
+// List memories by agent
+export const listMemoriesByAgent = async (agent_id) =>
+  (await api.get(`/memory/agent/${agent_id}`)).data;
+
+// Update memory
+export const updateMemory = async (memory_id, data) =>
+  (await api.put(`/memory/${memory_id}`, data)).data;
+
+// Soft delete memory
+export const deleteMemory = async (memory_id) =>
+  (await api.delete(`/memory/${memory_id}`)).data;
+
+/* ===============================
+   🕸️ WEAVER ROUTES
+=============================== */
+
+// Create a new weaver entry
+export const createWeaver = async (data) =>
+  (await api.post("/weaver/", data)).data;
+
+// Get a weaver by ID
+export const getWeaverById = async (weaver_id) =>
+  (await api.get(`/weaver/${weaver_id}`)).data;
+
+// List weavers by project
+export const listWeaversByProject = async (project_id) =>
+  (await api.get(`/weaver/project/${project_id}`)).data;
+
+// List weavers by agent
+export const listWeaversByAgent = async (agent_id) =>
+  (await api.get(`/weaver/agent/${agent_id}`)).data;
+
+// Update an existing weaver
+export const updateWeaver = async (weaver_id, data) =>
+  (await api.put(`/weaver/${weaver_id}`, data)).data;
+
+// Soft delete a weaver
+export const deleteWeaver = async (weaver_id) =>
+  (await api.delete(`/weaver/${weaver_id}`)).data;
+
+
+
+
 
 
 /* ===============================

@@ -469,6 +469,15 @@ body[data-theme="dark"]  .ws-backdrop-content,
   cursor: pointer;
 }
 
+.rel-edge-pos { stroke: var(--accent-green, #4caf50); }
+.rel-edge-neg { stroke: var(--accent-red, #e53935); }
+.rel-edge-neu { stroke: var(--border-color, #aaa); }
+.rel-edge:hover { stroke-width: 3; cursor: pointer; }
+.rel-node, .rel-node-hit { cursor: pointer; }
+.rel-node:hover { stroke: var(--accent, #66aaff); stroke-width: 3; }
+.rel-edge-hit { cursor: pointer; opacity: 0; stroke-width: 15; }
+
+
 /* Tooltip (same as before) */
 /* .rel-tip { … } remains as you had */
 
@@ -1612,4 +1621,60 @@ html, body { height: 100%; overflow-x: hidden; }
 .hub-new {
   text-align: center;
   margin-top: 2rem;
+}
+
+/* ==== Hub Enhancements ==== */
+.hub-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hub-chip {
+  border-radius: 8px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.hub-chip.active {
+  background: #c0ffc0;
+  color: #054a05;
+}
+.hub-chip.inactive {
+  background: #ffe0b3;
+  color: #664400;
+}
+.hub-chip.archived {
+  background: #ffd0d0;
+  color: #611;
+}
+
+.hub-empty {
+  text-align: center;
+  padding: 40px 0;
+  opacity: 0.85;
+}
+.hub-empty p {
+  font-size: 1rem;
+  margin-bottom: 16px;
+}
+/* ==== Pagination ==== */
+.hub-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0;
+  font-size: 0.95rem;
+}
+
+.hub-page-info {
+  opacity: 0.8;
+}
+
+.hub-pagination .ws-btn[disabled] {
+  opacity: 0.4;
+  cursor: not-allowed;
 }

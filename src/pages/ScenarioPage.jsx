@@ -1,13 +1,27 @@
 // ===============================
-// ScenarioPage.jsx (updated with backend integration)
+// ScenarioPage.jsx (updated with backend integration + AI integration markers)
 // ===============================
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { SvgIcon } from "./Workstation";
 import { AgentCard } from "./Workstation";
 import "../ws_css.css";
-import { createScenario, getScenarios } from "../api/api"; // ✅ added
+import {
+  createScenario,
+  getScenarios,
+  getResultsByAgentScenarioType,
+  getResults,
+} from "../api/api";
+import { useParams } from "react-router-dom";
+import toast, { Toaster } from "react-hot-toast";
 
-export default function ScenarioPage({ theme, onBackToWorkstation, onBackToGraph, selectedAgents }) {
+export default function ScenarioPage({
+  theme,
+  onBackToWorkstation,
+  onBackToGraph,
+  selectedAgents,
+}) {
+  const { projectid } = useParams();
+
   // ---------------- state ----------------
   const [scenarioText, setScenarioText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -16,9 +30,12 @@ export default function ScenarioPage({ theme, onBackToWorkstation, onBackToGraph
   const [hover, setHover] = useState(null); // {x,y,text,transform}
   const [scenarios, setScenarios] = useState([]); // ✅ store history
   const boundsRef = useRef(null);
+  const [currentScenario, setCurrentScenario] = useState(null);
 
   // local theme label that always flips correctly
-  const [t, setT] = useState(() => document.documentElement.getAttribute("data-theme") || "dark");
+  const [t, setT] = useState(() =>
+    document.documentElement.getAttribute("data-theme") || "dark"
+  );
   const toggleTheme = () => {
     const next = t === "dark" ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", next);
@@ -31,10 +48,33 @@ export default function ScenarioPage({ theme, onBackToWorkstation, onBackToGraph
   // ---------------- helpers ----------------
   const hasOutput = loading || logs.length > 0;
 
-  const bubbleTextFor = (name) => {
-    const feels = ["curious", "focused", "skeptical", "excited", "confident", "cautious"];
-    const acts = ["sketching ideas", "testing a hunch", "pairing on a fix", "checking signals", "writing a note"];
-    return `${name} feels ${feels[Math.floor(Math.random() * feels.length)]} and is ${acts[Math.floor(Math.random() * acts.length)]}.`;
+  // ---------------- Bubble Thought Fetcher ----------------
+  // Fetches latest "thought" results for the given agent.
+  // 🧠 [AI THOUGHT INTEGRATION POINT]
+  // In the future, replace this call to `getResultsByAgentScenarioType`
+  // with an AI endpoint that dynamically generates the agent's "thought"
+  // such as: POST /simulate/agent-thought { projectagentid, scenarioid, context }
+  const bubbleTextFor = async (agent) => {
+    try {
+      if (!agent.projectagentid || !currentScenario)
+        return `${agent.name} is thinking...`;
+
+      const thoughts = await getResultsByAgentScenarioType(
+        agent.projectagentid,
+        currentScenario.scenarioid,
+        "thought"
+      );
+
+      if (thoughts.length > 0) {
+        const r = thoughts[Math.floor(Math.random() * thoughts.length)];
+        return r.resulttext || `${agent.name} is pondering something.`;
+      } else {
+        return `${agent.name} is quietly observing.`;
+      }
+    } catch (err) {
+      console.warn("⚠️ Failed to fetch thought for agent", agent.name, err);
+      return `${agent.name} is quietly observing.`;
+    }
   };
 
   // Flip bubble to avoid clipping (top/bottom/left/right)
@@ -72,7 +112,6 @@ export default function ScenarioPage({ theme, onBackToWorkstation, onBackToGraph
 
     const W = el.clientWidth;
     const H = el.clientHeight;
-
     const PAD = 72;
     const n = Math.max(1, selectedAgents.length);
     const cx = W / 2;
@@ -82,7 +121,14 @@ export default function ScenarioPage({ theme, onBackToWorkstation, onBackToGraph
     if (n === 1) {
       const ag = selectedAgents[0];
       setNodes([
-        { id: ag.id, name: ag.name, icon: ag.icon || "user", x: Math.round(cx), y: Math.round(cy) },
+        {
+          id: ag.agentid,
+          name: ag.agentname,
+          projectagentid: ag.projectagentid,
+          icon: ag.icon || "user",
+          x: Math.round(cx),
+          y: Math.round(cy),
+        },
       ]);
       return;
     }
@@ -93,7 +139,14 @@ export default function ScenarioPage({ theme, onBackToWorkstation, onBackToGraph
       const y = cy + R * Math.sin(t);
       const xC = Math.max(PAD, Math.min(W - PAD, x));
       const yC = Math.max(PAD, Math.min(H - PAD, y));
-      return { id: ag.id, name: ag.name, icon: ag.icon || "user", x: Math.round(xC), y: Math.round(yC) };
+      return {
+        id: ag.agentid,
+        name: ag.agentname,
+        projectagentid: ag.projectagentid,
+        icon: ag.icon || "user",
+        x: Math.round(xC),
+        y: Math.round(yC),
+      };
     });
     setNodes(pts);
   }, [selectedAgents]);
@@ -112,7 +165,8 @@ export default function ScenarioPage({ theme, onBackToWorkstation, onBackToGraph
     const fetchScenarios = async () => {
       try {
         const data = await getScenarios();
-        setScenarios(data);
+        const filtered = data.filter((s) => s.projectid === Number(projectid));
+        setScenarios(filtered);
         console.log("✅ Loaded scenarios:", data);
       } catch (err) {
         console.error("❌ Failed to load scenarios:", err);
@@ -131,39 +185,76 @@ export default function ScenarioPage({ theme, onBackToWorkstation, onBackToGraph
       "shares a concern about scope.",
     ];
     return {
-      id: `${ag.id}-${i}`,
-      who: ag.name,
+      id: `${ag.agentid}-${i}`,
+      who: ag.agentname,
       turn: i + 1,
-      text: `${ag.name} ${acts[Math.floor(Math.random() * acts.length)]}`,
+      text: `${ag.agentname} ${
+        acts[Math.floor(Math.random() * acts.length)]
+      }`,
     };
   };
 
   const onGenerate = async () => {
+    if (!scenarioText.trim()) {
+      toast.error("Please enter a scenario description first.");
+      return;
+    }
+    if (currentScenario) {
+      toast.error("Finish or clear the current scenario before generating a new one.");
+      return;
+    }
+
     setLoading(true);
     setLogs([]);
     setHover(null);
 
     try {
-      // 🧠 Save scenario to backend
       const scenarioPayload = {
         scenarioname: scenarioText || "Untitled Scenario",
         scenarioprompt: scenarioText,
-        projectid: 1, // TODO: replace with actual project id context if available
+        projectid: Number(projectid),
         status: "active",
       };
-      await createScenario(scenarioPayload);
-      console.log("✅ Scenario saved:", scenarioPayload);
 
-      // 🪄 Local fake log generation
+      await createScenario(scenarioPayload);
+      toast.success("Scenario saved successfully!");
+      setCurrentScenario(scenarioPayload); // 🟢 Store active scenario
+
+      // ---------------- Fetch all simulation results (any type) ----------------
+      // 🧩 [AI RESULT INTEGRATION POINT]
+      // In the future, replace this section with a unified simulation call like:
+      // POST /simulate/scenario { projectid, scenarioid }
+      // The backend AI service should generate and persist all result types.
+      try {
+        const allResults = await getResults();
+        const filtered = allResults.filter(
+          (r) => r.scenarioid === scenarioPayload.scenarioid
+        );
+        const formatted = filtered.map((r, i) => ({
+          id: r.resultid,
+          who:
+            selectedAgents.find(
+              (a) => a.projectagentid === r.projectagentid
+            )?.agentname || "Unknown",
+          turn: r.sequence_no || i + 1,
+          text: r.resulttext,
+        }));
+        setLogs(formatted);
+      } catch (fetchErr) {
+        console.error("❌ Failed to fetch scenario results:", fetchErr);
+      }
+
+      // 🪄 Local fallback — only used if backend has no AI output yet
       const L = [];
       const total = Math.max(6, selectedAgents.length * 2);
       for (let i = 0; i < total; i++) {
-        const ag = selectedAgents[Math.floor(Math.random() * selectedAgents.length)];
+        const ag =
+          selectedAgents[Math.floor(Math.random() * selectedAgents.length)];
         L.push(genLine(ag, i));
       }
       setLogs(L);
     } catch (err) {
-      console.error("❌ Scenario creation failed:", err);
+      toast.error("Failed to create scenario");
     } finally {
       setLoading(false);
     }
@@ -199,8 +290,15 @@ export default function ScenarioPage({ theme, onBackToWorkstation, onBackToGraph
             onClick={toggleTheme}
             aria-label="Toggle theme"
           />
-          <div className="sc-user" role="button" tabIndex={0} aria-label="User profile">
-            <div className="avatar" aria-hidden="true">A</div>
+          <div
+            className="sc-user"
+            role="button"
+            tabIndex={0}
+            aria-label="User profile"
+          >
+            <div className="avatar" aria-hidden="true">
+              A
+            </div>
             <div className="meta">
               <div className="name">Alex</div>
               <div className="role">Pro</div>
@@ -219,8 +317,12 @@ export default function ScenarioPage({ theme, onBackToWorkstation, onBackToGraph
             onChange={(e) => setScenarioText(e.target.value)}
             placeholder="Describe the situation you want to simulate…"
           />
-          <button className="ws-btn primary" onClick={onGenerate}>
-            Generate
+          <button
+            className="ws-btn primary"
+            onClick={onGenerate}
+            disabled={loading || !!currentScenario}
+          >
+            {loading ? "Generating..." : "Generate"}
           </button>
         </label>
       </section>
@@ -228,7 +330,10 @@ export default function ScenarioPage({ theme, onBackToWorkstation, onBackToGraph
       {/* MAIN grid */}
       <section className={`sc-main ${hasOutput ? "has-output" : ""}`}>
         {/* Canvas */}
-        <div className={`sc-canvas sc-grid ws-card ${hasOutput ? "post" : "pre"}`} ref={boundsRef}>
+        <div
+          className={`sc-canvas sc-grid ws-card ${hasOutput ? "post" : "pre"}`}
+          ref={boundsRef}
+        >
           {loading && (
             <div className="sc-center">
               <div className="sc-spinner big" />
@@ -241,12 +346,13 @@ export default function ScenarioPage({ theme, onBackToWorkstation, onBackToGraph
                 key={n.id}
                 className="sc-node"
                 style={{ left: n.x, top: n.y }}
-                onMouseEnter={() => {
+                onMouseEnter={async () => {
                   const p = bubbleFor(n.x, n.y);
+                  const text = await bubbleTextFor(n);
                   setHover({
                     x: p.x,
                     y: p.y,
-                    text: bubbleTextFor(n.name),
+                    text,
                     transform: p.transform,
                   });
                 }}
@@ -260,17 +366,33 @@ export default function ScenarioPage({ theme, onBackToWorkstation, onBackToGraph
             ))}
 
           {hover && (
-            <div className="sc-bubble" style={{ left: hover.x, top: hover.y, transform: hover.transform }}>
+            <div
+              className="sc-bubble"
+              style={{
+                left: hover.x,
+                top: hover.y,
+                transform: hover.transform,
+              }}
+            >
               {hover.text}
             </div>
           )}
         </div>
 
+        {currentScenario && (
+          <div className="sc-current ws-card">
+            <h3>Scenario:</h3>
+            <p>{currentScenario.scenarioprompt}</p>
+          </div>
+        )}
+
         {/* Log */}
         <aside className="sc-log ws-card compact">
           <div className="sc-log-head">Simulation Log</div>
           {loading ? (
-            <div className="sc-center"><div className="sc-spinner" /></div>
+            <div className="sc-center">
+              <div className="sc-spinner" />
+            </div>
           ) : (
             <div className="sc-log-list">
               {logs.map((item) => (
@@ -287,10 +409,21 @@ export default function ScenarioPage({ theme, onBackToWorkstation, onBackToGraph
           )}
         </aside>
 
+        {currentScenario && !loading && (
+          <div className="sc-clear">
+            <button
+              className="ws-btn ghost"
+              onClick={() => setCurrentScenario(null)}
+            >
+              + New Scenario
+            </button>
+          </div>
+        )}
+
         {/* Roster */}
         <div className="sc-roster">
           {selectedAgents.map((ag) => (
-            <div className="agent-card-wrap" key={ag.id}>
+            <div className="agent-card-wrap" key={ag.agentid}>
               <AgentCard agent={ag} onRemove={() => {}} onEdit={() => {}} />
             </div>
           ))}

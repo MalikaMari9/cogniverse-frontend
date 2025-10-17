@@ -5,7 +5,7 @@ import React from "react";
 import { SvgIcon } from "./Workstation";
 import { useParams } from "react-router-dom";
 import { useRef } from "react";
-
+import toast,{Toaster} from "react-hot-toast";
 import { getAgentRelations, createAgentRelation } from "../api/api";
 
 function RelationshipGraph({ agents, onBack, onNext }) {
@@ -16,9 +16,11 @@ function RelationshipGraph({ agents, onBack, onNext }) {
   const [weights, setWeights] = React.useState(() => ({})); // "a|b" -> number
   const [nodeDialog, setNodeDialog] = React.useState(null);
   const [stage, setStage] = React.useState("graph");
-  const saveTimer = useRef(null); // 🕒 debounce timer
+  const saveTimers = useRef({}); // 🕒 one timer per relation key
 
-  const CX = 520, CY = 300, R = 260;
+  const CX = 520, CY = 300;
+const R = 200 + Math.max(0, (6 - agents.length) * 10); // auto-spacing for smaller teams
+
 
   // --- Layout ---
   const layout = React.useMemo(() => {
@@ -94,6 +96,7 @@ function RelationshipGraph({ agents, onBack, onNext }) {
   // 💾 Save relation (create/update)
   // =============================
 // 💾 Save relation (create/update) — debounced 500 ms
+// 💾 Save relation (create/update) — debounced 500 ms, per relation key
 const saveRelation = React.useCallback((a, b, v) => {
   const projectID = Number(projectid);
   if (!projectID || !a || !b) return;
@@ -108,19 +111,21 @@ const saveRelation = React.useCallback((a, b, v) => {
     status: "active",
   };
 
-  // Cancel any pending save first
-  clearTimeout(saveTimer.current);
+  const relationKey = key(a, b);
+  if (saveTimers.current[relationKey]) clearTimeout(saveTimers.current[relationKey]);
 
-  // Schedule new save after 500 ms of no change
-  saveTimer.current = setTimeout(async () => {
+  saveTimers.current[relationKey] = setTimeout(async () => {
     try {
       await createAgentRelation(payload);
       console.log(`✅ Synced relation ${a} ↔ ${b}: ${v}`);
+      toast.success(`Relation updated: ${a} ↔ ${b}`, { duration: 1800 });
     } catch (err) {
       console.warn("⚠️ Failed to sync relation:", err);
+      toast.error("Failed to sync relation");
     }
   }, 500);
 }, [projectid, weights]);
+
 
 
   // =============================
@@ -157,6 +162,7 @@ const saveRelation = React.useCallback((a, b, v) => {
   // =============================
   return (
     <div className="rel-wrap">
+     
       <svg
         ref={svgRef}
         className="rel-svg"
@@ -227,33 +233,25 @@ const saveRelation = React.useCallback((a, b, v) => {
           <th>Strength</th>
         </tr>
       </thead>
-      <tbody>
-        {edges.flatMap(({ a, b }) => {
-          const agentA = agents.find((x) => x.agentid === a);
-          const agentB = agents.find((x) => x.agentid === b);
-          const valAB = getW(a, b);
-          const valBA = getW(b, a);
+<tbody>
+  {edges.map(({ a, b }) => {
+    const agentA = agents.find(x => x.agentid === a);
+    const agentB = agents.find(x => x.agentid === b);
+    const valAB = getW(a, b);
+    const valBA = getW(b, a);
+    const color = v => v > 0 ? "pos" : v < 0 ? "neg" : "neu";
 
-          const color = (val) => {
-            if (val > 0) return "pos";
-            if (val < 0) return "neg";
-            return "neu";
-          };
+    return (
+      <tr key={`${a}-${b}`}>
+        <td>{agentA?.agentname}</td>
+        <td>{agentB?.agentname}</td>
+        <td className={color(valAB)}>{valAB}</td>
+        <td className={color(valBA)}>{valBA}</td>
+      </tr>
+    );
+  })}
+</tbody>
 
-          return [
-            <tr key={`${a}-${b}-ab`}>
-              <td>{agentA?.agentname}</td>
-              <td>{agentB?.agentname}</td>
-              <td className={color(valAB)}>{valAB}</td>
-            </tr>,
-            <tr key={`${b}-${a}-ba`}>
-              <td>{agentB?.agentname}</td>
-              <td>{agentA?.agentname}</td>
-              <td className={color(valBA)}>{valBA}</td>
-            </tr>,
-          ];
-        })}
-      </tbody>
     </table>
   </div>
 </div>
@@ -349,7 +347,19 @@ const saveRelation = React.useCallback((a, b, v) => {
       <div className="rel-affix">
         <div className="rel-affix-inner">
           <button className="ws-btn ghost" onClick={onBack}>Back</button>
-          <button className="ws-btn primary" onClick={onNext}>Next</button>
+          <button
+  className="ws-btn primary"
+  onClick={async () => {
+    // Flush pending relation saves before moving on
+    for (const t of Object.values(saveTimers.current)) clearTimeout(t);
+    saveTimers.current = {};
+    toast.success("All relations synced!");
+    onNext();
+  }}
+>
+  Next
+</button>
+
         </div>
       </div>
     </div>

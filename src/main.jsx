@@ -26,6 +26,8 @@ import ScenarioPage from "./pages/ScenarioPage.jsx";
 
 // 🧩 Development / experimental
 import AgentNode from "./pages/AgentNodes.jsx";
+import WorkstationPageTest from "./pages/TestAgent.jsx";
+import SessionMonitor from "./pages/SessionMonitor.jsx";
 
 import "./styles.css";
 
@@ -65,7 +67,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             =============================== */}
         {/* 1️⃣ Hub (list of all projects) */}
         <Route path="/workstation" element={<WorkstationHub />} />
-
+          <Route path="/testws" element={<WorkstationPageTest />} />
         {/* 2️⃣ Create a new project */}
         <Route path="/workstation/new" element={<WorkstationPage />} />
 
@@ -82,6 +84,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             🧩  DEV / DEBUG ROUTES
             =============================== */}
         <Route path="/agentnodes" element={<AgentNode />} />
+        <Route path="/sessionMonitor" element={<SessionMonitor/>} />
 
         {/* ===============================
             🚧  FALLBACK

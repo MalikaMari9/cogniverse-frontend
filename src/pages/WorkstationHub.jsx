@@ -6,6 +6,7 @@ import "../ws_css.css";
 import { WorkstationHubSidebar } from "../components/Sidebar";
 import { SvgIcon } from "./Workstation";
 import { getProjects, createProject } from "../api/api";
+import { useNavigate } from "react-router-dom";
 
 /* ---------- Create Project Modal ---------- */
 function CreateProjectModal({ open, onClose, onSubmit }) {
@@ -135,6 +136,12 @@ function CreateProjectModal({ open, onClose, onSubmit }) {
 
 /* ---------- Hub Page ---------- */
 export default function WorkstationHub() {
+    const navigate = useNavigate();
+      // 🧭 Pagination setup
+  const [currentPage, setCurrentPage] = useState(1);
+  const PROJECTS_PER_PAGE = 6; // TOBECHANGED (config-driven later)
+
+
   const [theme, setTheme] = useState(
     document.documentElement.getAttribute("data-theme") || "dark"
   );
@@ -143,6 +150,26 @@ export default function WorkstationHub() {
   const [openCreate, setOpenCreate] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+
+    // 🔁 Reload projects list
+  const reloadProjects = async () => {
+    setLoading(true);
+    try {
+      const res = await getProjects();
+      // sort by latest update
+      const sorted = [...res].sort(
+        (a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0)
+      );
+      setProjects(sorted);
+    } catch (err) {
+      console.error("Failed to reload projects:", err);
+      setError("Could not refresh projects.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   /* ---------- Theme ---------- */
   const toggleTheme = () => {
@@ -178,9 +205,11 @@ export default function WorkstationHub() {
       setProjects((prev) => [...prev, newProj]);
 
       // Navigate to the new project after creation
-      setTimeout(() => {
-        window.location.href = `/workstation/${newProj.projectid}`;
-      }, 400);
+      await reloadProjects();
+setTimeout(() => {
+  navigate(`/workstation/${newProj.projectid}`);
+}, 400);
+
     } catch (err) {
       console.error("Failed to create project:", err);
       alert("Error creating project: " + err.message);
@@ -188,9 +217,10 @@ export default function WorkstationHub() {
   };
 
   /* ---------- Open existing project ---------- */
-  const handleOpenExisting = (project) => {
-    window.location.href = `/workstation/${project.projectid}`;
-  };
+const handleOpenExisting = (project) => {
+  navigate(`/workstation/${project.projectid}`);
+};
+
 
   return (
     <div className="hub-page ws-page">
@@ -225,28 +255,37 @@ export default function WorkstationHub() {
           ) : error ? (
             <p style={{ color: "red", padding: "20px" }}>{error}</p>
           ) : projects.length === 0 ? (
-            <p style={{ padding: "20px", opacity: 0.7 }}>
-              No projects yet. Create your first one!
-            </p>
+           <div className="hub-empty">
+  <p>🗂️ No projects yet. Ready to create your first one?</p>
+  <button className="ws-btn primary" onClick={() => setOpenCreate(true)}>
+    + Create Project
+  </button>
+</div>
+
           ) : (
             <div className="hub-list">
-              {projects.map((p) => (
+             {projects
+  .slice((currentPage - 1) * PROJECTS_PER_PAGE, currentPage * PROJECTS_PER_PAGE)
+  .map((p) => (
+
                 <div key={p.projectid} className="hub-card ws-card">
                   <div className="hub-card-head">
-                    <h3>{p.projectname}</h3>
-                    <div className="hub-meta">
-                      <span className="hub-status">
-                        {p.status?.toUpperCase() || "ACTIVE"}
-                      </span>{" "}
-                      •{" "}
-                      <span>
-                        Last updated:{" "}
-                        {p.updated_at
-                          ? new Date(p.updated_at).toLocaleString()
-                          : "—"}
-                      </span>
-                    </div>
-                  </div>
+  <div className="hub-title-row">
+    <h3>{p.projectname}</h3>
+    <span className={`hub-chip ${p.status || "active"}`}>
+      {p.status || "active"}
+    </span>
+  </div>
+  <div className="hub-meta">
+    <span>
+      Last updated:{" "}
+      {p.updated_at
+        ? new Date(p.updated_at).toLocaleString()
+        : "—"}
+    </span>
+  </div>
+</div>
+
                   <p className="hub-desc">
                     {p.project_desc || "No description provided."}
                   </p>
@@ -262,6 +301,34 @@ export default function WorkstationHub() {
               ))}
             </div>
           )}
+          {projects.length > PROJECTS_PER_PAGE && (
+  <div className="hub-pagination">
+    <button
+      className="ws-btn ghost"
+      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+      disabled={currentPage === 1}
+    >
+      ← Prev
+    </button>
+
+    <span className="hub-page-info">
+      Page {currentPage} of {Math.ceil(projects.length / PROJECTS_PER_PAGE)}
+    </span>
+
+    <button
+      className="ws-btn ghost"
+      onClick={() =>
+        setCurrentPage((p) =>
+          Math.min(Math.ceil(projects.length / PROJECTS_PER_PAGE), p + 1)
+        )
+      }
+      disabled={currentPage === Math.ceil(projects.length / PROJECTS_PER_PAGE)}
+    >
+      Next →
+    </button>
+  </div>
+)}
+
         </section>
 
         <section className="hub-new">

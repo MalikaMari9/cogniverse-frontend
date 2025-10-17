@@ -95,6 +95,16 @@ export const updateUserProfile = async (payload) => {
   return res.data;
 };
 
+export const uploadProfilePicture = async (profile_image) => {
+  const formData = new FormData();
+  formData.append("profile_image", profile_image);
+
+  const res = await api.put("/users/profile/picture", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data;
+};
+
 /* ===============================
    📁 PROJECT ROUTES
 =============================== */

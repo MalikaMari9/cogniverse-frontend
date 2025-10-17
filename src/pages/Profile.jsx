@@ -169,7 +169,37 @@ const DEFAULT_AVATAR =
 
 
 /* ================= Page ================= */
-export default function ProfilePage() {
+
+ export default function ProfilePage() {
+
+  const [form, setForm] = React.useState({
+    username: "",
+    role: "",
+    email: "",
+  });
+  const [avatar, setAvatar] = React.useState("");
+
+  React.useEffect(() => {
+  const fetchProfile = async () => {
+    try {
+      const data = await getUserProfile(); // <- data is already res.data
+      console.log("Profile response:", data); // correct
+
+      if (data) {
+        setForm({
+          username: data.username,
+          role: data.role,
+          email: data.email,
+        });
+        setAvatar(data.profile_image_url || "");
+      }
+    } catch (err) {
+      console.error("Failed to fetch profile", err);
+      // if (err.response?.status === 401) window.location.href = "/login";
+    }
+  };
+  fetchProfile();
+}, []);
   const [theme, setTheme] = React.useState(getStoredTheme());
 React.useEffect(() => { applyTheme(theme); }, [theme]);
 
@@ -179,19 +209,6 @@ React.useEffect(() => { applyTheme(theme); }, [theme]);
   const goWorkstation = () => { /* route to workstation */ };
   const goGraph       = () => { /* route to relationship graph */ };
   const goHistory     = () => { /* route to history */ };  
-
-  // edit state + data
-  const [isEditing, setIsEditing] = React.useState(false);
-  const [form, setForm] = React.useState({
-    name: "Denise",
-    role: "Founder @ CogniVerse",
-    email: "denise@example.com",
-    phone: "+95 9 123 456 789",
-    address: "Mandalay, Myanmar",
-  });
-
-  const [avatar, setAvatar] = React.useState("");        // empty → default avatar shows
-  const [activeTab, setActiveTab] = React.useState("overview"); // overview | security | billing
 
   const billingBoxRef = React.useRef(null);
   const fileRef = React.useRef(null);
@@ -227,33 +244,59 @@ React.useEffect(() => { applyTheme(theme); }, [theme]);
       if (restoreY) window.scrollTo(0, restoreY);
     };
   }, [isEditing]);
-  /* ===================================================================== */
+/* ===================================================================== */
 
   const pickAvatar = () => fileRef.current?.click();
   const onAvatar = (e) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    setAvatar(URL.createObjectURL(f));
-  };
+  const f = e.target.files?.[0];
+  if (!f) return;
+  const preview = URL.createObjectURL(f);
+  setAvatar(preview);
+};
+
 
   const openEdit  = () => setIsEditing(true);
   const closeEdit = () => setIsEditing(false);
-  const saveEdit  = () => {
+  const saveEdit = async () => {
+  try {
+    const formData = new FormData();
+    formData.append("username", form.username);
+    formData.append("email", form.email);
+
+    // If a new avatar is selected
+    if (fileRef.current && fileRef.current.files[0]) {
+      formData.append("profile_image", fileRef.current.files[0]);
+    }
+
+    const res = await api.put("users/profile", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    toast("Profile saved successfully");
     setIsEditing(false);
-    const toast = document.createElement("div");
-    toast.className = "save-toast";
-    toast.textContent = "Profile saved";
-    document.querySelector(".pbar")?.appendChild(toast);
-    setTimeout(() => toast.remove(), 1600);
-  };
 
-  const setField = (k) => (e) => setForm((s) => ({ ...s, [k]: e.target.value }));
+    // Refresh local state with backend-confirmed data
+    if (res.data) {
+      setForm({
+        username: res.data.username,
+        role: res.data.role,
+        email: res.data.email,
+      });
+      setAvatar(res.data.profile_image_url || avatar);
+    }
+  } catch (err) {
+    console.error("Save error:", err);
+    toast("Failed to save profile");
+  }
+};
 
-  // jump from top-left chips to Billing section + select tab
-  const jumpToTab = (tab) => {
-    setActiveTab(tab);
-    billingBoxRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
+const setField = (k) => (e) => setForm((s) => ({ ...s, [k]: e.target.value }));
+
+// jump from top-left chips to Billing section + select tab
+const jumpToTab = (tab) => {
+  setActiveTab(tab);
+  billingBoxRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+};
 
   /* ---------------- Billing/Security actions ---------------- */
 const [dialog, setDialog] = React.useState(null); // null | 'change-plan'|'update-payment'|'manage-devices'|'update-password'|'add-payment-method'
@@ -342,6 +385,8 @@ const handleDownloadInvoices = () => {
               <button type="button" className="btn ghost ml-auto" onClick={pickAvatar}>
                 Change photo
               </button>
+              
+          
 
               {/* In-card Edit button (per request) */}
               <button
@@ -650,11 +695,9 @@ const handleDownloadInvoices = () => {
           <div className="modal card" onClick={(e) => e.stopPropagation()}>
             <h3>Edit profile</h3>
             <div className="form">
-              <label> Name   <input value={form.name}    onChange={setField("name")} />   </label>
+              <label> Name   <input value={form.username}    onChange={setField("username")} />   </label>
               <label> Role   <input value={form.role}    onChange={setField("role")} />   </label>
               {/* <label> Email  <input value={form.email}   onChange={setField("email")} />  </label> */}
-              <label> Phone  <input value={form.phone}   onChange={setField("phone")} />  </label>
-              <label> Address<input value={form.address} onChange={setField("address")} /></label>
             </div>
             <div className="modal-actions">
               <button type="button" className="btn" onClick={closeEdit}>Cancel</button>

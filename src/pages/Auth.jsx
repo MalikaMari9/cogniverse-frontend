@@ -217,12 +217,7 @@ setTimeout(() => {
                   <label htmlFor="password" className="fade-item" style={{ animationDelay: "120ms" }}>Password</label>
                   <input id="password" name="password" type="password" placeholder="••••••••" required className="fade-item" style={{ animationDelay: "160ms" }} />
 
-                  <div className={`collapsible ${tab === "signup" ? "open" : ""} fade-item`} style={{ animationDelay: "200ms" }}>
-                    <div className="collapsible-inner">
-                      <label htmlFor="name">Your name</label>
-                      <input id="name" name="name" type="text" placeholder="Jane Doe" />
-                    </div>
-                  </div>
+                  
 
                   <div className="row between fade-item" style={{ animationDelay: "240ms" }}>
                     <label className="chk">

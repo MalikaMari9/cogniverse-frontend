@@ -258,6 +258,12 @@ React.useEffect(() => { applyTheme(theme); }, [theme]);
   }, [isEditing]);
 /* ===================================================================== */
 
+// Add this with your other state declarations
+const [errors, setErrors] = React.useState({
+  username: "",
+  email: ""
+});
+
 const pickAvatar = () => fileRef.current?.click();
 
 // REPLACE THIS: old onAvatar function
@@ -332,6 +338,40 @@ const uploadAvatarImmediately = async (file) => {
 const openEdit = () => setIsEditing(true);
 const closeEdit = () => setIsEditing(false);
 
+// ADD THIS: delete profile picture function
+const deleteProfilePicture = async () => {
+  try {
+    const token = localStorage.getItem("access_token");
+    
+    console.log("🔄 Deleting profile picture...");
+    
+    const response = await fetch("http://localhost:8000/users/profile/picture", {
+      method: "DELETE",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log("✅ Profile picture deleted:", data);
+    
+    toast("Profile picture removed");
+    
+    // Reset to default avatar
+    setAvatar(DEFAULT_AVATAR);
+    
+    return data;
+  } catch (err) {
+    console.error("Delete profile picture error:", err);
+    toast("Failed to remove profile picture");
+    throw err;
+  }
+};
+
 // REPLACE THIS: old saveEdit function
 // const saveEdit = async () => {
 //   try {
@@ -368,6 +408,9 @@ const closeEdit = () => setIsEditing(false);
 
 // WITH THIS: new saveEdit function without profile image handling
 const saveEdit = async () => {
+  // Clear previous errors
+  setErrors({ username: "", email: "" });
+  
   try {
     const formData = new FormData();
     formData.append("username", form.username);
@@ -375,23 +418,37 @@ const saveEdit = async () => {
 
     const token = localStorage.getItem("access_token");
     
-    console.log("🔄 Making request with fetch...");
+    console.log("🔄 Saving profile data...");
     
     const response = await fetch("http://localhost:8000/users/profile", {
       method: "PUT",
       headers: {
         "Authorization": `Bearer ${token}`,
-        // Don't set Content-Type for FormData - browser handles it
       },
       body: formData
     });
     
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      const errorData = await response.json();
+      
+      if (response.status === 400) {
+        // Handle duplicate username/email errors
+        if (errorData.detail?.includes("Username")) {
+          setErrors(prev => ({ ...prev, username: "Username already taken" }));
+          throw new Error("Username already taken");
+        } else if (errorData.detail?.includes("Email")) {
+          setErrors(prev => ({ ...prev, email: "Email already taken" }));
+          throw new Error("Email already taken");
+        } else {
+          throw new Error(errorData.detail || "Validation error");
+        }
+      } else {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
     }
     
     const data = await response.json();
-    console.log("✅ Request successful:", data);
+    console.log("✅ Profile data saved:", data);
     toast("Profile saved successfully");
     setIsEditing(false);
 
@@ -401,10 +458,12 @@ const saveEdit = async () => {
       email: data.email,
     });
   } catch (err) {
-    console.error("❌ Request failed:", err);
-    toast("Failed to save profile");
+    console.error("❌ Save failed:", err);
+    // Error is already handled in the setErrors above
   }
 };
+
+
 
 const setField = (k) => (e) => setForm((s) => ({ ...s, [k]: e.target.value }));
 
@@ -494,13 +553,25 @@ const handleDownloadInvoices = () => {
                 onError={(e) => (e.currentTarget.src = DEFAULT_AVATAR)}
               />
               <div className="id-name">
-                <h3>{form.username}</h3>
-                <div className="tag">{form.role}</div>
+                {/* <h3>{form.username}</h3>
+                <div className="tag">{form.role}</div> */}
               </div>
               <input ref={fileRef} type="file" accept="image/*" hidden onChange={onAvatar} />
               <button type="button" className="btn ghost ml-auto" onClick={pickAvatar}>
                 Change photo
               </button>
+
+              {/* Remove Button - only show if not using default avatar */}
+              {avatar && avatar !== DEFAULT_AVATAR && (
+                <button 
+                  type="button" 
+                  className="btn ghost danger" 
+                  onClick={deleteProfilePicture}
+                  aria-label="Remove profile picture"
+                >
+                  Remove
+                </button>
+              )}
 
               {/* In-card Edit button (per request) */}
               <button
@@ -517,6 +588,7 @@ const handleDownloadInvoices = () => {
             <dl className="kv">
               <div><dt>Name</dt><dd>{form.username}</dd></div>
               <div><dt>Email</dt><dd>{form.email}</dd></div>
+               <div><dt>Role</dt><dd>{form.role}</dd></div>
             </dl>
 
             <div
@@ -802,18 +874,36 @@ const handleDownloadInvoices = () => {
 
 
       {/* ===== Edit Panel (modal) ===== */}
-      {isEditing && (
+{isEditing && (
   <div className="modal-backdrop" onClick={closeEdit}>
     <div className="modal card" onClick={(e) => e.stopPropagation()}>
       <h3>Edit profile</h3>
       <div className="form">
-        <label> Name <input value={form.username} onChange={setField("username")} /> </label>
-        <label> Email <input value={form.email} onChange={setField("email")} /> </label>
-        {/* Remove the Role field since it's typically not editable by users */}
+        <label> 
+          Name   
+          <input 
+            value={form.username}    
+            onChange={setField("username")} 
+            className={errors.username ? "error" : ""}
+          />
+          {errors.username && <div className="error-text">{errors.username}</div>}
+        </label>
+        
+        <label> 
+          Email  
+          <input 
+            value={form.email}   
+            onChange={setField("email")} 
+            className={errors.email ? "error" : ""}
+          />
+          {errors.email && <div className="error-text">{errors.email}</div>}
+        </label>
       </div>
       <div className="modal-actions">
         <button type="button" className="btn" onClick={closeEdit}>Cancel</button>
-        <button type="button" className="btn primary" onClick={saveEdit}><IcSave /> Save</button>
+        <button type="button" className="btn primary" onClick={saveEdit}>
+          <IcSave /> Save
+        </button>
       </div>
     </div>
   </div>

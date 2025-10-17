@@ -49,28 +49,148 @@ function PfNav({ theme, onToggleTheme, onGoWorkstation, onGoGraph, onGoHistory }
 
 
 function UpdatePassword({ onDone, onCancel }) {
-  const [a, setA] = React.useState("");
-  const [b, setB] = React.useState("");
+  const [currentPassword, setCurrentPassword] = React.useState("");
+  const [newPassword, setNewPassword] = React.useState("");
+  const [confirmPassword, setConfirmPassword] = React.useState("");
   const [err, setErr] = React.useState("");
+  const [isLoading, setIsLoading] = React.useState(false);
 
-  const submit = () => {
-    if (a.length < 8) return setErr("Use at least 8 characters.");
-    if (a !== b) return setErr("Passwords don’t match.");
+  // Use the toast function from the parent component
+  const showToast = (msg) => {
+    const t = document.createElement("div");
+    t.className = "save-toast";
+    t.textContent = msg;
+    document.querySelector(".pbar")?.appendChild(t);
+    setTimeout(() => t.remove(), 1600);
+  };
+
+  const submit = async () => {
+    // Clear previous errors
     setErr("");
-    onDone();
+    
+    // Validation
+    if (!currentPassword) {
+      setErr("Current password is required");
+      return;
+    }
+    if (newPassword.length < 6) {
+      setErr("New password must be at least 6 characters");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setErr("New passwords don't match");
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      const token = localStorage.getItem("access_token");
+      
+      const response = await fetch("http://localhost:8000/users/profile/password", {
+        method: "PUT",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          current_password: currentPassword,
+          new_password: newPassword
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        
+        // Handle specific error messages
+        if (errorData.detail?.includes("Current password is incorrect")) {
+          setErr("Current password is incorrect");
+          throw new Error("Current password is incorrect");
+        } else if (errorData.detail?.includes("at least 6 characters")) {
+          setErr("New password must be at least 6 characters");
+          throw new Error(errorData.detail);
+        } else {
+          setErr(errorData.detail || "Failed to update password");
+          throw new Error(errorData.detail || "Failed to update password");
+        }
+      }
+      
+      const data = await response.json();
+      console.log("✅ Password changed:", data);
+      
+      // Clear form
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      
+      // Show success message and close modal
+      showToast("✅ Password updated successfully");
+      onDone();
+      
+    } catch (error) {
+      console.error("❌ Password change failed:", error);
+      // Error message is already set in the setErr above
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <>
       <h3>Update password</h3>
       <div className="form">
-        <label> New password <input type="password" value={a} onChange={(e)=>setA(e.target.value)} placeholder="••••••••" /></label>
-        <label> Confirm new password <input type="password" value={b} onChange={(e)=>setB(e.target.value)} placeholder="••••••••" /></label>
-        {err && <div className="error-text">{err}</div>}
+        <label> 
+          Current password 
+          <input 
+            type="password" 
+            value={currentPassword} 
+            onChange={(e) => setCurrentPassword(e.target.value)} 
+            placeholder="••••••••" 
+            disabled={isLoading}
+          />
+        </label>
+        
+        <label> 
+          New password 
+          <input 
+            type="password" 
+            value={newPassword} 
+            onChange={(e) => setNewPassword(e.target.value)} 
+            placeholder="••••••••" 
+            disabled={isLoading}
+          />
+          <div className="hint">Must be at least 6 characters</div>
+        </label>
+        
+        <label> 
+          Confirm new password 
+          <input 
+            type="password" 
+            value={confirmPassword} 
+            onChange={(e) => setConfirmPassword(e.target.value)} 
+            placeholder="••••••••" 
+            disabled={isLoading}
+          />
+        </label>
+        
+        {err && (
+          <div className={`error-text ${err.includes("successfully") ? "success" : ""}`}>
+            {err}
+          </div>
+        )}
       </div>
       <div className="modal-actions">
-        <button type="button" className="btn" onClick={onCancel}>Cancel</button>
-        <button type="button" className="btn primary" onClick={submit}>Update</button>
+        <button type="button" className="btn" onClick={onCancel} disabled={isLoading}>
+          Cancel
+        </button>
+        <button 
+          type="button" 
+          className="btn primary" 
+          onClick={submit} 
+          disabled={isLoading}
+        >
+          {isLoading ? "Updating..." : "Update Password"}
+        </button>
       </div>
     </>
   );
@@ -266,15 +386,6 @@ const [errors, setErrors] = React.useState({
 
 const pickAvatar = () => fileRef.current?.click();
 
-// REPLACE THIS: old onAvatar function
-// const onAvatar = (e) => {
-//   const f = e.target.files?.[0];
-//   if (!f) return;
-//   const preview = URL.createObjectURL(f);
-//   setAvatar(preview);
-// };
-
-// WITH THIS: new onAvatar function with immediate upload
 const onAvatar = async (e) => {
   const f = e.target.files?.[0];
   if (!f) return;
@@ -372,41 +483,6 @@ const deleteProfilePicture = async () => {
   }
 };
 
-// REPLACE THIS: old saveEdit function
-// const saveEdit = async () => {
-//   try {
-//     const formData = new FormData();
-//     formData.append("username", form.username);
-//     formData.append("email", form.email);
-//
-//     // If a new avatar is selected
-//     if (fileRef.current && fileRef.current.files[0]) {
-//       formData.append("profile_image", fileRef.current.files[0]);
-//     }
-//
-//     const res = await api.put("users/profile", formData, {
-//       headers: { "Content-Type": "multipart/form-data" },
-//     });
-//
-//     toast("Profile saved successfully");
-//     setIsEditing(false);
-//
-//     // Refresh local state with backend-confirmed data
-//     if (res.data) {
-//       setForm({
-//         username: res.data.username,
-//         role: res.data.role,
-//         email: res.data.email,
-//       });
-//       setAvatar(res.data.profile_image_url || avatar);
-//     }
-//   } catch (err) {
-//     console.error("Save error:", err);
-//     toast("Failed to save profile");
-//   }
-// };
-
-// WITH THIS: new saveEdit function without profile image handling
 const saveEdit = async () => {
   // Clear previous errors
   setErrors({ username: "", email: "" });
@@ -462,8 +538,6 @@ const saveEdit = async () => {
     // Error is already handled in the setErrors above
   }
 };
-
-
 
 const setField = (k) => (e) => setForm((s) => ({ ...s, [k]: e.target.value }));
 

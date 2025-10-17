@@ -31,6 +31,11 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // 🟢 ADD THIS: Don't redirect for login endpoint errors
+     if (originalRequest.url.includes('/auth/login')) {
+      return Promise.reject(error); // Let the login page handle the error
+    }
+
     // Only handle 401s and avoid infinite loops
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
@@ -102,6 +107,15 @@ export const uploadProfilePicture = async (profile_image) => {
   const res = await api.put("/users/profile/picture", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
+  return res.data;
+};
+
+/**
+ * Change user password
+ * @param {Object} payload - { current_password, new_password }
+ */
+export const changePassword = async (payload) => {
+  const res = await api.put("/users/profile/password", payload);
   return res.data;
 };
 

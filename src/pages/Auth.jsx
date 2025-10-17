@@ -119,43 +119,41 @@ export default function AuthPage() {
       };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    const payload = Object.fromEntries(fd.entries());
+  e.preventDefault();
+  const fd = new FormData(e.currentTarget);
+  const payload = Object.fromEntries(fd.entries());
 
-    try {
-      if (tab === "login") {
-       const res = await loginUser({
-  identifier: payload.email,
-  password: payload.password,
-});
+  try {
+    if (tab === "login") {
+      const res = await loginUser({
+        identifier: payload.identifier,
+        password: payload.password,
+      });
 
-console.log("✅ Login success:", res);
-setMessage(`Welcome back, ${payload.email || "friend"}!`);
+      //console.log("✅ Login success:", res);
+      //setMessage(`Welcome back, ${payload.identifier || "friend"}!`);
 
-// store tokens locally for later
-localStorage.setItem("access_token", res.access_token);
-localStorage.setItem("refresh_token", res.refresh_token);
+      localStorage.setItem("access_token", res.access_token);
+      localStorage.setItem("refresh_token", res.refresh_token);
 
-// optional small delay before redirect
-setTimeout(() => {
-  window.location.href = "/workstation";
-}, 800);
-
-      } else {
-        const res = await registerUser({
-          username: payload.name || payload.email.split("@")[0],
-          email: payload.email,
-          password: payload.password,
-        });
-        console.log("✅ Register success:", res);
-        setMessage(`Account created for ${payload.email || "you"} ✔`);
-      }
-    } catch (err) {
-      console.error("❌ Auth failed:", err.response?.data || err);
-      setMessage(err.response?.data?.detail || "Something went wrong");
+      setTimeout(() => {
+        window.location.href = "/workstation";
+      }, 800);
+    } else {
+      const res = await registerUser({
+        username: payload.username,
+        email: payload.email,
+        password: payload.password,
+      });
+      console.log("✅ Register success:", res);
+      setMessage(`Account created for ${payload.username || payload.email} ✔`);
     }
-  };
+  } catch (err) {
+    console.error("❌ Auth failed:", err.response?.data || err);
+    setMessage(JSON.stringify(err.response?.data || err));
+}
+};
+
 
   return (
     <div className="app auth-page">
@@ -165,6 +163,7 @@ setTimeout(() => {
         onGoWorkstation={goWorkstation}
         onGoGraph={goGraph}
         onGoHistory={goHistory}
+        
       />
 
       <main>
@@ -211,13 +210,33 @@ setTimeout(() => {
                 </div>
 
                 <form key={tab} onSubmit={handleSubmit} className="form" noValidate>
-                  <label htmlFor="email" className="fade-item" style={{ animationDelay: "40ms" }}>Email or username</label>
-                  <input id="email" name="email" type="text" placeholder="you@company.com" required className="fade-item" style={{ animationDelay: "80ms" }} />
+                {/* Login: Show identifier field */}
+                  {tab === "login" && (
+                    <>
+                      <label htmlFor="identifier" className="fade-item" style={{ animationDelay: "40ms" }}>Username or Email</label>
+                      <input id="identifier" name="identifier" type="text" placeholder="john.doe or you@company.com" required className="fade-item" style={{ animationDelay: "80ms" }} />
+                    </>
+                  )}
+                {/* Login: Show identifier field */}
+                  {tab === "signup" && (
+                    <>
+                    <label htmlFor="username" className="fade-item" style={{ animationDelay: "40ms" }}>Username</label>
+                    <input id="username" name="username" type="text" placeholder="john.doe" required className="fade-item" style={{ animationDelay: "80ms" }} />
+
+                    <label htmlFor="email" className="fade-item" style={{ animationDelay: "120ms" }}>Email</label>
+                    <input id="email" name="email" type="email" placeholder="you@company.com" required className="fade-item" style={{ animationDelay: "160ms" }} />
+                    </>
+                  )}
 
                   <label htmlFor="password" className="fade-item" style={{ animationDelay: "120ms" }}>Password</label>
                   <input id="password" name="password" type="password" placeholder="••••••••" required className="fade-item" style={{ animationDelay: "160ms" }} />
 
-                  
+                  <div className={`collapsible ${tab === "signup" ? "open" : ""} fade-item`} style={{ animationDelay: "200ms" }}>
+                    <div className="collapsible-inner">
+                      <label htmlFor="name">Your name</label>
+                      <input id="name" name="name" type="text" placeholder="Jane Doe" />
+                    </div>
+                  </div>
 
                   <div className="row between fade-item" style={{ animationDelay: "240ms" }}>
                     <label className="chk">

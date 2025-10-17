@@ -1,6 +1,7 @@
 import React from "react";
 import "../profile-nav.css";        // <— new CSS file shown below
-
+import api from "../api/axios";
+import { getUserProfile, updateUserProfile } from "../api/api";
 
 // If you already have these helpers elsewhere, use those instead:
 function getStoredTheme() {
@@ -181,23 +182,30 @@ const DEFAULT_AVATAR =
 
   React.useEffect(() => {
   const fetchProfile = async () => {
-    try {
-      const data = await getUserProfile(); // <- data is already res.data
-      console.log("Profile response:", data); // correct
+  try {
+    const data = await getUserProfile();
+    console.log("Profile response:", data);
 
-      if (data) {
-        setForm({
-          username: data.username,
-          role: data.role,
-          email: data.email,
-        });
-        setAvatar(data.profile_image_url || "");
+    if (data) {
+      setForm({
+        username: data.username,
+        role: data.role,
+        email: data.email,
+      });
+      
+      // Construct full URL for profile image
+      if (data.profile_image_url) {
+        const fullAvatarUrl = `http://localhost:8000${data.profile_image_url}`;
+        console.log("Setting avatar to:", fullAvatarUrl);
+        setAvatar(fullAvatarUrl);
+      } else {
+        setAvatar(""); // or set to a default avatar
       }
-    } catch (err) {
-      console.error("Failed to fetch profile", err);
-      // if (err.response?.status === 401) window.location.href = "/login";
     }
-  };
+  } catch (err) {
+    console.error("Failed to fetch profile", err);
+  }
+};
   fetchProfile();
 }, []);
   const [theme, setTheme] = React.useState(getStoredTheme());
@@ -209,6 +217,10 @@ React.useEffect(() => { applyTheme(theme); }, [theme]);
   const goWorkstation = () => { /* route to workstation */ };
   const goGraph       = () => { /* route to relationship graph */ };
   const goHistory     = () => { /* route to history */ };  
+
+  // edit state + data
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [activeTab, setActiveTab] = React.useState("overview"); // overview | security | billing
 
   const billingBoxRef = React.useRef(null);
   const fileRef = React.useRef(null);
@@ -246,46 +258,150 @@ React.useEffect(() => { applyTheme(theme); }, [theme]);
   }, [isEditing]);
 /* ===================================================================== */
 
-  const pickAvatar = () => fileRef.current?.click();
-  const onAvatar = (e) => {
+const pickAvatar = () => fileRef.current?.click();
+
+// REPLACE THIS: old onAvatar function
+// const onAvatar = (e) => {
+//   const f = e.target.files?.[0];
+//   if (!f) return;
+//   const preview = URL.createObjectURL(f);
+//   setAvatar(preview);
+// };
+
+// WITH THIS: new onAvatar function with immediate upload
+const onAvatar = async (e) => {
   const f = e.target.files?.[0];
   if (!f) return;
+  
+  // Create preview immediately
   const preview = URL.createObjectURL(f);
   setAvatar(preview);
+  
+  // Upload to backend immediately
+  try {
+    await uploadAvatarImmediately(f);
+  } catch (err) {
+    // If upload fails, revert to previous avatar
+    // You might want to fetch the previous avatar URL from backend
+    console.error("Upload failed, reverting...");
+  }
 };
 
+// ADD THIS: new uploadAvatarImmediately function (place it before onAvatar)
+const uploadAvatarImmediately = async (file) => {
+  try {
+    const formData = new FormData();
+    formData.append("profile_image", file);
 
-  const openEdit  = () => setIsEditing(true);
-  const closeEdit = () => setIsEditing(false);
-  const saveEdit = async () => {
+    const token = localStorage.getItem("access_token");
+    
+    console.log("🔄 Uploading profile picture...");
+    
+    const response = await fetch("http://localhost:8000/users/profile/picture", {
+      method: "PUT",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+      },
+      body: formData
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log("✅ Profile picture upload successful:", data);
+    
+    toast("Profile picture updated successfully");
+    
+    // Update avatar with the new URL from backend
+    if (data.profile_image_url) {
+      const fullUrl = `http://localhost:8000${data.profile_image_url}`;
+      console.log("Full avatar URL:", fullUrl);
+      setAvatar(fullUrl);
+    }
+    
+    return data;
+  } catch (err) {
+    console.error("Avatar upload error:", err);
+    toast("Failed to update profile picture");
+    throw err;
+  }
+};
+
+const openEdit = () => setIsEditing(true);
+const closeEdit = () => setIsEditing(false);
+
+// REPLACE THIS: old saveEdit function
+// const saveEdit = async () => {
+//   try {
+//     const formData = new FormData();
+//     formData.append("username", form.username);
+//     formData.append("email", form.email);
+//
+//     // If a new avatar is selected
+//     if (fileRef.current && fileRef.current.files[0]) {
+//       formData.append("profile_image", fileRef.current.files[0]);
+//     }
+//
+//     const res = await api.put("users/profile", formData, {
+//       headers: { "Content-Type": "multipart/form-data" },
+//     });
+//
+//     toast("Profile saved successfully");
+//     setIsEditing(false);
+//
+//     // Refresh local state with backend-confirmed data
+//     if (res.data) {
+//       setForm({
+//         username: res.data.username,
+//         role: res.data.role,
+//         email: res.data.email,
+//       });
+//       setAvatar(res.data.profile_image_url || avatar);
+//     }
+//   } catch (err) {
+//     console.error("Save error:", err);
+//     toast("Failed to save profile");
+//   }
+// };
+
+// WITH THIS: new saveEdit function without profile image handling
+const saveEdit = async () => {
   try {
     const formData = new FormData();
     formData.append("username", form.username);
     formData.append("email", form.email);
 
-    // If a new avatar is selected
-    if (fileRef.current && fileRef.current.files[0]) {
-      formData.append("profile_image", fileRef.current.files[0]);
-    }
-
-    const res = await api.put("users/profile", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
+    const token = localStorage.getItem("access_token");
+    
+    console.log("🔄 Making request with fetch...");
+    
+    const response = await fetch("http://localhost:8000/users/profile", {
+      method: "PUT",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        // Don't set Content-Type for FormData - browser handles it
+      },
+      body: formData
     });
-
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log("✅ Request successful:", data);
     toast("Profile saved successfully");
     setIsEditing(false);
 
-    // Refresh local state with backend-confirmed data
-    if (res.data) {
-      setForm({
-        username: res.data.username,
-        role: res.data.role,
-        email: res.data.email,
-      });
-      setAvatar(res.data.profile_image_url || avatar);
-    }
+    setForm({
+      username: data.username,
+      role: data.role,
+      email: data.email,
+    });
   } catch (err) {
-    console.error("Save error:", err);
+    console.error("❌ Request failed:", err);
     toast("Failed to save profile");
   }
 };
@@ -378,15 +494,13 @@ const handleDownloadInvoices = () => {
                 onError={(e) => (e.currentTarget.src = DEFAULT_AVATAR)}
               />
               <div className="id-name">
-                <h3>{form.name}</h3>
+                <h3>{form.username}</h3>
                 <div className="tag">{form.role}</div>
               </div>
               <input ref={fileRef} type="file" accept="image/*" hidden onChange={onAvatar} />
               <button type="button" className="btn ghost ml-auto" onClick={pickAvatar}>
                 Change photo
               </button>
-              
-          
 
               {/* In-card Edit button (per request) */}
               <button
@@ -401,10 +515,8 @@ const handleDownloadInvoices = () => {
             </div>
 
             <dl className="kv">
-              <div><dt>Name</dt><dd>{form.name}</dd></div>
+              <div><dt>Name</dt><dd>{form.username}</dd></div>
               <div><dt>Email</dt><dd>{form.email}</dd></div>
-              <div><dt>Phone</dt><dd>{form.phone}</dd></div>
-              <div><dt>Address</dt><dd>{form.address}</dd></div>
             </dl>
 
             <div
@@ -691,21 +803,22 @@ const handleDownloadInvoices = () => {
 
       {/* ===== Edit Panel (modal) ===== */}
       {isEditing && (
-        <div className="modal-backdrop" onClick={closeEdit}>
-          <div className="modal card" onClick={(e) => e.stopPropagation()}>
-            <h3>Edit profile</h3>
-            <div className="form">
-              <label> Name   <input value={form.username}    onChange={setField("username")} />   </label>
-              <label> Role   <input value={form.role}    onChange={setField("role")} />   </label>
-              {/* <label> Email  <input value={form.email}   onChange={setField("email")} />  </label> */}
-            </div>
-            <div className="modal-actions">
-              <button type="button" className="btn" onClick={closeEdit}>Cancel</button>
-              <button type="button" className="btn primary" onClick={saveEdit}><IcSave /> Save</button>
-            </div>
-          </div>
-        </div>
-      )}
+  <div className="modal-backdrop" onClick={closeEdit}>
+    <div className="modal card" onClick={(e) => e.stopPropagation()}>
+      <h3>Edit profile</h3>
+      <div className="form">
+        <label> Name <input value={form.username} onChange={setField("username")} /> </label>
+        <label> Email <input value={form.email} onChange={setField("email")} /> </label>
+        {/* Remove the Role field since it's typically not editable by users */}
+      </div>
+      <div className="modal-actions">
+        <button type="button" className="btn" onClick={closeEdit}>Cancel</button>
+        <button type="button" className="btn primary" onClick={saveEdit}><IcSave /> Save</button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }
+

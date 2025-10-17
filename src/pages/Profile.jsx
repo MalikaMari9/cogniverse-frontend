@@ -1,6 +1,7 @@
 import React from "react";
 import "../profile-nav.css";        // <— new CSS file shown below
-
+import api from "../api/axios";
+import { getUserProfile, updateUserProfile } from "../api/api";
 
 // If you already have these helpers elsewhere, use those instead:
 function getStoredTheme() {
@@ -48,28 +49,148 @@ function PfNav({ theme, onToggleTheme, onGoWorkstation, onGoGraph, onGoHistory }
 
 
 function UpdatePassword({ onDone, onCancel }) {
-  const [a, setA] = React.useState("");
-  const [b, setB] = React.useState("");
+  const [currentPassword, setCurrentPassword] = React.useState("");
+  const [newPassword, setNewPassword] = React.useState("");
+  const [confirmPassword, setConfirmPassword] = React.useState("");
   const [err, setErr] = React.useState("");
+  const [isLoading, setIsLoading] = React.useState(false);
 
-  const submit = () => {
-    if (a.length < 8) return setErr("Use at least 8 characters.");
-    if (a !== b) return setErr("Passwords don’t match.");
+  // Use the toast function from the parent component
+  const showToast = (msg) => {
+    const t = document.createElement("div");
+    t.className = "save-toast";
+    t.textContent = msg;
+    document.querySelector(".pbar")?.appendChild(t);
+    setTimeout(() => t.remove(), 1600);
+  };
+
+  const submit = async () => {
+    // Clear previous errors
     setErr("");
-    onDone();
+    
+    // Validation
+    if (!currentPassword) {
+      setErr("Current password is required");
+      return;
+    }
+    if (newPassword.length < 6) {
+      setErr("New password must be at least 6 characters");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setErr("New passwords don't match");
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      const token = localStorage.getItem("access_token");
+      
+      const response = await fetch("http://localhost:8000/users/profile/password", {
+        method: "PUT",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          current_password: currentPassword,
+          new_password: newPassword
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        
+        // Handle specific error messages
+        if (errorData.detail?.includes("Current password is incorrect")) {
+          setErr("Current password is incorrect");
+          throw new Error("Current password is incorrect");
+        } else if (errorData.detail?.includes("at least 6 characters")) {
+          setErr("New password must be at least 6 characters");
+          throw new Error(errorData.detail);
+        } else {
+          setErr(errorData.detail || "Failed to update password");
+          throw new Error(errorData.detail || "Failed to update password");
+        }
+      }
+      
+      const data = await response.json();
+      console.log("✅ Password changed:", data);
+      
+      // Clear form
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      
+      // Show success message and close modal
+      showToast("✅ Password updated successfully");
+      onDone();
+      
+    } catch (error) {
+      console.error("❌ Password change failed:", error);
+      // Error message is already set in the setErr above
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <>
       <h3>Update password</h3>
       <div className="form">
-        <label> New password <input type="password" value={a} onChange={(e)=>setA(e.target.value)} placeholder="••••••••" /></label>
-        <label> Confirm new password <input type="password" value={b} onChange={(e)=>setB(e.target.value)} placeholder="••••••••" /></label>
-        {err && <div className="error-text">{err}</div>}
+        <label> 
+          Current password 
+          <input 
+            type="password" 
+            value={currentPassword} 
+            onChange={(e) => setCurrentPassword(e.target.value)} 
+            placeholder="••••••••" 
+            disabled={isLoading}
+          />
+        </label>
+        
+        <label> 
+          New password 
+          <input 
+            type="password" 
+            value={newPassword} 
+            onChange={(e) => setNewPassword(e.target.value)} 
+            placeholder="••••••••" 
+            disabled={isLoading}
+          />
+          <div className="hint">Must be at least 6 characters</div>
+        </label>
+        
+        <label> 
+          Confirm new password 
+          <input 
+            type="password" 
+            value={confirmPassword} 
+            onChange={(e) => setConfirmPassword(e.target.value)} 
+            placeholder="••••••••" 
+            disabled={isLoading}
+          />
+        </label>
+        
+        {err && (
+          <div className={`error-text ${err.includes("successfully") ? "success" : ""}`}>
+            {err}
+          </div>
+        )}
       </div>
       <div className="modal-actions">
-        <button type="button" className="btn" onClick={onCancel}>Cancel</button>
-        <button type="button" className="btn primary" onClick={submit}>Update</button>
+        <button type="button" className="btn" onClick={onCancel} disabled={isLoading}>
+          Cancel
+        </button>
+        <button 
+          type="button" 
+          className="btn primary" 
+          onClick={submit} 
+          disabled={isLoading}
+        >
+          {isLoading ? "Updating..." : "Update Password"}
+        </button>
       </div>
     </>
   );
@@ -169,7 +290,44 @@ const DEFAULT_AVATAR =
 
 
 /* ================= Page ================= */
-export default function ProfilePage() {
+
+ export default function ProfilePage() {
+
+  const [form, setForm] = React.useState({
+    username: "",
+    role: "",
+    email: "",
+  });
+  const [avatar, setAvatar] = React.useState("");
+
+  React.useEffect(() => {
+  const fetchProfile = async () => {
+  try {
+    const data = await getUserProfile();
+    console.log("Profile response:", data);
+
+    if (data) {
+      setForm({
+        username: data.username,
+        role: data.role,
+        email: data.email,
+      });
+      
+      // Construct full URL for profile image
+      if (data.profile_image_url) {
+        const fullAvatarUrl = `http://localhost:8000${data.profile_image_url}`;
+        console.log("Setting avatar to:", fullAvatarUrl);
+        setAvatar(fullAvatarUrl);
+      } else {
+        setAvatar(""); // or set to a default avatar
+      }
+    }
+  } catch (err) {
+    console.error("Failed to fetch profile", err);
+  }
+};
+  fetchProfile();
+}, []);
   const [theme, setTheme] = React.useState(getStoredTheme());
 React.useEffect(() => { applyTheme(theme); }, [theme]);
 
@@ -182,15 +340,6 @@ React.useEffect(() => { applyTheme(theme); }, [theme]);
 
   // edit state + data
   const [isEditing, setIsEditing] = React.useState(false);
-  const [form, setForm] = React.useState({
-    name: "Denise",
-    role: "Founder @ CogniVerse",
-    email: "denise@example.com",
-    phone: "+95 9 123 456 789",
-    address: "Mandalay, Myanmar",
-  });
-
-  const [avatar, setAvatar] = React.useState("");        // empty → default avatar shows
   const [activeTab, setActiveTab] = React.useState("overview"); // overview | security | billing
 
   const billingBoxRef = React.useRef(null);
@@ -227,33 +376,176 @@ React.useEffect(() => { applyTheme(theme); }, [theme]);
       if (restoreY) window.scrollTo(0, restoreY);
     };
   }, [isEditing]);
-  /* ===================================================================== */
+/* ===================================================================== */
 
-  const pickAvatar = () => fileRef.current?.click();
-  const onAvatar = (e) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    setAvatar(URL.createObjectURL(f));
-  };
+// Add this with your other state declarations
+const [errors, setErrors] = React.useState({
+  username: "",
+  email: ""
+});
 
-  const openEdit  = () => setIsEditing(true);
-  const closeEdit = () => setIsEditing(false);
-  const saveEdit  = () => {
+const pickAvatar = () => fileRef.current?.click();
+
+const onAvatar = async (e) => {
+  const f = e.target.files?.[0];
+  if (!f) return;
+  
+  // Create preview immediately
+  const preview = URL.createObjectURL(f);
+  setAvatar(preview);
+  
+  // Upload to backend immediately
+  try {
+    await uploadAvatarImmediately(f);
+  } catch (err) {
+    // If upload fails, revert to previous avatar
+    // You might want to fetch the previous avatar URL from backend
+    console.error("Upload failed, reverting...");
+  }
+};
+
+// ADD THIS: new uploadAvatarImmediately function (place it before onAvatar)
+const uploadAvatarImmediately = async (file) => {
+  try {
+    const formData = new FormData();
+    formData.append("profile_image", file);
+
+    const token = localStorage.getItem("access_token");
+    
+    console.log("🔄 Uploading profile picture...");
+    
+    const response = await fetch("http://localhost:8000/users/profile/picture", {
+      method: "PUT",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+      },
+      body: formData
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log("✅ Profile picture upload successful:", data);
+    
+    toast("Profile picture updated successfully");
+    
+    // Update avatar with the new URL from backend
+    if (data.profile_image_url) {
+      const fullUrl = `http://localhost:8000${data.profile_image_url}`;
+      console.log("Full avatar URL:", fullUrl);
+      setAvatar(fullUrl);
+    }
+    
+    return data;
+  } catch (err) {
+    console.error("Avatar upload error:", err);
+    toast("Failed to update profile picture");
+    throw err;
+  }
+};
+
+const openEdit = () => setIsEditing(true);
+const closeEdit = () => setIsEditing(false);
+
+// ADD THIS: delete profile picture function
+const deleteProfilePicture = async () => {
+  try {
+    const token = localStorage.getItem("access_token");
+    
+    console.log("🔄 Deleting profile picture...");
+    
+    const response = await fetch("http://localhost:8000/users/profile/picture", {
+      method: "DELETE",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log("✅ Profile picture deleted:", data);
+    
+    toast("Profile picture removed");
+    
+    // Reset to default avatar
+    setAvatar(DEFAULT_AVATAR);
+    
+    return data;
+  } catch (err) {
+    console.error("Delete profile picture error:", err);
+    toast("Failed to remove profile picture");
+    throw err;
+  }
+};
+
+const saveEdit = async () => {
+  // Clear previous errors
+  setErrors({ username: "", email: "" });
+  
+  try {
+    const formData = new FormData();
+    formData.append("username", form.username);
+    formData.append("email", form.email);
+
+    const token = localStorage.getItem("access_token");
+    
+    console.log("🔄 Saving profile data...");
+    
+    const response = await fetch("http://localhost:8000/users/profile", {
+      method: "PUT",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+      },
+      body: formData
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      
+      if (response.status === 400) {
+        // Handle duplicate username/email errors
+        if (errorData.detail?.includes("Username")) {
+          setErrors(prev => ({ ...prev, username: "Username already taken" }));
+          throw new Error("Username already taken");
+        } else if (errorData.detail?.includes("Email")) {
+          setErrors(prev => ({ ...prev, email: "Email already taken" }));
+          throw new Error("Email already taken");
+        } else {
+          throw new Error(errorData.detail || "Validation error");
+        }
+      } else {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+    }
+    
+    const data = await response.json();
+    console.log("✅ Profile data saved:", data);
+    toast("Profile saved successfully");
     setIsEditing(false);
-    const toast = document.createElement("div");
-    toast.className = "save-toast";
-    toast.textContent = "Profile saved";
-    document.querySelector(".pbar")?.appendChild(toast);
-    setTimeout(() => toast.remove(), 1600);
-  };
 
-  const setField = (k) => (e) => setForm((s) => ({ ...s, [k]: e.target.value }));
+    setForm({
+      username: data.username,
+      role: data.role,
+      email: data.email,
+    });
+  } catch (err) {
+    console.error("❌ Save failed:", err);
+    // Error is already handled in the setErrors above
+  }
+};
 
-  // jump from top-left chips to Billing section + select tab
-  const jumpToTab = (tab) => {
-    setActiveTab(tab);
-    billingBoxRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
+const setField = (k) => (e) => setForm((s) => ({ ...s, [k]: e.target.value }));
+
+// jump from top-left chips to Billing section + select tab
+const jumpToTab = (tab) => {
+  setActiveTab(tab);
+  billingBoxRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+};
 
   /* ---------------- Billing/Security actions ---------------- */
 const [dialog, setDialog] = React.useState(null); // null | 'change-plan'|'update-payment'|'manage-devices'|'update-password'|'add-payment-method'
@@ -335,13 +627,25 @@ const handleDownloadInvoices = () => {
                 onError={(e) => (e.currentTarget.src = DEFAULT_AVATAR)}
               />
               <div className="id-name">
-                <h3>{form.name}</h3>
-                <div className="tag">{form.role}</div>
+                {/* <h3>{form.username}</h3>
+                <div className="tag">{form.role}</div> */}
               </div>
               <input ref={fileRef} type="file" accept="image/*" hidden onChange={onAvatar} />
               <button type="button" className="btn ghost ml-auto" onClick={pickAvatar}>
                 Change photo
               </button>
+
+              {/* Remove Button - only show if not using default avatar */}
+              {avatar && avatar !== DEFAULT_AVATAR && (
+                <button 
+                  type="button" 
+                  className="btn ghost danger" 
+                  onClick={deleteProfilePicture}
+                  aria-label="Remove profile picture"
+                >
+                  Remove
+                </button>
+              )}
 
               {/* In-card Edit button (per request) */}
               <button
@@ -356,10 +660,9 @@ const handleDownloadInvoices = () => {
             </div>
 
             <dl className="kv">
-              <div><dt>Name</dt><dd>{form.name}</dd></div>
+              <div><dt>Name</dt><dd>{form.username}</dd></div>
               <div><dt>Email</dt><dd>{form.email}</dd></div>
-              <div><dt>Phone</dt><dd>{form.phone}</dd></div>
-              <div><dt>Address</dt><dd>{form.address}</dd></div>
+               <div><dt>Role</dt><dd>{form.role}</dd></div>
             </dl>
 
             <div
@@ -645,24 +948,41 @@ const handleDownloadInvoices = () => {
 
 
       {/* ===== Edit Panel (modal) ===== */}
-      {isEditing && (
-        <div className="modal-backdrop" onClick={closeEdit}>
-          <div className="modal card" onClick={(e) => e.stopPropagation()}>
-            <h3>Edit profile</h3>
-            <div className="form">
-              <label> Name   <input value={form.name}    onChange={setField("name")} />   </label>
-              <label> Role   <input value={form.role}    onChange={setField("role")} />   </label>
-              {/* <label> Email  <input value={form.email}   onChange={setField("email")} />  </label> */}
-              <label> Phone  <input value={form.phone}   onChange={setField("phone")} />  </label>
-              <label> Address<input value={form.address} onChange={setField("address")} /></label>
-            </div>
-            <div className="modal-actions">
-              <button type="button" className="btn" onClick={closeEdit}>Cancel</button>
-              <button type="button" className="btn primary" onClick={saveEdit}><IcSave /> Save</button>
-            </div>
-          </div>
-        </div>
-      )}
+{isEditing && (
+  <div className="modal-backdrop" onClick={closeEdit}>
+    <div className="modal card" onClick={(e) => e.stopPropagation()}>
+      <h3>Edit profile</h3>
+      <div className="form">
+        <label> 
+          Name   
+          <input 
+            value={form.username}    
+            onChange={setField("username")} 
+            className={errors.username ? "error" : ""}
+          />
+          {errors.username && <div className="error-text">{errors.username}</div>}
+        </label>
+        
+        <label> 
+          Email  
+          <input 
+            value={form.email}   
+            onChange={setField("email")} 
+            className={errors.email ? "error" : ""}
+          />
+          {errors.email && <div className="error-text">{errors.email}</div>}
+        </label>
+      </div>
+      <div className="modal-actions">
+        <button type="button" className="btn" onClick={closeEdit}>Cancel</button>
+        <button type="button" className="btn primary" onClick={saveEdit}>
+          <IcSave /> Save
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }
+

@@ -10,7 +10,7 @@ import axios from "axios";
 /* ------------------------------ Base Instance ------------------------------ */
 const api = axios.create({
   // ✅ Reads from Vite .env (example: VITE_API_URL=http://localhost:8000)
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000",
+  baseURL: "http://localhost:8000",
   withCredentials: true,
 });
 
@@ -30,6 +30,11 @@ api.interceptors.response.use(
   (response) => response, // pass through if OK
   async (error) => {
     const originalRequest = error.config;
+
+    // 🟢 ADD THIS: Don't redirect for login endpoint errors
+     if (originalRequest.url.includes('/auth/login')) {
+      return Promise.reject(error); // Let the login page handle the error
+    }
 
     // Only handle 401s and avoid infinite loops
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -92,6 +97,25 @@ export const updateUserProfile = async (payload) => {
   const res = await api.put("/users/profile", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
+  return res.data;
+};
+
+export const uploadProfilePicture = async (profile_image) => {
+  const formData = new FormData();
+  formData.append("profile_image", profile_image);
+
+  const res = await api.put("/users/profile/picture", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data;
+};
+
+/**
+ * Change user password
+ * @param {Object} payload - { current_password, new_password }
+ */
+export const changePassword = async (payload) => {
+  const res = await api.put("/users/profile/password", payload);
   return res.data;
 };
 

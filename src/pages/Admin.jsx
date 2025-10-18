@@ -119,24 +119,30 @@ export default function Admin() {
   const [theme, setTheme] = React.useState(
     () => document.documentElement.getAttribute("data-theme") || "dark"
   );
-  const [tab, setTab] = React.useState("config");
+
+  // ✅ Load last active tab from localStorage or fallback to "config"
+  const [tab, setTab] = React.useState(() => localStorage.getItem("admin_tab") || "config");
 
   React.useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
 
+  // ✅ Whenever tab changes, store it
+  React.useEffect(() => {
+    localStorage.setItem("admin_tab", tab);
+  }, [tab]);
+
   const handleLogout = () => {
     localStorage.removeItem("authToken");
+    localStorage.removeItem("admin_tab"); // optional: clear saved tab on logout
     sessionStorage.clear();
-    window.location.href = "/login"; // redirect to login
+    window.location.href = "/login";
   };
 
   return (
     <div className="ad-shell">
-      {/* Background */}
       <div className="ad-bg" aria-hidden />
 
-      {/* Sidebar */}
       <AdminNav
         theme={theme}
         tab={tab}
@@ -145,7 +151,6 @@ export default function Admin() {
         handleLogout={handleLogout}
       />
 
-      {/* Content */}
       <main className="ad-main">
         <header className="ad-head ws-card">
           <div className="title">
@@ -157,16 +162,13 @@ export default function Admin() {
           </div>
         </header>
 
-        {/* Render Tab Content */}
         {tab === "config" && <AccessConfig Icon={Icon} />}
         {tab === "syslog" && <SystemLogTable />}
         {tab === "access" && <AccessControlTable Icon={Icon} />}
         {tab === "announcements" && <AnnouncementTable Icon={Icon} />}
         {tab === "notify" && <NotificationTable />}
 
-        {!["config", "syslog", "access", "announcements", "notify"].includes(
-          tab
-        ) && (
+        {!["config", "syslog", "access", "announcements", "notify"].includes(tab) && (
           <section className="ad-card ws-card ad-empty">
             Coming soon: {tab}
           </section>
@@ -175,3 +177,4 @@ export default function Admin() {
     </div>
   );
 }
+

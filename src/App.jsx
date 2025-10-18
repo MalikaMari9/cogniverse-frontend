@@ -9,7 +9,7 @@ import useSessionWatcher from "./hooks/useSessionWatcher";
 
 
 /* =========================
-   Theme (unchanged)
+   Themlogine (unchanged)
 ========================= */
 function useTheme() {
   const [theme, setTheme] = React.useState(() => localStorage.getItem('theme') || 'light')

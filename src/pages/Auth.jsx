@@ -133,9 +133,19 @@ export default function AuthPage() {
         localStorage.setItem("access_token", res.access_token);
         localStorage.setItem("refresh_token", res.refresh_token);
 
-        setTimeout(() => {
-          window.location.href = "/workstation";
-        }, 1500);
+       // decode JWT payload
+const tokenParts = res.access_token.split(".");
+const decoded = JSON.parse(atob(tokenParts[1]));
+const role = decoded.role || "user";
+
+let target = "/workstation";
+if (role === "admin" || role === "superadmin") target = "/admin";
+
+// wait for UI feedback, then redirect
+setTimeout(() => {
+  window.location.href = target;
+}, 1500);
+
       } else {
         // Registration validation
         if (payload.password.length < 6) {

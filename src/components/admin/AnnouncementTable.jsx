@@ -43,25 +43,18 @@ export default function AnnouncementTable({ Icon }) {
 
   // Load announcements from backend
   const loadAnnouncements = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await getAnnouncements();
-      
-      // Add username placeholders
-      const dataWithUsernames = data.map(ann => ({
-        ...ann,
-        created_by_username: `User ${ann.created_by}` // Temporary placeholder
-      }));
-      
-      setRows(dataWithUsernames);
-    } catch (err) {
-      console.error("Failed to load announcements:", err);
-      setError("Failed to load announcements");
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    setLoading(true);
+    setError(null);
+    const data = await getAnnouncements();
+    setRows(data); // Backend now provides created_by_username
+  } catch (err) {
+    console.error("Failed to load announcements:", err);
+    setError("Failed to load announcements");
+  } finally {
+    setLoading(false);
+  }
+};
 
   React.useEffect(() => {
     loadAnnouncements();
@@ -81,32 +74,23 @@ export default function AnnouncementTable({ Icon }) {
 
   // Save announcement (create or update)
   const saveRow = async (form) => {
-    try {
-      setError(null);
-      let result;
-      
-      if (form.announcementid) {
-        // Update existing
-        result = await updateAnnouncement(form.announcementid, form);
-        setRows(old => old.map(r => r.announcementid === form.announcementid ? {
-          ...result,
-          created_by_username: `User ${result.created_by}`
-        } : r));
-      } else {
-        // Create new - add username for immediate display
-        result = await createAnnouncement(form);
-        const newAnnWithUsername = {
-          ...result,
-          created_by_username: currentUser?.username || `User ${result.created_by}`
-        };
-        setRows(old => [newAnnWithUsername, ...old]);
-      }
-      closeModal();
-    } catch (err) {
-      console.error("Failed to save announcement:", err);
-      setError("Failed to save announcement");
+  try {
+    setError(null);
+    let result;
+    
+    if (form.announcementid) {
+      result = await updateAnnouncement(form.announcementid, form);
+      setRows(old => old.map(r => r.announcementid === form.announcementid ? result : r));
+    } else {
+      result = await createAnnouncement(form);
+      setRows(old => [result, ...old]); // Backend provides username
     }
-  };
+    closeModal();
+  } catch (err) {
+    console.error("Failed to save announcement:", err);
+    setError("Failed to save announcement");
+  }
+};
 
   // Delete announcement
   const delRow = async (id) => {
@@ -218,7 +202,7 @@ export default function AnnouncementTable({ Icon }) {
                   <button className="ws-btn ghost" title="View" onClick={() => openView(r)}>{r.title}</button>
                 </td>
                 <td data-label="content" className="truncate">{r.content}</td>
-                <td data-label="created_by">{r.created_by_username || `User ${r.created_by}`}</td>
+                <td data-label="created_by">{r.created_by_username || "—"}</td>
                 <td data-label="status"><span className={`ad-chip ${r.status}`}>{r.status}</span></td>
                 <td data-label="created_at" className="mono">{fmtDate(r.created_at)}</td>
                 <td data-label="updated_at" className="mono">{fmtDate(r.updated_at)}</td>
@@ -266,23 +250,29 @@ function AnnouncementModal({ open, initial, onClose, onSave, currentUser }) {
   const updateField = (key, value) => setForm(s => ({ ...s, [key]: value }));
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!form.title || !form.content) return;
+  e.preventDefault();
+  if (!form.title || !form.content) return;
+  
+  setSaving(true);
+  try {
+    // Debug: Log what we're sending
+    console.log("🔄 DEBUG - Submitting form data:", form);
     
-    setSaving(true);
-    try {
-      // Prepare data for submission
-      const submissionData = {
-        ...form,
-        // For new announcements, include created_by if we have current user
-        ...(!form.announcementid && currentUser && { created_by: currentUser.id })
-      };
-      
-      await onSave(submissionData);
-    } finally {
-      setSaving(false);
-    }
-  };
+    // Prepare data for submission
+    const submissionData = {
+      ...form,
+      ...(!form.announcementid && currentUser && { created_by: currentUser.id })
+    };
+    
+    console.log("🔄 DEBUG - Final submission data:", submissionData);
+    
+    await onSave(submissionData);
+  } catch (err) {
+    console.error("❌ DEBUG - Submission error:", err);
+  } finally {
+    setSaving(false);
+  }
+};
 
   if (!open) return null;
 
@@ -296,20 +286,6 @@ function AnnouncementModal({ open, initial, onClose, onSave, currentUser }) {
         </div>
 
         <form className="ad-form" onSubmit={handleSubmit}>
-          {/* Show current user info for new announcements */}
-          {!form.announcementid && currentUser && (
-            <div style={{ 
-              padding: '8px 12px', 
-              background: 'var(--bg-muted)', 
-              borderRadius: '4px', 
-              marginBottom: '16px',
-              fontSize: '0.9em',
-              color: 'var(--text-muted)'
-            }}>
-              <strong>Creating as:</strong> {currentUser.username} (User #{currentUser.id})
-            </div>
-          )}
-          
           <label>
             <span>Title *</span>
             <input

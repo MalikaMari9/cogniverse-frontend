@@ -70,6 +70,9 @@ api.interceptors.response.use(
   }
 );
 
+
+
+
 /* ===============================
    🔐 AUTH ROUTES
 =============================== */
@@ -92,6 +95,25 @@ export const updateUserProfile = async (payload) => {
   const res = await api.put("/users/profile", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
+  return res.data;
+};
+
+export const uploadProfilePicture = async (profile_image) => {
+  const formData = new FormData();
+  formData.append("profile_image", profile_image);
+
+  const res = await api.put("/users/profile/picture", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data;
+};
+
+/**
+ * Change user password
+ * @param {Object} payload - { current_password, new_password }
+ */
+export const changePassword = async (payload) => {
+  const res = await api.put("/users/profile/password", payload);
   return res.data;
 };
 

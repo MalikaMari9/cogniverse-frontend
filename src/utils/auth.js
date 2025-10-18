@@ -34,3 +34,30 @@ export function logoutAndRedirect() {
   localStorage.removeItem("refresh_token");
   window.location.href = "/login";
 }
+
+
+// Check if access token is expired
+
+
+// Request a new access token using refresh token
+export async function refreshAccessToken() {
+  const refresh = localStorage.getItem("refresh_token");
+  if (!refresh) return null;
+
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/refresh`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${refresh}` },
+    });
+    const data = await res.json();
+
+    if (data.access_token) {
+      localStorage.setItem("access_token", data.access_token);
+      return data.access_token;
+    }
+  } catch (err) {
+    console.error("Refresh failed:", err);
+  }
+
+  return null;
+}

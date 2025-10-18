@@ -63,7 +63,7 @@
   position: relative;
   border-radius: 16px;
   border: 1px solid var(--pf-nav-border, rgba(255,255,255,.12));
-  overflow: hidden;               /* clip animated film to rounded corners */
+  overflow: visible;               /* clip animated film to rounded corners */
   isolation: isolate;             /* keep ::before under children */
   backdrop-filter: saturate(120%) blur(8px);
 }
@@ -143,6 +143,69 @@
 [data-theme="light"] .pf-user{
   background: rgba(0,0,0,.06);
   border-color: rgba(0,0,0,.12);
+}
+
+.pf-user {
+  position: relative;
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+.pf-user:hover {
+  background: rgba(255,255,255,.10);
+  border-color: rgba(255,255,255,.20);
+}
+
+/* Dropdown panel */
+.pf-dropdown {
+  position: absolute;
+  top: 110%;
+  right: 0;
+  background: rgba(20, 24, 38, 0.92);
+  backdrop-filter: blur(10px) saturate(120%);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.35);
+  overflow: hidden;
+  min-width: 160px;
+  z-index: 999;
+  animation: pfDropdownFade 0.15s ease forwards;
+}
+
+/* Light theme adjustment */
+[data-theme="light"] .pf-dropdown {
+  background: rgba(255,255,255,.96);
+  border-color: rgba(0,0,0,.08);
+  box-shadow: 0 8px 26px rgba(0,0,0,.12);
+}
+
+/* Menu items */
+.pf-dd-item {
+  display: block;
+  padding: 10px 16px;
+  color: inherit;
+  text-decoration: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.9rem;
+  letter-spacing: 0.2px;
+  transition: background 0.2s ease, color 0.2s ease;
+  border: none;
+  width: 100%;
+  text-align: left;
+}
+
+.pf-dd-item:hover {
+  background: rgba(255,255,255,.08);
+}
+
+[data-theme="light"] .pf-dd-item:hover {
+  background: rgba(0,0,0,.05);
+}
+
+/* subtle fade/slide */
+@keyframes pfDropdownFade {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* animation */

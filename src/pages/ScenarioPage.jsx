@@ -4,6 +4,8 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { SvgIcon } from "./Workstation";
 import { AgentCard } from "./Workstation";
+import NavProduct from "../components/NavProduct";
+
 import "../ws_css.css";
 import {
   createScenario,
@@ -264,48 +266,14 @@ export default function ScenarioPage({
   return (
     <div className="sc-page">
       {/* NAV */}
-      <header className="sc-nav ws-card sc-nav-pretty">
-        <div className="sc-brand">
-          <div className="ws-brand">
-            <span className="logo">
-              <img src="logo.png" alt="" />
-            </span>
-          </div>
-          <div className="sc-divider" />
-          <nav className="sc-tabs">
-            <button className="sc-tab" onClick={onBackToWorkstation}>
-              Workstation
-            </button>
-            <button className="sc-tab" onClick={onBackToGraph}>
-              Graph
-            </button>
-            <button className="sc-tab ghost">History</button>
-          </nav>
-        </div>
-
-        <div className="right sc-right">
-          <button
-            type="button"
-            className={`ws-theme-switch ${t}`}
-            onClick={toggleTheme}
-            aria-label="Toggle theme"
-          />
-          <div
-            className="sc-user"
-            role="button"
-            tabIndex={0}
-            aria-label="User profile"
-          >
-            <div className="avatar" aria-hidden="true">
-              A
-            </div>
-            <div className="meta">
-              <div className="name">Alex</div>
-              <div className="role">Pro</div>
-            </div>
-          </div>
-        </div>
-      </header>
+        <NavProduct
+           theme={theme}
+           onToggleTheme={toggleTheme}
+           active="workstation"
+           onGoWorkstation={() => (window.location.href = "/workstation")}
+           onGoGraph={() => (window.location.href = "/graph")}
+           onGoHistory={() => (window.location.href = "/history")}
+         />
 
       {/* Scenario input */}
       <section className="sc-input ws-card">

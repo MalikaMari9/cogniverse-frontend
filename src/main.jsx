@@ -28,6 +28,7 @@ import ScenarioPage from "./pages/ScenarioPage.jsx";
 import AgentNode from "./pages/AgentNodes.jsx";
 import WorkstationPageTest from "./pages/TestAgent.jsx";
 import SessionMonitor from "./pages/SessionMonitor.jsx";
+import AdminPage from "./pages/Admin.jsx"; 
 
 import "./styles.css";
 
@@ -85,12 +86,20 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             =============================== */}
         <Route path="/agentnodes" element={<AgentNode />} />
         <Route path="/sessionMonitor" element={<SessionMonitor/>} />
+        
 
         {/* ===============================
             🚧  FALLBACK
             If no route matches, go home.
             =============================== */}
         <Route path="*" element={<Navigate to="/" replace />} />
+
+        {/* ===============================
+    🧱  ADMIN SECTION
+    =============================== */}
+<Route path="/admin" element={<AdminPage />} />
+<Route path="/admin/*" element={<AdminPage />} />
+
       </Routes>
     </BrowserRouter>
   </React.StrictMode>

@@ -309,10 +309,17 @@ export const updateWeaver = async (weaver_id, data) =>
 export const deleteWeaver = async (weaver_id) =>
   (await api.delete(`/weaver/${weaver_id}`)).data;
 
+/* ===============================
+   🔐 ADMIN ROUTES
+=============================== */
 
-
-
-
+/* ===============================
+   📢 ANNOUNCEMENT ROUTES
+=============================== */
+export const getAnnouncements = async () => (await api.get("/announcements/")).data;
+export const createAnnouncement = async (payload) => (await api.post("/announcements/", payload)).data;
+export const updateAnnouncement = async (announcementId, payload) => (await api.put(`/announcements/${announcementId}`, payload)).data;
+export const deleteAnnouncement = async (announcementId) => (await api.delete(`/announcements/${announcementId}`)).data;
 
 /* ===============================
    Default Export

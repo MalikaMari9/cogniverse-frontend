@@ -311,7 +311,43 @@ export const deleteWeaver = async (weaver_id) =>
 
 /* ===============================
    🔐 ADMIN ROUTES
-=============================== */
+   ⚙️ CONFIG ROUTES
+   */
+
+/**
+ * Get all configurations
+ */
+export const getAllConfigs = async () => (await api.get("/configs/")).data;
+
+/**
+ * Get a single configuration by ID
+ * @param {number} config_id
+ */
+export const getConfigById = async (config_id) =>
+  (await api.get(`/configs/${config_id}`)).data;
+
+/**
+ * Create a new configuration
+ * @param {Object} data - { config_key, config_value, description, status }
+ */
+export const createConfig = async (data) =>
+  (await api.post("/configs/", data)).data;
+
+/**
+ * Update an existing configuration
+ * @param {number} config_id
+ * @param {Object} data - partial update (config_value, description, status)
+ */
+export const updateConfig = async (config_id, data) =>
+  (await api.put(`/configs/${config_id}`, data)).data;
+
+/**
+ * Delete a configuration by ID
+ * @param {number} config_id
+ */
+export const deleteConfig = async (config_id) =>
+  (await api.delete(`/configs/${config_id}`)).data;
+
 
 /* ===============================
    📢 ANNOUNCEMENT ROUTES
@@ -323,11 +359,45 @@ export const deleteAnnouncement = async (announcementId) => (await api.delete(`/
 
 /* ===============================
    📋 SYSTEM LOG ROUTES
-=============================== */
 export const getSystemLogs = async (params = {}) => (await api.get("/system-logs/", { params })).data;
 export const createSystemLog = async (payload) => (await api.post("/system-logs/", payload)).data;
 export const deleteSystemLog = async (logId) => (await api.delete(`/system-logs/${logId}`)).data;
 export const deleteSystemLogs = async (logIds) => (await api.delete("/system-logs/bulk", { data: { log_ids: logIds } })).data;
+// ===============================
+// accessControlApi.js
+// ===============================
+
+// 🧩 Fetch all Access Controls
+export const getAllAccessControls = async () => {
+  const res = await api.get("/access-controls/");
+  return res.data;
+};
+
+// 🧩 Get Access Control by ID
+export const getAccessControlById = async (id) => {
+  const res = await api.get(`/access-controls/${id}`);
+  return res.data;
+};
+
+// 🧩 Create Access Control
+export const createAccessControl = async (data) => {
+  const res = await api.post("/access-controls/", data);
+  return res.data;
+};
+
+// 🧩 Update Access Control
+export const updateAccessControl = async (id, data) => {
+  const res = await api.put(`/access-controls/${id}`, data);
+  return res.data;
+};
+
+// 🧩 Delete Access Control
+export const deleteAccessControl = async (id) => {
+  const res = await api.delete(`/access-controls/${id}`);
+  return res.data;
+};
+
+
 
 /* ===============================
    Default Export

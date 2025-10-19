@@ -1,15 +1,41 @@
+// AppRoot.jsx
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { getCurrentUserFromToken, logoutAndRedirect } from "./utils/auth";
+import useSessionWatcher from "./hooks/useSessionWatcher";
+
+const AuthContext = createContext(null);
+export const useAuth = () => useContext(AuthContext);
+
 export default function AppRoot({ children }) {
-  useSessionWatcher({
+  const [user, setUser] = useState(getCurrentUserFromToken());
+  const [loading, setLoading] = useState(true);
+
+  const { forceRefresh } = useSessionWatcher({
     thresholdSeconds: 30,
-    intervalMs: 1000,
     autoRefresh: true,
-    showToasts: false,               // set true if you wire toast globally
+    onRefreshed: () => setUser(getCurrentUserFromToken()),
     onLogout: () => {
-      // optional: centralized logout handling
-      // e.g., route push if you use a router hook
-      window.location.href = "/login";
+      setUser(null);
+      logoutAndRedirect();
     },
   });
 
-  return children;
+  // Initial decode
+  useEffect(() => {
+    setUser(getCurrentUserFromToken());
+    setLoading(false);
+  }, []);
+
+  const logout = () => {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    setUser(null);
+    logoutAndRedirect();
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, loading, logout, forceRefresh }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }

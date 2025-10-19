@@ -322,6 +322,14 @@ export const updateAnnouncement = async (announcementId, payload) => (await api.
 export const deleteAnnouncement = async (announcementId) => (await api.delete(`/announcements/${announcementId}`)).data;
 
 /* ===============================
+   📋 SYSTEM LOG ROUTES
+=============================== */
+export const getSystemLogs = async (params = {}) => (await api.get("/system-logs/", { params })).data;
+export const createSystemLog = async (payload) => (await api.post("/system-logs/", payload)).data;
+export const deleteSystemLog = async (logId) => (await api.delete(`/system-logs/${logId}`)).data;
+export const deleteSystemLogs = async (logIds) => (await api.delete("/system-logs/bulk", { data: { log_ids: logIds } })).data;
+
+/* ===============================
    Default Export
 =============================== */
 export default api;

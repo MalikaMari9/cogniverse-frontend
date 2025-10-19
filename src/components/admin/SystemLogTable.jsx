@@ -1,9 +1,12 @@
 import React from "react";
-import { fmtDate,StatusPill } from "./helpers";
+import { fmtDate, StatusPill } from "./helpers";
+import { getSystemLogs, deleteSystemLog, deleteSystemLogs } from "../../api/api";
 
 export default function SystemLogTable() {
   const [rows, setRows] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState(null);
+  const [selectedLogs, setSelectedLogs] = React.useState(new Set());
 
   // filters
   const [q, setQ] = React.useState("");
@@ -20,44 +23,81 @@ export default function SystemLogTable() {
   const [page, setPage] = React.useState(1);
   const pageSize = 10;
 
-  React.useEffect(() => {
-    let alive = true;
-    (async () => {
+  // Load logs from backend
+  const loadLogs = async () => {
+    try {
       setLoading(true);
-
-      /* Replace mock with your backend:
-         const resp = await fetch(`/api/admin/logs`);
-         const data = await resp.json();
-      */
-      // --- mock data (remove when wired) ---
-      const actions = ["login", "logout", "create", "update", "delete"];
-      const statuses = ["success", "failed", "pending"];
-      const mock = Array.from({ length: 63 }).map((_, i) => ({
-        logID: 1000 + i,
-        action_type: actions[Math.floor(Math.random() * actions.length)],
-        userID: `user_${(i % 8) + 1}`,
-        username: ["Nova", "Orion", "Pixel", "Volt", "Sable", "Aurora", "Quark", "Atlas"][i % 8],
-        details: i % 5 === 0 ? "IP throttling triggered" : "OK",
-        ip_address: `10.0.0.${(i % 245) + 1}`,
-        browser_info: ["Chrome", "Firefox", "Safari", "Edge"][i % 4] + " 121",
-        status: statuses[Math.floor(Math.random() * statuses.length)],
-        created_at: new Date(Date.now() - i * 3600_000).toISOString(),
-      }));
-      const data = mock;
-      // -------------------------------------
-
-      if (!alive) return;
+      setError(null);
+      const data = await getSystemLogs();
       setRows(data);
+    } catch (err) {
+      console.error("Failed to load system logs:", err);
+      setError("Failed to load system logs");
+    } finally {
       setLoading(false);
-    })();
+    }
+  };
 
-    return () => { alive = false; };
+  React.useEffect(() => {
+    loadLogs();
   }, []);
+
+  // Delete single log
+  const deleteLog = async (logId) => {
+    if (!window.confirm("Are you sure you want to delete this log?")) return;
+    
+    try {
+      setError(null);
+      await deleteSystemLog(logId);
+      setRows(old => old.filter(r => r.logid !== logId));
+    } catch (err) {
+      console.error("Failed to delete log:", err);
+      setError("Failed to delete log");
+    }
+  };
+
+  // Delete multiple logs
+  const deleteSelectedLogs = async () => {
+    if (selectedLogs.size === 0) return;
+    
+    if (!window.confirm(`Are you sure you want to delete ${selectedLogs.size} logs?`)) return;
+    
+    try {
+      setError(null);
+      await deleteSystemLogs(Array.from(selectedLogs));
+      setRows(old => old.filter(r => !selectedLogs.has(r.logid)));
+      setSelectedLogs(new Set());
+    } catch (err) {
+      console.error("Failed to delete logs:", err);
+      setError("Failed to delete logs");
+    }
+  };
+
+  // Select/deselect all logs on current page
+  const toggleSelectAll = () => {
+    if (selectedLogs.size === pageRows.length) {
+      setSelectedLogs(new Set());
+    } else {
+      const allIds = new Set(pageRows.map(r => r.logid));
+      setSelectedLogs(allIds);
+    }
+  };
+
+  // Toggle single log selection
+  const toggleLogSelection = (logId) => {
+    const newSelected = new Set(selectedLogs);
+    if (newSelected.has(logId)) {
+      newSelected.delete(logId);
+    } else {
+      newSelected.add(logId);
+    }
+    setSelectedLogs(newSelected);
+  };
 
   // apply filters
   const filtered = rows.filter(r => {
     if (q) {
-      const hay = `${r.logID} ${r.action_type} ${r.username} ${r.userID} ${r.details} ${r.ip_address} ${r.browser_info}`.toLowerCase();
+      const hay = `${r.logid} ${r.action_type} ${r.username} ${r.userid} ${r.details} ${r.ip_address} ${r.browser_info}`.toLowerCase();
       if (!hay.includes(q.toLowerCase())) return false;
     }
     if (action !== "all" && r.action_type !== action) return false;
@@ -88,8 +128,31 @@ export default function SystemLogTable() {
     else { setSortBy(key); setSortDir("asc"); }
   };
 
+  const downloadCSV = () => {
+    const header = ["logid", "action_type", "username", "userid", "details", "ip_address", "browser_info", "status", "created_at"];
+    const esc = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const body = sorted.map(r => header.map(h => esc(r[h])).join(",")).join("\n");
+    const csv = header.join(",") + "\n" + body;
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); 
+    a.href = url; 
+    a.download = "system_logs.csv";
+    document.body.appendChild(a); 
+    a.click(); 
+    a.remove(); 
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="adm-card">
+      {error && (
+        <div className="ad-alert error" style={{ marginBottom: '1rem' }}>
+          {error}
+          <button onClick={() => setError(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}>×</button>
+        </div>
+      )}
+      
       <header className="adm-head">
         <div className="adm-title">System Log</div>
         <div className="adm-tools">
@@ -109,14 +172,23 @@ export default function SystemLogTable() {
           </select>
           <select className="adm-select" value={status} onChange={(e)=>{ setStatus(e.target.value); setPage(1); }}>
             <option value="all">All status</option>
-            <option value="success">success</option>
-            <option value="failed">failed</option>
-            <option value="pending">pending</option>
+            <option value="active">active</option>
+            <option value="inactive">inactive</option>
+            <option value="archived">archived</option>
           </select>
 
           <input className="adm-input" type="date" value={from} onChange={(e)=>{ setFrom(e.target.value); setPage(1); }} />
           <span className="adm-date-sep">–</span>
           <input className="adm-input" type="date" value={to} onChange={(e)=>{ setTo(e.target.value); setPage(1); }} />
+          
+          {selectedLogs.size > 0 && (
+          <button className="ws-btn danger" onClick={deleteSelectedLogs}>
+            Delete ({selectedLogs.size})  {/* Remove <Icon name="trash" /> */}
+          </button>
+        )}
+          <button className="ws-btn ghost" onClick={downloadCSV}>
+            Export CSV
+          </button>
         </div>
       </header>
 
@@ -124,7 +196,15 @@ export default function SystemLogTable() {
         <table className="adm-table">
           <thead>
             <tr>
-              <th onClick={()=>setSort("logID")}        aria-sort={sortBy==="logID"?sortDir:"none"}>logID</th>
+              <th>
+                <input
+                  type="checkbox"
+                  checked={pageRows.length > 0 && selectedLogs.size === pageRows.length}
+                  onChange={toggleSelectAll}
+                  aria-label="Select all logs"
+                />
+              </th>
+              <th onClick={()=>setSort("logid")}        aria-sort={sortBy==="logid"?sortDir:"none"}>logID</th>
               <th onClick={()=>setSort("action_type")}  aria-sort={sortBy==="action_type"?sortDir:"none"}>action_type</th>
               <th onClick={()=>setSort("username")}     aria-sort={sortBy==="username"?sortDir:"none"}>user</th>
               <th>details</th>
@@ -132,24 +212,33 @@ export default function SystemLogTable() {
               <th>browser_info</th>
               <th onClick={()=>setSort("status")}       aria-sort={sortBy==="status"?sortDir:"none"}>status</th>
               <th onClick={()=>setSort("created_at")}   aria-sort={sortBy==="created_at"?sortDir:"none"}>created_at</th>
+              <th>actions</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={8}><div className="adm-center"><div className="sc-spinner" /></div></td></tr>
+              <tr><td colSpan={10}><div className="adm-center"><div className="sc-spinner" /></div></td></tr>
             ) : pageRows.length === 0 ? (
-              <tr><td colSpan={8}><div className="adm-empty">No logs found</div></td></tr>
+              <tr><td colSpan={10}><div className="adm-empty">No logs found</div></td></tr>
             ) : (
               pageRows.map(r => (
-                <tr key={r.logID}>
-                  <td data-label="logID">#{r.logID}</td>
+                <tr key={r.logid}>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={selectedLogs.has(r.logid)}
+                      onChange={() => toggleLogSelection(r.logid)}
+                      aria-label={`Select log ${r.logid}`}
+                    />
+                  </td>
+                  <td data-label="logID">#{r.logid}</td>
                   <td data-label="action">{r.action_type}</td>
                   <td data-label="user">
                     <div className="adm-user">
                       <div className="avatar sm" aria-hidden>🧑</div>
                       <div>
-                        <div className="name">{r.username}</div>
-                        <div className="muted">{r.userID}</div>
+                        <div className="name">{r.username || "System"}</div>
+                        <div className="muted">{r.userid ? `ID: ${r.userid}` : "System"}</div>
                       </div>
                     </div>
                   </td>
@@ -158,6 +247,15 @@ export default function SystemLogTable() {
                   <td data-label="browser" className="muted">{r.browser_info}</td>
                   <td data-label="status"><StatusPill value={r.status} /></td>
                   <td data-label="time" className="muted">{fmtDate(r.created_at)}</td>
+                  <td className="actions">
+                    <button 
+                    className="ws-btn danger sm" 
+                    title="Delete" 
+                    onClick={() => deleteLog(r.logid)}
+                  >
+                    Delete  {/* Remove <Icon name="trash" /> */}
+                  </button>
+                </td>
                 </tr>
               ))
             )}
@@ -166,7 +264,7 @@ export default function SystemLogTable() {
       </div>
 
       <footer className="adm-foot">
-        <div>Page {safePage}/{totalPages}</div>
+        <div>Page {safePage}/{totalPages} • {sorted.length} total logs</div>
         <div className="adm-pager">
           <button className="ws-btn ghost" disabled={safePage<=1}
                   onClick={()=>setPage(p=>Math.max(1,p-1))}>Prev</button>

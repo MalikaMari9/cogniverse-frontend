@@ -159,7 +159,7 @@ export default function Admin() {
 
         {/* Render Tab Content */}
         {tab === "config" && <AccessConfig Icon={Icon} />}
-        {tab === "syslog" && <SystemLogTable />}
+        {tab === "syslog" && <SystemLogTable  />}
         {tab === "access" && <AccessControlTable Icon={Icon} />}
         {tab === "announcements" && <AnnouncementTable Icon={Icon} />}
         {tab === "notify" && <NotificationTable />}

@@ -310,8 +310,9 @@ export const deleteWeaver = async (weaver_id) =>
   (await api.delete(`/weaver/${weaver_id}`)).data;
 
 /* ===============================
+   🔐 ADMIN ROUTES
    ⚙️ CONFIG ROUTES
-=============================== */
+   */
 
 /**
  * Get all configurations
@@ -348,7 +349,20 @@ export const deleteConfig = async (config_id) =>
   (await api.delete(`/configs/${config_id}`)).data;
 
 
+/* ===============================
+   📢 ANNOUNCEMENT ROUTES
+=============================== */
+export const getAnnouncements = async () => (await api.get("/announcements/")).data;
+export const createAnnouncement = async (payload) => (await api.post("/announcements/", payload)).data;
+export const updateAnnouncement = async (announcementId, payload) => (await api.put(`/announcements/${announcementId}`, payload)).data;
+export const deleteAnnouncement = async (announcementId) => (await api.delete(`/announcements/${announcementId}`)).data;
 
+/* ===============================
+   📋 SYSTEM LOG ROUTES
+export const getSystemLogs = async (params = {}) => (await api.get("/system-logs/", { params })).data;
+export const createSystemLog = async (payload) => (await api.post("/system-logs/", payload)).data;
+export const deleteSystemLog = async (logId) => (await api.delete(`/system-logs/${logId}`)).data;
+export const deleteSystemLogs = async (logIds) => (await api.delete("/system-logs/bulk", { data: { log_ids: logIds } })).data;
 // ===============================
 // accessControlApi.js
 // ===============================

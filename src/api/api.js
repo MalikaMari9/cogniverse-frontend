@@ -439,6 +439,41 @@ export async function getPermission(moduleKey) {
   return res.data;
 }
 
+/* ===============================
+   👥 USER MANAGEMENT ROUTES
+=============================== */
+export const getAllUsers = async (params = {}) => 
+  (await api.get("/admin/users/", { params })).data;
+
+export const getUserById = async (userId) => 
+  (await api.get(`/admin/users/${userId}`)).data;
+
+export const createUser = async (userData) => 
+  (await api.post("/admin/users/", userData)).data;
+
+export const updateUser = async (userId, userData) => 
+  (await api.put(`/admin/users/${userId}`, userData)).data;
+
+export const changeUserStatus = async (userId, status) => 
+  (await api.patch(`/admin/users/${userId}/status`, { status })).data;
+
+export const deleteUser = async (userId) => 
+  (await api.delete(`/admin/users/${userId}`)).data;
+
+export const hardDeleteUser = async (userId) => 
+  (await api.delete(`/admin/users/${userId}/hard`)).data;
+
+export const bulkChangeUserStatus = async (userIds, status) => 
+  (await api.post("/admin/users/bulk/status", { 
+    user_ids: userIds, 
+    status: status 
+  })).data;
+
+export const bulkDeleteUsers = async (userIds) => 
+  (await api.post("/admin/users/bulk/delete", { 
+    user_ids: userIds 
+  })).data;
+
 
 /* ===============================
    Default Export

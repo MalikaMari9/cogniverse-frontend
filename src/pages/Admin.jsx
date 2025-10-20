@@ -12,6 +12,7 @@ import SystemLogTable from "../components/admin/SystemLogTable.jsx";
 import AccessControlTable from "../components/admin/AccessControlTable.jsx";
 import AnnouncementTable from "../components/admin/AnnouncementTable.jsx";
 import NotificationTable from "../components/admin/NotificationTable.jsx";
+import MaintenanceTable from "../components/admin/MaintenanceTable.jsx";
 
 // 🧩 Shared helpers (optional, if needed here)
 import { fmtDate, StatusPill } from "../components/admin//helpers.jsx";
@@ -155,6 +156,8 @@ export default function Admin() {
         <header className="ad-head ws-card">
           <div className="title">
             {tab === "config" && "Access Config"}
+            {tab === "maintenance" && <MaintenanceTable Icon={Icon} />}
+
             {tab === "syslog" && "System Log"}
             {tab === "access" && "Access Control"}
             {tab === "announcements" && "Announcements"}
@@ -163,6 +166,8 @@ export default function Admin() {
         </header>
 
         {tab === "config" && <AccessConfig Icon={Icon} />}
+        {tab === "maintenance" && "System Maintenance"}
+
         {tab === "syslog" && <SystemLogTable  />}
         {tab === "access" && <AccessControlTable Icon={Icon} />}
         {tab === "announcements" && <AnnouncementTable Icon={Icon} />}

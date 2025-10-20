@@ -405,6 +405,49 @@
 .adm-table thead th:nth-child(7){ width: 150px; } /* updated_at */
 .adm-table thead th:nth-child(8){ width: 96px;  } /* actions (room for edit+delete) */
 
+.status-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.status-pill.active {
+  background-color: #d4f8d4;
+  color: #1f7a1f;
+}
+.status-pill.inactive {
+  background-color: #ffe0e0;
+  color: #b30000;
+}
+
+
+/* === Modal background fix (dark + light theme) === */
+.ad-modal .ws-card,
+.ad-modal .ad-modal-content {
+  background: rgba(20, 24, 32, 0.92);        /* dark semi-solid */
+  color: var(--ink-1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="light"] .ad-modal .ws-card,
+[data-theme="light"] .ad-modal .ad-modal-content {
+  background: rgba(255, 255, 255, 0.96);     /* light solid */
+  color: var(--ink-1);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Optional: dim the backdrop a bit more so text pops */
+.ad-modal::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: -1;
+  backdrop-filter: blur(6px);
+}
+
+
 /* Truncate text in tight columns so they don't force overflow */
 .adm-table td.truncate,
 .adm-table td[data-label="title"],

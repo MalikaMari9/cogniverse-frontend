@@ -163,6 +163,10 @@ export const updateAgent = async (agent_id, payload) =>
 export const deleteAgent = async (agent_id) =>
   (await api.delete(`/agents/${agent_id}`)).data;
 
+export const getAgentsByUser = async (userId) =>
+  (await api.get(`/agents/user/${userId}`)).data;
+
+
 /* ===============================
    🔗 PROJECT–AGENT LINKS
 =============================== */
@@ -359,6 +363,7 @@ export const deleteAnnouncement = async (announcementId) => (await api.delete(`/
 
 /* ===============================
    📋 SYSTEM LOG ROUTES
+   */
 export const getSystemLogs = async (params = {}) => (await api.get("/system-logs/", { params })).data;
 export const createSystemLog = async (payload) => (await api.post("/system-logs/", payload)).data;
 export const deleteSystemLog = async (logId) => (await api.delete(`/system-logs/${logId}`)).data;
@@ -398,6 +403,32 @@ export const deleteAccessControl = async (id) => {
 };
 
 
+// ===============================
+// Maintenance API
+// ===============================
+
+export async function getAllMaintenance() {
+  const res = await api.get("/maintenance/");
+  return res.data;
+}
+
+export async function updateMaintenance(moduleKey, payload) {
+  const res = await api.put(`/maintenance/${moduleKey}`, payload);
+  return res.data;
+}
+
+// ===============================
+// 🛠️ GLOBAL MAINTENANCE API
+// ===============================
+
+/**
+ * Get the current global maintenance status
+ * @returns {Promise<{ module_key: string, under_maintenance: boolean, message: string, updated_at: string }>}
+ */
+export async function getGlobalMaintenance() {
+  const res = await api.get("/maintenance/global");
+  return res.data;
+}
 
 /* ===============================
    Default Export

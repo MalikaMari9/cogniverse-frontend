@@ -416,7 +416,7 @@ function AgentViewModal({ open, agent, onClose }) {
 }
 
 /* ---------- Main Workstation Page ---------- */
-export default function WorkstationPage() {
+export  function WorkstationPage() {
   const { projectid } = useParams();
   const [theme, setTheme] = useState(getStoredTheme());
   const [expanded, setExpanded] = useState(true);
@@ -758,4 +758,14 @@ const handleAdd = async (input) => {
 // ===============================
 // Exports
 // ===============================
+// ===============================
+// Exports (Final)
+// ===============================
+import { withMaintenanceGuard } from "../components/withMaintenanceGuard";
+
+// ✅ Named exports (helpers)
 export { SvgIcon, AgentCard, AgentModal, AgentViewModal };
+
+// ✅ Default export (guarded version)
+const GuardedWorkstation = withMaintenanceGuard(WorkstationPage, "Workstation");
+export default GuardedWorkstation;

@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 import { SvgIcon, AgentViewModal } from "../pages/Workstation";
 import { getCurrentUserFromToken } from "../utils/auth";
 import { handleLogout } from "../utils/logout";
-import { getAgents, createAgent } from "../api/api";
+import { getAgentsByUser, createAgent,  } from "../api/api";
 import "../ws_css.css";
 
 /* ---------- Custom MBTI dropdown ---------- */
@@ -241,7 +241,8 @@ export function WorkstationSidebar({
 
   const loadAgents = async () => {
     try {
-      const res = await getAgents();
+      const user = getCurrentUserFromToken();
+const res = await getAgentsByUser(user.user_id || user.userid);
       setAgents(res);
     } catch (err) {
       console.error("Failed to load agents:", err);
@@ -383,7 +384,8 @@ export function WorkstationHubSidebar({ expanded, onToggleExpand, theme, onToggl
     if (decoded) setUserInfo(decoded);
     (async () => {
       try {
-        const res = await getAgents();
+        const user = getCurrentUserFromToken();
+const res = await getAgentsByUser(user.user_id || user.userid);
         setAgents(res);
       } catch (err) {
         console.warn("Failed to fetch agents:", err);

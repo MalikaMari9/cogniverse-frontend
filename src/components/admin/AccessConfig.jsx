@@ -1,5 +1,5 @@
 // ===============================
-// AccessConfig.jsx
+// AccessConfig.jsx — With Permission Control
 // ===============================
 import React from "react";
 import { fmtDate } from "./helpers";
@@ -9,6 +9,7 @@ import {
   updateConfig,
   deleteConfig,
 } from "../../api/api";
+import { usePermission } from "../../hooks/usePermission";
 
 export default function AccessConfig({ Icon }) {
   // ===============================
@@ -21,15 +22,18 @@ export default function AccessConfig({ Icon }) {
   const [page, setPage] = React.useState(1);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState("");
+  const [noAccessModal, setNoAccessModal] = React.useState({ open: false, message: "" });
 
   const pageSize = 8;
+  const { level: permission, canRead, canWrite, loading: permLoading } =
+    usePermission("CONFIGURATION");
 
   // ===============================
   // 🔹 FETCH CONFIGS
   // ===============================
   React.useEffect(() => {
-    fetchConfigs();
-  }, []);
+    if (!permLoading && canRead) fetchConfigs();
+  }, [permLoading, canRead]);
 
   const fetchConfigs = async () => {
     setLoading(true);
@@ -54,9 +58,24 @@ export default function AccessConfig({ Icon }) {
   };
 
   // ===============================
+  // 🔹 PERMISSION CHECK
+  // ===============================
+  const requireWrite = (action = "modify") => {
+    if (!canWrite) {
+      setNoAccessModal({
+        open: true,
+        message: `You don't have permission to ${action} configurations.`,
+      });
+      return false;
+    }
+    return true;
+  };
+
+  // ===============================
   // 🔹 ADD CONFIG
   // ===============================
   const handleAdd = async (newData) => {
+    if (!requireWrite("add")) return;
     try {
       await createConfig(newData);
       await fetchConfigs();
@@ -71,6 +90,7 @@ export default function AccessConfig({ Icon }) {
   // 🔹 UPDATE CONFIG
   // ===============================
   const handleUpdate = async (config) => {
+    if (!requireWrite("update")) return;
     try {
       await updateConfig(config.configID, {
         config_value: config.config_value,
@@ -87,6 +107,7 @@ export default function AccessConfig({ Icon }) {
   // 🔹 DELETE CONFIG
   // ===============================
   const delRow = async (id) => {
+    if (!requireWrite("delete")) return;
     if (!window.confirm("Are you sure you want to delete this config?")) return;
     try {
       await deleteConfig(id);
@@ -123,7 +144,27 @@ export default function AccessConfig({ Icon }) {
   };
 
   // ===============================
-  // 🔹 RENDER
+  // 🔹 CONDITIONAL RENDER (Permissions)
+  // ===============================
+  if (permLoading)
+    return (
+      <section className="ad-card ws-card">
+        <div className="ad-loading">Checking permissions...</div>
+      </section>
+    );
+
+  if (permission === "none")
+    return (
+      <section className="ad-card ws-card ad-empty">
+        <h2 style={{ color: "var(--ink-1)" }}>Access Denied</h2>
+        <p style={{ color: "var(--ink-3)", marginTop: 6 }}>
+          You don’t have permission to view Configurations.
+        </p>
+      </section>
+    );
+
+  // ===============================
+  // 🔹 RENDER MAIN
   // ===============================
   return (
     <section className="ad-card ws-card">
@@ -162,8 +203,17 @@ export default function AccessConfig({ Icon }) {
 
         <button
           className="ws-btn primary"
-          onClick={() => setAddModal(true)}
+          onClick={() =>
+            canWrite
+              ? setAddModal(true)
+              : setNoAccessModal({
+                  open: true,
+                  message: "You don't have permission to add configurations.",
+                })
+          }
           style={{ marginLeft: "auto" }}
+          disabled={!canWrite}
+          title={!canWrite ? "Read-only access" : ""}
         >
           + Add Config
         </button>
@@ -199,15 +249,30 @@ export default function AccessConfig({ Icon }) {
                 <td className="actions">
                   <button
                     className="ad-icon"
-                    title="Edit"
-                    onClick={() => openEdit(r)}
+                    title={canWrite ? "Edit" : "View-only"}
+                    onClick={() =>
+                      canWrite
+                        ? openEdit(r)
+                        : setNoAccessModal({
+                            open: true,
+                            message: "You don't have permission to edit configurations.",
+                          })
+                    }
                   >
                     <Icon name="edit" />
                   </button>
                   <button
                     className="ad-icon danger"
-                    title="Delete"
-                    onClick={() => delRow(r.configID)}
+                    title={canWrite ? "Delete" : "View-only"}
+                    onClick={() =>
+                      canWrite
+                        ? delRow(r.configID)
+                        : setNoAccessModal({
+                            open: true,
+                            message: "You don't have permission to delete configurations.",
+                          })
+                    }
+                    disabled={!canWrite}
                   >
                     <Icon name="trash" />
                   </button>
@@ -246,9 +311,7 @@ export default function AccessConfig({ Icon }) {
         </button>
       </div>
 
-      {/* ===============================
-          🔹 EDIT MODAL
-         =============================== */}
+      {/* 🔹 Edit Modal */}
       {modal.open && (
         <div className="ad-modal">
           <div className="ad-modal-content ws-card">
@@ -291,9 +354,7 @@ export default function AccessConfig({ Icon }) {
         </div>
       )}
 
-      {/* ===============================
-          🔹 ADD MODAL
-         =============================== */}
+      {/* 🔹 Add Modal */}
       {addModal && (
         <div className="ad-modal">
           <div className="ad-modal-content ws-card">
@@ -302,6 +363,24 @@ export default function AccessConfig({ Icon }) {
               onCancel={() => setAddModal(false)}
               onSubmit={handleAdd}
             />
+          </div>
+        </div>
+      )}
+
+      {/* 🔹 No Access Modal */}
+      {noAccessModal.open && (
+        <div className="ad-modal">
+          <div className="ad-modal-content ws-card">
+            <h3>Access Denied</h3>
+            <p>{noAccessModal.message}</p>
+            <div className="modal-actions">
+              <button
+                className="ws-btn primary"
+                onClick={() => setNoAccessModal({ open: false, message: "" })}
+              >
+                OK
+              </button>
+            </div>
           </div>
         </div>
       )}

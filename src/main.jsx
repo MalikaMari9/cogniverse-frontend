@@ -25,7 +25,7 @@ import ContactPage from "./pages/Contact.jsx";
 import AboutPage from "./pages/About.jsx";
 import AuthPage from "./pages/Auth.jsx";
 import MaintenancePage from "./pages/MaintenancePage.jsx";
-
+import UnauthorizedPage from "./pages/UnauthorizedPage.jsx";
 /* ===============================
    👤 USER PAGES
    =============================== */
@@ -74,6 +74,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/maintenance" element={<MaintenancePage />} />
+          <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
           {/* ===============================
               🔐  AUTH

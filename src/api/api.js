@@ -429,6 +429,16 @@ export async function getGlobalMaintenance() {
   const res = await api.get("/maintenance/global");
   return res.data;
 }
+// ===============================
+// 🛠️ Permission  API
+// ===============================
+
+
+export async function getPermission(moduleKey) {
+  const res = await api.get(`/permissions/${moduleKey}`);
+  return res.data;
+}
+
 
 /* ===============================
    Default Export

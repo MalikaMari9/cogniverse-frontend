@@ -30,6 +30,7 @@ export function withGlobalMaintenanceGuard(AppComponent) {
             "/login",
             "/signup",
             "/maintenance",
+            "/unauthorized",
           ];
 
           if (allowList.some((p) => currentPath.startsWith(p))) {

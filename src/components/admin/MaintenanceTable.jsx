@@ -1,9 +1,11 @@
 // ===============================
-// MaintenanceTable.jsx — Confirm Modal Version
+// MaintenanceTable.jsx — With Permission Message
 // ===============================
+
 import React from "react";
 import { fmtDate } from "./helpers";
 import { getAllMaintenance, updateMaintenance } from "../../api/api";
+import { usePermission } from "../../hooks/usePermission";
 
 export default function MaintenanceTable({ Icon }) {
   const [rows, setRows] = React.useState([]);
@@ -11,13 +13,18 @@ export default function MaintenanceTable({ Icon }) {
   const [error, setError] = React.useState("");
   const [modal, setModal] = React.useState({ open: false, data: null });
   const [confirmModal, setConfirmModal] = React.useState({ open: false, data: null });
+  const [noAccessModal, setNoAccessModal] = React.useState({ open: false, message: "" });
+
+  const { level: permission, canRead, canWrite, loading: permLoading } =
+    usePermission("MAINTENANCE");
 
   // ===============================
-  // 🔹 FETCH MAINTENANCE
+  // 🔹 HANDLE PERMISSIONS + FETCH
   // ===============================
   React.useEffect(() => {
-    fetchMaintenance();
-  }, []);
+    if (permLoading) return;
+    if (canRead) fetchMaintenance();
+  }, [permLoading, canRead]);
 
   const fetchMaintenance = async () => {
     setLoading(true);
@@ -41,9 +48,24 @@ export default function MaintenanceTable({ Icon }) {
   };
 
   // ===============================
-  // 🔹 TOGGLE WITH CONFIRMATION
+  // 🔹 PERMISSION CHECK HELPERS
+  // ===============================
+  const requireWrite = (actionName = "modify") => {
+    if (!canWrite) {
+      setNoAccessModal({
+        open: true,
+        message: `You don't have permission to ${actionName} maintenance settings.`,
+      });
+      return false;
+    }
+    return true;
+  };
+
+  // ===============================
+  // 🔹 TOGGLE + MESSAGE UPDATE
   // ===============================
   const openConfirm = (r) => {
+    if (!requireWrite("toggle")) return;
     setConfirmModal({ open: true, data: r });
   };
 
@@ -59,10 +81,8 @@ export default function MaintenanceTable({ Icon }) {
     }
   };
 
-  // ===============================
-  // 🔹 UPDATE MESSAGE
-  // ===============================
   const saveMessage = async () => {
+    if (!requireWrite("edit message")) return;
     try {
       await updateMaintenance(modal.data.module_key, {
         message: modal.data.message,
@@ -78,10 +98,37 @@ export default function MaintenanceTable({ Icon }) {
   // ===============================
   // 🔹 RENDER
   // ===============================
+  if (permLoading) {
+    return (
+      <section className="ad-card ws-card">
+        <div className="ad-loading">Checking permissions...</div>
+      </section>
+    );
+  }
+
+  // 🚫 No permission at all
+  if (permission === "none") {
+    return (
+      <section className="ad-card ws-card ad-empty">
+        <h2 style={{ color: "var(--ink-1)" }}>Access Denied</h2>
+        <p style={{ color: "var(--ink-3)", marginTop: 6 }}>
+          You don’t have permission to view Maintenance Control.  
+          Please contact your system administrator if you believe this is an error.
+        </p>
+      </section>
+    );
+  }
+
+  // ✅ Authorized (read/write)
   return (
     <section className="ad-card ws-card">
       <div className="ad-topbar" style={{ marginBottom: 12 }}>
         <h3>Maintenance Control</h3>
+        {permission && (
+          <span className="perm-label">
+            Access Level: <b>{permission}</b>
+          </span>
+        )}
       </div>
 
       {loading && <div className="ad-loading">Loading maintenance...</div>}
@@ -104,31 +151,40 @@ export default function MaintenanceTable({ Icon }) {
               <tr key={r.maintenanceid}>
                 <td className="mono">{r.maintenanceid}</td>
                 <td>{r.module_key}</td>
-<td>
-  <span
-    className={`status-pill ${r.under_maintenance ? "inactive" : "active"}`}
-  >
-    {r.under_maintenance ? "Under Maintenance" : "Active"}
-  </span>
-</td>
-<td>{r.message}</td>
-<td className="mono">{r.updated_at}</td>
-<td className="actions">
-  <button
-    className={`ws-btn ${r.under_maintenance ? "primary" : "danger"}`}
-    onClick={() => openConfirm(r)}
-  >
-    {r.under_maintenance ? "Disable Maintenance" : "Enable Maintenance"}
-  </button>
-  <button
-    className="ad-icon"
-    title="Edit message"
-    onClick={() => setModal({ open: true, data: r })}
-  >
-    <Icon name="edit" />
-  </button>
-</td>
-
+                <td>
+                  <span
+                    className={`status-pill ${r.under_maintenance ? "inactive" : "active"}`}
+                  >
+                    {r.under_maintenance ? "Under Maintenance" : "Active"}
+                  </span>
+                </td>
+                <td>{r.message}</td>
+                <td className="mono">{r.updated_at}</td>
+                <td className="actions">
+                  <button
+                    className={`ws-btn ${r.under_maintenance ? "primary" : "danger"}`}
+                    onClick={() => openConfirm(r)}
+                    disabled={!canWrite}
+                    title={!canWrite ? "Read-only access" : ""}
+                  >
+                    {r.under_maintenance ? "Disable Maintenance" : "Enable Maintenance"}
+                  </button>
+                  <button
+                    className="ad-icon"
+                    title={canWrite ? "Edit message" : "View-only"}
+                    onClick={() =>
+                      canWrite
+                        ? setModal({ open: true, data: r })
+                        : setNoAccessModal({
+                            open: true,
+                            message:
+                              "You don't have permission to edit maintenance messages.",
+                          })
+                    }
+                  >
+                    <Icon name="edit" />
+                  </button>
+                </td>
               </tr>
             ))}
             {rows.length === 0 && !loading && (
@@ -197,6 +253,24 @@ export default function MaintenanceTable({ Icon }) {
                 onClick={() => setConfirmModal({ open: false, data: null })}
               >
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🔹 No Access Modal */}
+      {noAccessModal.open && (
+        <div className="ad-modal">
+          <div className="ad-modal-content ws-card">
+            <h3>Access Denied</h3>
+            <p>{noAccessModal.message}</p>
+            <div className="modal-actions">
+              <button
+                className="ws-btn primary"
+                onClick={() => setNoAccessModal({ open: false, message: "" })}
+              >
+                OK
               </button>
             </div>
           </div>

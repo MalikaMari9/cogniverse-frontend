@@ -154,24 +154,24 @@ export default function Admin() {
 
       <main className="ad-main">
         <header className="ad-head ws-card">
-          <div className="title">
-            {tab === "config" && "Access Config"}
-            {tab === "maintenance" && <MaintenanceTable Icon={Icon} />}
+  <div className="title">
+    {tab === "config" && "Access Config"}
+    {tab === "maintenance" && "System Maintenance"}
+    {tab === "syslog" && "System Log"}
+    {tab === "access" && "Access Control"}
+    {tab === "announcements" && "Announcements"}
+    {tab === "notify" && "Notification"}
+  </div>
+</header>
 
-            {tab === "syslog" && "System Log"}
-            {tab === "access" && "Access Control"}
-            {tab === "announcements" && "Announcements"}
-            {tab === "notify" && "Notification"}
-          </div>
-        </header>
+{/* ✅ Move table components here in main section */}
+{tab === "config" && <AccessConfig Icon={Icon} />}
+{tab === "maintenance" && <MaintenanceTable Icon={Icon} />}
+{tab === "syslog" && <SystemLogTable />}
+{tab === "access" && <AccessControlTable Icon={Icon} />}
+{tab === "announcements" && <AnnouncementTable Icon={Icon} />}
+{tab === "notify" && <NotificationTable />}
 
-        {tab === "config" && <AccessConfig Icon={Icon} />}
-        {tab === "maintenance" && "System Maintenance"}
-
-        {tab === "syslog" && <SystemLogTable  />}
-        {tab === "access" && <AccessControlTable Icon={Icon} />}
-        {tab === "announcements" && <AnnouncementTable Icon={Icon} />}
-        {tab === "notify" && <NotificationTable />}
 
         {!["config", "syslog", "access", "announcements", "notify"].includes(tab) && (
           <section className="ad-card ws-card ad-empty">

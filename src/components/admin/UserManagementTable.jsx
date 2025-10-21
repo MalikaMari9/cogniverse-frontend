@@ -6,6 +6,7 @@ import {
   updateUser,
   changeUserStatus,
   deleteUser,
+  hardDeleteUser, // 🆕 ADD THIS IMPORT
   bulkChangeUserStatus,
   bulkDeleteUsers,
 } from "../../api/api";
@@ -153,6 +154,21 @@ export default function UserManagementTable() {
     }
   };
 
+  const handleHardDelete = async (userId) => {
+  if (!requireWrite("hard delete")) return;
+  
+  if (!window.confirm("⚠️ DANGER: Are you sure you want to PERMANENTLY delete this user? This action cannot be undone and will remove all user data from the database!")) return;
+
+  try {
+    await hardDeleteUser(userId);
+    loadUsers();
+    setError("User permanently deleted successfully");
+  } catch (err) {
+    console.error("❌ Failed to hard delete user:", err);
+    setError(err.response?.data?.detail || "Failed to permanently delete user");
+  }
+};
+
   const handleBulkStatusChange = async (newStatus) => {
     if (!requireWrite("change status")) return;
     if (selectedUsers.size === 0) return;
@@ -291,7 +307,7 @@ export default function UserManagementTable() {
             <option value="all">All roles</option>
             <option value="user">User</option>
             <option value="admin">Admin</option>
-            <option value="moderator">Moderator</option>
+            <option value="superadmin">Super Admin</option>
           </select>
           <select
             className="adm-select"
@@ -404,46 +420,70 @@ export default function UserManagementTable() {
                   </td>
                   <td className="muted">{fmtDate(user.created_at)}</td>
                   <td className="actions">
-                    <button
-                      className="ws-btn ghost sm"
-                      title="Edit"
-                      onClick={() => {
-                        setEditModal({ open: true, user });
-                        setEditFormData({
-                          username: user.username,
-                          email: user.email,
-                          role: user.role,
-                          status: user.status,
-                        });
-                      }}
-                    >
-                      Edit
-                    </button>
-                    {user.status === "active" ? (
-                      <button
-                        className="ws-btn warning sm"
-                        title="Suspend"
-                        onClick={() => handleStatusChange(user.userid, "suspended")}
-                      >
-                        Suspend
-                      </button>
-                    ) : (
-                      <button
-                        className="ws-btn success sm"
-                        title="Activate"
-                        onClick={() => handleStatusChange(user.userid, "active")}
-                      >
-                        Activate
-                      </button>
-                    )}
-                    <button
-                      className="ws-btn danger sm"
-                      title="Delete"
-                      onClick={() => handleDeleteUser(user.userid)}
-                    >
-                      Delete
-                    </button>
-                  </td>
+  <button
+    className="ws-btn ghost sm"
+    title="Edit"
+    onClick={() => {
+      setEditModal({ open: true, user });
+      setEditFormData({
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+      });
+    }}
+  >
+    Edit
+  </button>
+  
+  {user.status === "active" ? (
+    <button
+      className="ws-btn warning sm"
+      title="Suspend"
+      onClick={() => handleStatusChange(user.userid, "suspended")}
+    >
+      Suspend
+    </button>
+  ) : user.status === "suspended" ? (
+    <button
+      className="ws-btn success sm"
+      title="Activate"
+      onClick={() => handleStatusChange(user.userid, "active")}
+    >
+      Activate
+    </button>
+  ) : null}
+  
+  {/* Show Hard Delete only when viewing deleted users */}
+  {status === "deleted" && user.status === "deleted" ? (
+    <>
+      <button
+        className="ws-btn success sm"
+        title="Activate"
+        onClick={() => handleStatusChange(user.userid, "active")}
+      >
+        Activate
+      </button>
+      
+      <button
+        className="ws-btn danger sm hard-delete"
+        title="Permanently Delete"
+        onClick={() => handleHardDelete(user.userid)}
+        style={{ fontSize: '0.875rem', padding: '0.5rem 0.5rem' }} // Force small size
+      >
+        Hard Delete
+      </button>
+    </>
+  ) : user.status !== "deleted" ? (
+    <button
+      className="ws-btn danger sm"
+      title="Delete (Soft)"
+      onClick={() => handleDeleteUser(user.userid)}
+    >
+      Delete
+    </button>
+  ) : null}
+</td>
                 </tr>
               ))
             )}
@@ -513,8 +553,8 @@ export default function UserManagementTable() {
                   onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                 >
                   <option value="user">User</option>
-                  <option value="moderator">Moderator</option>
                   <option value="admin">Admin</option>
+                  <option value="superadmin">Super Admin</option>
                 </select>
               </div>
               <div className="modal-actions">
@@ -561,8 +601,8 @@ export default function UserManagementTable() {
                   onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value })}
                 >
                   <option value="user">User</option>
-                  <option value="moderator">Moderator</option>
                   <option value="admin">Admin</option>
+                  <option value="superadmin">Super Admin</option>
                 </select>
               </div>
               <div className="form-group">

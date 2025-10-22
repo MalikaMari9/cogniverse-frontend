@@ -12,7 +12,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AppRoot from "./AppRoot.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import { withGlobalMaintenanceGuard } from "./components/withGlobalMaintenanceGuard.jsx";
-
+import PaymentPage from "./pages/payment.jsx";
 import "./styles.css";
 
 /* ===============================
@@ -150,6 +150,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route path="/testadm" element={<AdminTest />} />
           <Route path="/agentnodes" element={<AgentNode />} />
           <Route path="/sessionMonitor" element={<SessionMonitor />} />
+          <Route path="/payment" element={<PaymentPage />} />
 
           {/* ===============================
               🚧  FALLBACK

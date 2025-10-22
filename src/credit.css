@@ -1,0 +1,230 @@
+/* ===== Credits Page (clean, complete) ===== */
+.credit-page{
+  min-height: 100dvh;
+  position: relative;
+  overflow-x: clip; /* avoid scrollbars with drifting layers */
+}
+
+/* Put content above the star layers */
+.credit-page nav,
+.credit-page .credit-hero,
+.credit-page .credit-wrap,
+.credit-page .credit-footer{ position: relative; z-index: 1; }
+
+/* --- Galaxy starfield: 2 parallax layers + soft nebula --- */
+.credit-page::before{
+  /* nebula / glow */
+  content:"";
+  position: fixed; inset: -2% -2% -2% -2%;
+  pointer-events:none; z-index: 0;
+  background:
+    radial-gradient(1200px 600px at 20% -10%, rgba(122,92,244,.16), transparent 60%),
+    radial-gradient(900px 500px at 80% 10%,  rgba(83,240,233,.12), transparent 62%),
+    radial-gradient(600px 360px at 10% 80%,  rgba(240,107,197,.10), transparent 70%);
+  filter: saturate(1.05);
+}
+
+.credit-page::after{
+  /* main stars */
+  content:"";
+  position: fixed; inset: -10% -10% -10% -10%;
+  pointer-events:none; z-index: 0;
+  background-image:
+    radial-gradient(1px 1px at 25px 40px,  rgba(255,255,255,.85) 1px, transparent 1.1px),
+    radial-gradient(1px 1px at 140px 120px, rgba(255,255,255,.70) 1px, transparent 1.1px),
+    radial-gradient(1px 1px at 60px 170px,  rgba(255,255,255,.80) 1px, transparent 1.1px),
+    radial-gradient(1px 1px at 180px 90px,  rgba(255,255,255,.85) 1px, transparent 1.1px);
+  background-size: 200px 200px, 260px 260px, 180px 180px, 300px 300px;
+  animation: starDrift 120s linear infinite;
+  opacity: .55;
+}
+.credit-hero::before{
+  /* sparse, twinkly foreground specks */
+  content:"";
+  position:absolute; inset:-20px;
+  pointer-events:none; z-index:0;
+  background-image:
+    radial-gradient(1px 1px at 40px 60px,  rgba(255,255,255,.9) 1px, transparent 1.1px),
+    radial-gradient(1px 1px at 120px 10px, rgba(255,255,255,.9) 1px, transparent 1.1px);
+  background-size: 180px 180px, 220px 220px;
+  animation: twinkle 3.8s ease-in-out infinite alternate;
+  opacity:.35;
+}
+
+/* Theme tuning */
+[data-theme='light'] .credit-page::after{ opacity:.32; }
+[data-theme='dark']  .credit-page::after{ opacity:.66; }
+
+/* Drift (we animate the layer, not background-position, for GPU-friendly transform) */
+@keyframes starDrift{
+  from{ transform: translateY(0); }
+  to  { transform: translateY(-220px); }
+}
+@keyframes twinkle{
+  0%{ opacity:.18; transform: translateY(0); }
+  50%{ opacity:.46; }
+  100%{ opacity:.26; transform: translateY(-1px); }
+}
+
+/* ===== Hero ===== */
+.credit-hero{
+  padding: 36px 16px 12px;
+  display:grid; place-items:center;
+  position:relative;
+}
+.credit-title{
+  margin: 4px 0 6px;
+  font-size: clamp(28px, 5vw, 44px);
+  line-height: 1.05;
+  text-align:center;
+}
+.credit-sub{
+  max-width: 760px;
+  text-align:center;
+  opacity:.9;
+  margin: 2px auto 4px;
+}
+
+/* ===== Layout ===== */
+.credit-wrap{
+  width: min(1100px, 92vw);
+  margin: 0 auto;
+  padding: 12px 12px 80px;
+}
+.grid-credits{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(260px, 1fr));
+  gap: 18px;
+}
+@media (max-width: 780px){
+  .grid-credits{ grid-template-columns: 1fr; }
+}
+
+/* ===== Pack cards ===== */
+.pack{
+  position:relative;
+  border-radius: 18px;
+  padding: 18px 16px;
+  background: var(--card);
+  border: 1px solid rgba(0,0,0,.06);
+  box-shadow: var(--shadow);
+  overflow:hidden;
+  will-change: transform, box-shadow;
+  transition:
+    transform .45s cubic-bezier(.22,.61,.36,1),
+    box-shadow .45s cubic-bezier(.22,.61,.36,1),
+    filter .45s ease;
+}
+[data-theme='dark'] .pack{
+  background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.05));
+  border-color: rgba(255,255,255,.12);
+}
+
+/* Glowing rim (tinted per pack tone) */
+.pack::before{
+  content:""; position:absolute; inset:-1px;
+  border-radius: 20px; padding:1px;
+  background:
+    radial-gradient(130% 70% at 30% 0%, rgba(83,240,233,.22), transparent 40%),
+    radial-gradient(130% 70% at 70% 0%, rgba(122,92,244,.20), transparent 42%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  opacity:.65; pointer-events:none;
+  transition: opacity .35s ease, filter .35s ease;
+}
+.pack.is-cyan::before   { background: radial-gradient(130% 70% at 30% 0%, rgba(83,240,233,.28), transparent 42%), radial-gradient(130% 70% at 70% 0%, rgba(76,123,255,.15), transparent 45%); }
+.pack.is-violet::before { background: radial-gradient(130% 70% at 30% 0%, rgba(122,92,244,.28), transparent 42%), radial-gradient(130% 70% at 70% 0%, rgba(240,107,197,.18), transparent 45%); }
+.pack.is-pink::before   { background: radial-gradient(130% 70% at 30% 0%, rgba(240,107,197,.28), transparent 42%), radial-gradient(130% 70% at 70% 0%, rgba(122,92,244,.18), transparent 45%); }
+.pack.is-teal::before   { background: radial-gradient(130% 70% at 30% 0%, rgba(53,200,196,.28), transparent 42%), radial-gradient(130% 70% at 70% 0%, rgba(122,92,244,.18), transparent 45%); }
+
+/* Sheen sweep on hover */
+.pack::after{
+  content:"";
+  position:absolute; inset:-40% -120% -40% -120%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.22), transparent);
+  transform: translateX(-60%) rotate(25deg);
+  transition: transform .9s cubic-bezier(.22,.61,.36,1), opacity .6s ease;
+  opacity: .0; pointer-events:none;
+}
+
+/* Hover/focus states — nicer lift + glow + sheen */
+.pack:hover,
+.pack:focus-within{
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 0 16px 36px rgba(0,0,0,.20), var(--shadow);
+  filter: saturate(1.02);
+}
+.pack:hover::before,
+.pack:focus-within::before{ opacity:.95; filter: saturate(1.06); }
+.pack:hover::after,
+.pack:focus-within::after{ transform: translateX(60%) rotate(25deg); opacity:.85; }
+
+/* Top row */
+.pack-top{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.pack-icon{
+  width:48px; height:48px; display:grid; place-items:center; border-radius:12px;
+  background: linear-gradient(180deg, rgba(255,255,255,.09), var(--bg-accent));
+  border: 1px solid rgba(0,0,0,.06);
+  box-shadow: var(--shadow);
+  transition: transform .35s cubic-bezier(.22,.61,.36,1);
+}
+[data-theme='dark'] .pack-icon{
+  background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.06));
+  border-color: rgba(255,255,255,.10);
+}
+.pack:hover .pack-icon{ transform: translateY(-2px) scale(1.03); }
+
+.ico{ width:26px; height:26px; color: currentColor; }
+
+.chip{
+  font-size: 12px; line-height:1; padding: 7px 10px; border-radius: 999px;
+  color:#fff; background: linear-gradient(90deg, var(--violet), var(--blue));
+  filter: drop-shadow(0 6px 14px rgba(76,123,255,.28));
+}
+
+/* Text & price */
+.pack-name{ margin: 12px 0 4px; font-size: clamp(18px, 2.2vw, 22px); }
+.pack-price{ display:flex; align-items:baseline; gap: 3px; margin: 2px 0 8px; }
+.pack-price .currency{ opacity:.85; }
+.pack-price .amount{ font-size: clamp(28px, 3.6vw, 36px); font-weight: 800; letter-spacing:.2px; }
+.pack-price .per{ font-size: 13px; opacity:.8; }
+
+/* Points */
+.pack-points{ list-style: none; padding:0; margin: 8px 0 14px; display:flex; flex-direction:column; gap:6px; }
+.pack-points li::before{ content:"✓ "; color: var(--teal); }
+
+/* Buttons */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center;
+  padding: 12px 16px; border-radius: 12px; border:1px solid rgba(0,0,0,.06);
+  background: var(--bg-accent); color: var(--text); cursor:pointer;
+  transition: transform .28s, box-shadow .28s, background-position .6s;
+}
+.btn.primary{
+  color:#fff; border:none;
+  background: linear-gradient(90deg, var(--cyan), var(--violet), var(--pink));
+  background-size: 200% 100%; background-position: 0% 50%;
+  filter: drop-shadow(0 8px 16px rgba(122,92,244,.35));
+}
+.btn.primary:hover{ transform: translateY(-2px) scale(1.02); background-position: 100% 50%; }
+
+/* Info card */
+.credit-faq.card{
+  margin-top: 22px; padding: 16px;
+  border-radius: 16px; background: var(--card);
+  border: 1px solid rgba(0,0,0,.06);
+  box-shadow: var(--shadow);
+}
+[data-theme='dark'] .credit-faq.card{
+  background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.05));
+  border-color: rgba(255,255,255,.12);
+}
+
+/* Footer */
+.credit-footer{ text-align:center; padding: 32px 12px 64px; opacity:.85; }
+
+/* ===== Reveal micro-animations (matches your pattern) ===== */
+.reveal{ opacity:0; transform: translateY(16px); }
+.reveal.reveal-in{ opacity:1; transform:none; transition: opacity .6s ease, transform .6s ease; transition-delay: var(--reveal-delay, 0ms); }
+.reveal-down{ transform: translateY(-10px); }
+.reveal.fade{ transform:none; }

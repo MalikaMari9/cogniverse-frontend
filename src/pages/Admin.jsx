@@ -13,6 +13,7 @@ import AccessControlTable from "../components/admin/AccessControlTable.jsx";
 import AnnouncementTable from "../components/admin/AnnouncementTable.jsx";
 import NotificationTable from "../components/admin/NotificationTable.jsx";
 import MaintenanceTable from "../components/admin/MaintenanceTable.jsx";
+import UserManagementTable from "../components/admin/UserManagementTable.jsx"; // 🆕 ADD THIS
 
 // 🧩 Shared helpers (optional, if needed here)
 import { fmtDate, StatusPill } from "../components/admin//helpers.jsx";
@@ -65,6 +66,15 @@ const Icon = ({ name, size = 18 }) => {
           <rect x="3" y="4" width="14" height="18" rx="2" />
           <path d="M7 8h6M7 12h6M7 16h4" />
           <path d="M17 8h4v12a2 2 0 0 1-2 2h-2" />
+        </svg>
+      );
+    case "users": // 🆕 ADD USER MANAGEMENT ICON
+      return (
+        <svg {...props}>
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
         </svg>
       );
     case "plus":
@@ -154,26 +164,27 @@ export default function Admin() {
 
       <main className="ad-main">
         <header className="ad-head ws-card">
-  <div className="title">
-    {tab === "config" && "Access Config"}
-    {tab === "maintenance" && "System Maintenance"}
-    {tab === "syslog" && "System Log"}
-    {tab === "access" && "Access Control"}
-    {tab === "announcements" && "Announcements"}
-    {tab === "notify" && "Notification"}
-  </div>
-</header>
+        <div className="title">
+          {tab === "config" && "Access Config"}
+          {tab === "maintenance" && "System Maintenance"}
+          {tab === "syslog" && "System Log"}
+          {tab === "access" && "Access Control"}
+          {tab === "announcements" && "Announcements"}
+          {tab === "notify" && "Notification"}
+          {tab === "users" && "User Management"} {/* 🆕 ADD THIS */}
+        </div>
+      </header>
 
-{/* ✅ Move table components here in main section */}
-{tab === "config" && <AccessConfig Icon={Icon} />}
-{tab === "maintenance" && <MaintenanceTable Icon={Icon} />}
-{tab === "syslog" && <SystemLogTable />}
-{tab === "access" && <AccessControlTable Icon={Icon} />}
-{tab === "announcements" && <AnnouncementTable Icon={Icon} />}
-{tab === "notify" && <NotificationTable />}
+        {/* ✅ Move table components here in main section */}
+        {tab === "config" && <AccessConfig Icon={Icon} />}
+        {tab === "maintenance" && <MaintenanceTable Icon={Icon} />}
+        {tab === "syslog" && <SystemLogTable />}
+        {tab === "access" && <AccessControlTable Icon={Icon} />}
+        {tab === "announcements" && <AnnouncementTable Icon={Icon} />}
+        {tab === "notify" && <NotificationTable />}
+        {tab === "users" && <UserManagementTable />} {/* 🆕 ADD THIS */}
 
-
-        {!["config", "syslog", "access", "announcements", "notify"].includes(tab) && (
+        {!["config", "syslog", "access", "announcements", "notify", "users"].includes(tab) && (
           <section className="ad-card ws-card ad-empty">
             Coming soon: {tab}
           </section>
@@ -182,4 +193,3 @@ export default function Admin() {
     </div>
   );
 }
-

@@ -405,6 +405,8 @@
 .adm-table thead th:nth-child(7){ width: 150px; } /* updated_at */
 .adm-table thead th:nth-child(8){ width: 96px;  } /* actions (room for edit+delete) */
 
+
+
 .status-pill {
   display: inline-block;
   padding: 2px 8px;

@@ -258,7 +258,7 @@ const DEFAULT_AVATAR =
 
 /* ================= Page ================= */
 
- export default function ProfilePage() {
+ export function ProfilePage() {
 
   const [form, setForm] = React.useState({
     username: "",
@@ -953,3 +953,10 @@ const handleDownloadInvoices = () => {
   );
 }
 
+import { withMaintenanceGuard } from "../components/withMaintenanceGuard";
+
+
+
+// ✅ Default export (guarded version)
+const GuardedWorkstation = withMaintenanceGuard(ProfilePage, "Profile");
+export default GuardedWorkstation;

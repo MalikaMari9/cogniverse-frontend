@@ -464,18 +464,21 @@ useEffect(() => {
 
   // Restore any local draft before fetching real data
   useEffect(() => {
-    const draft = localStorage.getItem(`proj-${projectid}-draftAgents`);
-    if (draft) {
-      try {
-        const parsed = JSON.parse(draft);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          console.log("📦 Restored draft agent selection:", parsed);
-          setSelected(parsed);
-        }
-      } catch {
-        console.warn("⚠️ Failed to parse local draft");
-      }
+const draft = localStorage.getItem(`proj-${projectid}-draftAgents`);
+if (draft) {
+  try {
+    const parsed = JSON.parse(draft);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      console.log("📦 Restored draft agent selection:", parsed);
+      // Add this filter:
+      const cleaned = parsed.filter(a => a && a.agentid);
+      setSelected(cleaned);
     }
+  } catch {
+    console.warn("⚠️ Failed to parse local draft");
+  }
+}
+
   }, [projectid]);
 
   // 🔁 Parallel load for agents + project agents

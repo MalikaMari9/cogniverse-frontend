@@ -5,8 +5,9 @@ import React, { useEffect, useState } from "react";
 import "../ws_css.css";
 import { WorkstationHubSidebar } from "../components/Sidebar";
 import { SvgIcon } from "./Workstation";
-import { getProjects, createProject } from "../api/api";
+import { getProjects, createProject, updateProject } from "../api/api";
 import { useNavigate } from "react-router-dom";
+import { usePermission } from "../hooks/usePermission";
 
 /* ---------- Create Project Modal ---------- */
 function CreateProjectModal({ open, onClose, onSubmit }) {
@@ -133,6 +134,111 @@ function CreateProjectModal({ open, onClose, onSubmit }) {
     </div>
   );
 }
+/* ---------- Edit Project Modal ---------- */
+function EditProjectModal({ open, onClose, project, onSubmit }) {
+  const [title, setTitle] = useState(project?.projectname || "");
+  const [desc, setDesc] = useState(project?.project_desc || "");
+
+  useEffect(() => {
+    if (project) {
+      setTitle(project.projectname);
+      setDesc(project.project_desc || "");
+    }
+  }, [project]);
+
+  if (!open) return null;
+
+  return (
+    <div className="ws-modal-layer fade-in">
+      <div className="ws-backdrop-content" onClick={onClose} />
+      <div
+        className="ws-card ws-modal ws-center-over-content"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: "min(480px, 92vw)",
+          zIndex: 600,
+          padding: "24px 28px",
+          borderRadius: "20px",
+          boxShadow: "0 12px 48px rgba(0,0,0,0.25)",
+          animation: "popIn 0.3s ease",
+        }}
+      >
+        <h3
+          style={{
+            fontSize: "1.4rem",
+            marginBottom: "16px",
+            textAlign: "center",
+            fontWeight: 600,
+          }}
+        >
+          ✏️ Edit Project
+        </h3>
+
+        <label style={{ display: "block", marginBottom: "16px" }}>
+          <span style={{ display: "block", marginBottom: "6px", fontWeight: 500 }}>
+            Project Title
+          </span>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Enter project title"
+            style={{
+              width: "100%",
+              padding: "10px 12px",
+              borderRadius: "10px",
+              border: "1px solid var(--border-color, #ccc)",
+              background: "var(--bg-alt, #fafafa)",
+            }}
+          />
+        </label>
+
+        <label style={{ display: "block", marginBottom: "24px" }}>
+          <span style={{ display: "block", marginBottom: "6px", fontWeight: 500 }}>
+            Description
+          </span>
+          <textarea
+            rows={3}
+            value={desc}
+            onChange={(e) => setDesc(e.target.value)}
+            placeholder="Short description..."
+            style={{
+              width: "100%",
+              padding: "10px 12px",
+              borderRadius: "10px",
+              border: "1px solid var(--border-color, #ccc)",
+              background: "var(--bg-alt, #fafafa)",
+              resize: "none",
+            }}
+          />
+        </label>
+
+        <div
+          className="ws-modal-actions"
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: "12px",
+            marginTop: "12px",
+          }}
+        >
+          <button className="ws-btn ghost" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            className="ws-btn primary"
+            onClick={() => {
+              onSubmit({ projectid: project.projectid, title, desc });
+              onClose();
+            }}
+            disabled={!title.trim()}
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 /* ---------- Hub Page ---------- */
 export default function WorkstationHub() {
@@ -150,7 +256,22 @@ export default function WorkstationHub() {
   const [openCreate, setOpenCreate] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+const [noAccessModal, setNoAccessModal] = useState({ open: false, message: "" });
+const { level: permission, canRead, canWrite, loading: permLoading } =
+  usePermission("PROJECTS");
+const [openEdit, setOpenEdit] = useState({ open: false, project: null });
 
+
+  const requireWrite = (action = "create projects") => {
+  if (!canWrite) {
+    setNoAccessModal({
+      open: true,
+      message: `You don't have permission to ${action}.`,
+    });
+    return false;
+  }
+  return true;
+};
 
     // 🔁 Reload projects list
   const reloadProjects = async () => {
@@ -180,7 +301,8 @@ export default function WorkstationHub() {
   };
 
   /* ---------- Fetch projects on load ---------- */
-  useEffect(() => {
+useEffect(() => {
+  if (!permLoading && canRead) {
     (async () => {
       try {
         const res = await getProjects();
@@ -192,7 +314,9 @@ export default function WorkstationHub() {
         setLoading(false);
       }
     })();
-  }, []);
+  }
+}, [permLoading, canRead]);
+
 
   /* ---------- Create project ---------- */
   const handleCreateProject = async (data) => {
@@ -216,11 +340,33 @@ setTimeout(() => {
     }
   };
 
+  const handleEditProject = async (data) => {
+  try {
+    const payload = {
+      projectname: data.title,
+      project_desc: data.desc,
+    };
+    await updateProject(data.projectid, payload); // ensure you import updateProject
+    await reloadProjects();
+  } catch (err) {
+    console.error("Failed to update project:", err);
+    alert("Error updating project: " + err.message);
+  }
+};
+
+
   /* ---------- Open existing project ---------- */
 const handleOpenExisting = (project) => {
   navigate(`/workstation/${project.projectid}`);
 };
 
+if (permLoading) return <p className="hub-loading">Checking permissions...</p>;
+
+if (permission === "none") {
+  // 🚫 Redirect if no permission
+  navigate("/unauthorized");
+  return null;
+}
 
   return (
     <div className="hub-page ws-page">
@@ -257,9 +403,18 @@ const handleOpenExisting = (project) => {
           ) : projects.length === 0 ? (
            <div className="hub-empty">
   <p>🗂️ No projects yet. Ready to create your first one?</p>
-  <button className="ws-btn primary" onClick={() => setOpenCreate(true)}>
-    + Create Project
-  </button>
+ <button
+  className="ws-btn primary"
+  onClick={() => {
+    if (!requireWrite("create new projects")) return;
+    setOpenCreate(true);
+  }}
+  disabled={!canWrite}
+  title={!canWrite ? "Read-only access" : ""}
+>
+  + {permission === "read" ? "View Projects" : "Create Project"}
+</button>
+
 </div>
 
           ) : (
@@ -296,6 +451,17 @@ const handleOpenExisting = (project) => {
                     >
                       Continue
                     </button>
+                    <button
+    className="ws-btn ghost"
+    onClick={() => {
+      if (!requireWrite("edit projects")) return;
+      setOpenEdit({ open: true, project: p });
+    }}
+    disabled={!canWrite}
+    title={!canWrite ? "Read-only access" : ""}
+  >
+    Edit
+  </button>
                   </div>
                 </div>
               ))}
@@ -332,9 +498,18 @@ const handleOpenExisting = (project) => {
         </section>
 
         <section className="hub-new">
-          <button className="ws-btn primary" onClick={() => setOpenCreate(true)}>
-            + Start New Project
-          </button>
+<button
+  className="ws-btn primary"
+  onClick={() => {
+    if (!requireWrite("create new projects")) return;
+    setOpenCreate(true);
+  }}
+  disabled={!canWrite}
+  title={!canWrite ? "Read-only access" : ""}
+>
+  + {permission === "read" ? "View Projects" : "Create Project"}
+</button>
+
         </section>
       </main>
 
@@ -343,6 +518,29 @@ const handleOpenExisting = (project) => {
         onClose={() => setOpenCreate(false)}
         onSubmit={handleCreateProject}
       />
+      <EditProjectModal
+  open={openEdit.open}
+  project={openEdit.project}
+  onClose={() => setOpenEdit({ open: false, project: null })}
+  onSubmit={handleEditProject}
+/>
+      {noAccessModal.open && (
+  <div className="ad-modal">
+    <div className="ad-modal-content ws-card">
+      <h3>Access Denied</h3>
+      <p>{noAccessModal.message}</p>
+      <div className="modal-actions">
+        <button
+          className="ws-btn primary"
+          onClick={() => setNoAccessModal({ open: false, message: "" })}
+        >
+          OK
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 }

@@ -33,6 +33,8 @@ export default function ScenarioPage({
   const [scenarios, setScenarios] = useState([]); // ✅ store history
   const boundsRef = useRef(null);
   const [currentScenario, setCurrentScenario] = useState(null);
+  // ✅ Prevent crash from undefined agents
+  const validAgents = (selectedAgents || []).filter(a => a && a.agentid);
 
   // local theme label that always flips correctly
   const [t, setT] = useState(() =>
@@ -108,59 +110,64 @@ export default function ScenarioPage({
   };
 
   // ---------------- node layout: always visible, evenly spaced ----------------
-  const layoutNodes = useCallback(() => {
-    const el = boundsRef.current;
-    if (!el) return;
+// ---------------- node layout: always visible, evenly spaced ----------------
+const layoutNodes = () => {
+  const el = boundsRef.current;
+  if (!el || !validAgents || validAgents.length === 0) {
+    setNodes([]); // clear old nodes if no agents
+    return;
+  }
 
-    const W = el.clientWidth;
-    const H = el.clientHeight;
-    const PAD = 72;
-    const n = Math.max(1, selectedAgents.length);
-    const cx = W / 2;
-    const cy = H / 2;
-    const R = Math.max(40, Math.min(W, H) / 2 - PAD);
+  const W = el.clientWidth;
+  const H = el.clientHeight;
+  const PAD = 72;
+  const n = Math.max(1, validAgents.length);
+  const cx = W / 2;
+  const cy = H / 2;
+  const R = Math.max(40, Math.min(W, H) / 2 - PAD);
 
-    if (n === 1) {
-      const ag = selectedAgents[0];
-      setNodes([
-        {
-          id: ag.agentid,
-          name: ag.agentname,
-          projectagentid: ag.projectagentid,
-          icon: ag.icon || "user",
-          x: Math.round(cx),
-          y: Math.round(cy),
-        },
-      ]);
-      return;
-    }
+  const pts =
+    n === 1
+      ? [
+          {
+            id: validAgents[0].agentid,
+            name: validAgents[0].agentname,
+            projectagentid: validAgents[0].projectagentid,
+            icon: validAgents[0].icon || "user",
+            x: Math.round(cx),
+            y: Math.round(cy),
+          },
+        ]
+      : validAgents.map((ag, i) => {
+          const t = -Math.PI / 2 + (i * 2 * Math.PI) / n;
+          const x = Math.max(PAD, Math.min(W - PAD, cx + R * Math.cos(t)));
+          const y = Math.max(PAD, Math.min(H - PAD, cy + R * Math.sin(t)));
+          return {
+            id: ag.agentid,
+            name: ag.agentname,
+            projectagentid: ag.projectagentid,
+            icon: ag.icon || "user",
+            x: Math.round(x),
+            y: Math.round(y),
+          };
+        });
 
-    const pts = selectedAgents.map((ag, i) => {
-      const t = -Math.PI / 2 + (i * 2 * Math.PI) / n;
-      const x = cx + R * Math.cos(t);
-      const y = cy + R * Math.sin(t);
-      const xC = Math.max(PAD, Math.min(W - PAD, x));
-      const yC = Math.max(PAD, Math.min(H - PAD, y));
-      return {
-        id: ag.agentid,
-        name: ag.agentname,
-        projectagentid: ag.projectagentid,
-        icon: ag.icon || "user",
-        x: Math.round(xC),
-        y: Math.round(yC),
-      };
-    });
-    setNodes(pts);
-  }, [selectedAgents]);
+  setNodes(pts);
+};
 
-  useEffect(() => {
-    layoutNodes();
-    const el = boundsRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(() => layoutNodes());
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [layoutNodes]);
+// Run layout when agent count changes
+useEffect(() => {
+  layoutNodes();
+}, [validAgents.length]);
+
+// Attach resize observer once
+useEffect(() => {
+  const el = boundsRef.current;
+  if (!el) return;
+  const ro = new ResizeObserver(() => layoutNodes());
+  ro.observe(el);
+  return () => ro.disconnect();
+}, []);
 
   // ---------------- 🧩 Load all scenarios ----------------
   useEffect(() => {
@@ -235,7 +242,7 @@ export default function ScenarioPage({
         const formatted = filtered.map((r, i) => ({
           id: r.resultid,
           who:
-            selectedAgents.find(
+            validAgents.find(
               (a) => a.projectagentid === r.projectagentid
             )?.agentname || "Unknown",
           turn: r.sequence_no || i + 1,
@@ -248,10 +255,10 @@ export default function ScenarioPage({
 
       // 🪄 Local fallback — only used if backend has no AI output yet
       const L = [];
-      const total = Math.max(6, selectedAgents.length * 2);
+      const total = Math.max(6, validAgents.length * 2);
       for (let i = 0; i < total; i++) {
         const ag =
-          selectedAgents[Math.floor(Math.random() * selectedAgents.length)];
+          validAgents[Math.floor(Math.random() * validAgents.length)];
         L.push(genLine(ag, i));
       }
       setLogs(L);
@@ -390,7 +397,7 @@ export default function ScenarioPage({
 
         {/* Roster */}
         <div className="sc-roster">
-          {selectedAgents.map((ag) => (
+          {validAgents.map((ag) => (
             <div className="agent-card-wrap" key={ag.agentid}>
               <AgentCard agent={ag} onRemove={() => {}} onEdit={() => {}} />
             </div>

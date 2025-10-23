@@ -6,7 +6,7 @@ import {
   updateUser,
   changeUserStatus,
   deleteUser,
-  hardDeleteUser, // 🆕 ADD THIS IMPORT
+  hardDeleteUser,
   bulkChangeUserStatus,
   bulkDeleteUsers,
 } from "../../api/api";
@@ -155,25 +155,30 @@ export default function UserManagementTable() {
   };
 
   const handleHardDelete = async (userId) => {
-  if (!requireWrite("hard delete")) return;
-  
-  if (!window.confirm("⚠️ DANGER: Are you sure you want to PERMANENTLY delete this user? This action cannot be undone and will remove all user data from the database!")) return;
+    if (!requireWrite("hard delete")) return;
+    if (
+      !window.confirm(
+        "⚠️ DANGER: Are you sure you want to PERMANENTLY delete this user? This action cannot be undone and will remove all user data from the database!"
+      )
+    )
+      return;
 
-  try {
-    await hardDeleteUser(userId);
-    loadUsers();
-    setError("User permanently deleted successfully");
-  } catch (err) {
-    console.error("❌ Failed to hard delete user:", err);
-    setError(err.response?.data?.detail || "Failed to permanently delete user");
-  }
-};
+    try {
+      await hardDeleteUser(userId);
+      loadUsers();
+      setError("User permanently deleted successfully");
+    } catch (err) {
+      console.error("❌ Failed to hard delete user:", err);
+      setError(err.response?.data?.detail || "Failed to permanently delete user");
+    }
+  };
 
   const handleBulkStatusChange = async (newStatus) => {
     if (!requireWrite("change status")) return;
     if (selectedUsers.size === 0) return;
 
-    if (!window.confirm(`Change status to ${newStatus} for ${selectedUsers.size} users?`)) return;
+    if (!window.confirm(`Change status to ${newStatus} for ${selectedUsers.size} users?`))
+      return;
 
     try {
       await bulkChangeUserStatus(Array.from(selectedUsers), newStatus);
@@ -214,7 +219,8 @@ export default function UserManagementTable() {
 
   const sorted = [...filtered].sort((a, b) => {
     const dir = sortDir === "asc" ? 1 : -1;
-    const A = a[sortBy], B = b[sortBy];
+    const A = a[sortBy],
+      B = b[sortBy];
     if (sortBy === "created_at") return (new Date(A) - new Date(B)) * dir;
     return String(A).localeCompare(String(B)) * dir;
   });
@@ -360,13 +366,13 @@ export default function UserManagementTable() {
                   onChange={toggleSelectAll}
                 />
               </th>
-               <th style={{ width: '60px' }} onClick={() => setSort("userid")}>ID</th>
-                <th style={{ width: '140px' }} onClick={() => setSort("username")}>Username</th>
-                <th style={{ width: '200px' }} onClick={() => setSort("email")}>Email</th>
-                <th style={{ width: '100px' }} onClick={() => setSort("role")}>Role</th>
-                <th style={{ width: '100px' }} onClick={() => setSort("status")}>Status</th>
-                <th style={{ width: '120px' }} onClick={() => setSort("created_at")}>Created</th>
-                <th style={{ width: '200px' }}>Actions</th>
+              <th onClick={() => setSort("userid")}>ID</th>
+              <th onClick={() => setSort("username")}>Username</th>
+              <th onClick={() => setSort("email")}>Email</th>
+              <th onClick={() => setSort("role")}>Role</th>
+              <th onClick={() => setSort("status")}>Status</th>
+              <th onClick={() => setSort("created_at")}>Created</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -394,96 +400,98 @@ export default function UserManagementTable() {
                       onChange={() => toggleUserSelection(user.userid)}
                     />
                   </td>
-                  <td data-label="ID">#{user.userid}</td>
-                  <td>
-                    <div className="adm-user">
-                      <div className="avatar sm" aria-hidden>
-                        {user.profile_image_url ? (
-                          <img src={user.profile_image_url} alt={user.username} />
-                        ) : (
-                          "👤"
-                        )}
-                      </div>
-                      <div>
-                        <div className="name">{user.username}</div>
-                      </div>
-                    </div>
-                  </td>
+                  <td>#{user.userid}</td>
+                  <td>{user.username}</td>
                   <td>{user.email}</td>
                   <td>
-                    <span className={`role-badge role-${user.role}`}>
-                      {user.role}
-                    </span>
+                    <span className={`role-badge role-${user.role}`}>{user.role}</span>
                   </td>
                   <td>
                     <StatusPill value={user.status} />
                   </td>
                   <td className="muted">{fmtDate(user.created_at)}</td>
                   <td className="actions">
-  <button
-    className="ws-btn ghost sm"
-    title="Edit"
-    onClick={() => {
-      setEditModal({ open: true, user });
-      setEditFormData({
-        username: user.username,
-        email: user.email,
-        role: user.role,
-        status: user.status,
-      });
-    }}
-  >
-    Edit
-  </button>
-  
-  {user.status === "active" ? (
-    <button
-      className="ws-btn warning sm"
-      title="Suspend"
-      onClick={() => handleStatusChange(user.userid, "suspended")}
-    >
-      Suspend
-    </button>
-  ) : user.status === "suspended" ? (
-    <button
-      className="ws-btn success sm"
-      title="Activate"
-      onClick={() => handleStatusChange(user.userid, "active")}
-    >
-      Activate
-    </button>
-  ) : null}
-  
-  {/* Show Hard Delete only when viewing deleted users */}
-  {status === "deleted" && user.status === "deleted" ? (
-    <>
-      <button
-        className="ws-btn success sm"
-        title="Activate"
-        onClick={() => handleStatusChange(user.userid, "active")}
-      >
-        Activate
-      </button>
-      
-      <button
-        className="ws-btn danger sm hard-delete"
-        title="Permanently Delete"
-        onClick={() => handleHardDelete(user.userid)}
-        style={{ fontSize: '0.875rem', padding: '0.5rem 0.5rem' }} // Force small size
-      >
-        Hard Delete
-      </button>
-    </>
-  ) : user.status !== "deleted" ? (
-    <button
-      className="ws-btn danger sm"
-      title="Delete (Soft)"
-      onClick={() => handleDeleteUser(user.userid)}
-    >
-      Delete
-    </button>
-  ) : null}
-</td>
+                    <button
+                      className="ws-btn ghost sm"
+                      title="Edit"
+                      onClick={() => {
+                        if (!requireWrite("edit")) return;
+                        setEditModal({ open: true, user });
+                        setEditFormData({
+                          username: user.username,
+                          email: user.email,
+                          role: user.role,
+                          status: user.status,
+                        });
+                      }}
+                    >
+                      Edit
+                    </button>
+
+                    {user.status === "active" ? (
+                      <button
+                        className="ws-btn warning sm"
+                        title="Suspend"
+                        onClick={() => {
+                          if (!requireWrite("suspend")) return;
+                          handleStatusChange(user.userid, "suspended");
+                        }}
+                      >
+                        Suspend
+                      </button>
+                    ) : user.status === "suspended" ? (
+                      <button
+                        className="ws-btn success sm"
+                        title="Activate"
+                        onClick={() => {
+                          if (!requireWrite("activate")) return;
+                          handleStatusChange(user.userid, "active");
+                        }}
+                      >
+                        Activate
+                      </button>
+                    ) : null}
+
+                    {status === "deleted" && user.status === "deleted" ? (
+                      <>
+                        <button
+                          className="ws-btn success sm"
+                          title="Activate"
+                          onClick={() => {
+                            if (!requireWrite("activate")) return;
+                            handleStatusChange(user.userid, "active");
+                          }}
+                        >
+                          Activate
+                        </button>
+                        <button
+                          className="ws-btn danger sm hard-delete"
+                          title="Permanently Delete"
+                          onClick={() => {
+                            if (!requireWrite("hard delete")) return;
+                            handleHardDelete(user.userid);
+                          }}
+                          style={{
+                            fontSize: "0.875rem",
+                            padding: "0.5rem 0.5rem",
+                          }}
+                        >
+                          Hard Delete
+                        </button>
+                      </>
+                    ) : user.status !== "deleted" ? (
+                      <button
+                        className="ws-btn danger sm"
+                        title="Delete (Soft)"
+                        onClick={() => {
+                          if (!requireWrite("delete")) return;
+                          handleDeleteUser(user.userid);
+                        }}
+                      >
+                        Delete
+                      </button>
+                    ) : null}
+                  </td>
                 </tr>
               ))
             )}
@@ -491,6 +499,7 @@ export default function UserManagementTable() {
         </table>
       </div>
 
+      {/* Pagination */}
       <footer className="adm-foot">
         <div>
           Page {safePage}/{totalPages} • {totalUsers} total users
@@ -513,52 +522,52 @@ export default function UserManagementTable() {
         </div>
       </footer>
 
-      {/* 🔹 Create User Modal */}
+      {/* Create Modal */}
       {createModal && (
         <div className="ad-modal">
           <div className="ad-modal-content ws-card">
             <h3>Create New User</h3>
             <form onSubmit={handleCreateUser}>
-              <div className="form-group">
-                <label>Username</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.username}
-                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                />
-              </div>
-              <div className="form-group">
-                <label>Email</label>
-                <input
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                />
-              </div>
-              <div className="form-group">
-                <label>Password</label>
-                <input
-                  type="password"
-                  required
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                />
-              </div>
-              <div className="form-group">
-                <label>Role</label>
-                <select
-                  value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                >
-                  <option value="user">User</option>
-                  <option value="admin">Admin</option>
-                  <option value="superadmin">Super Admin</option>
-                </select>
-              </div>
+              <label>Username</label>
+              <input
+                type="text"
+                required
+                value={formData.username}
+                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              />
+
+              <label>Email</label>
+              <input
+                type="email"
+                required
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              />
+
+              <label>Password</label>
+              <input
+                type="password"
+                required
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              />
+
+              <label>Role</label>
+              <select
+                value={formData.role}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+              >
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+                <option value="superadmin">Super Admin</option>
+              </select>
+
               <div className="modal-actions">
-                <button type="button" className="ws-btn ghost" onClick={() => setCreateModal(false)}>
+                <button
+                  type="button"
+                  className="ws-btn ghost"
+                  onClick={() => setCreateModal(false)}
+                >
                   Cancel
                 </button>
                 <button type="submit" className="ws-btn primary">
@@ -570,54 +579,62 @@ export default function UserManagementTable() {
         </div>
       )}
 
-      {/* 🔹 Edit User Modal */}
+      {/* Edit Modal */}
       {editModal.open && (
         <div className="ad-modal">
           <div className="ad-modal-content ws-card">
             <h3>Edit User</h3>
             <form onSubmit={handleEditUser}>
-              <div className="form-group">
-                <label>Username</label>
-                <input
-                  type="text"
-                  required
-                  value={editFormData.username || ""}
-                  onChange={(e) => setEditFormData({ ...editFormData, username: e.target.value })}
-                />
-              </div>
-              <div className="form-group">
-                <label>Email</label>
-                <input
-                  type="email"
-                  required
-                  value={editFormData.email || ""}
-                  onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
-                />
-              </div>
-              <div className="form-group">
-                <label>Role</label>
-                <select
-                  value={editFormData.role || "user"}
-                  onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value })}
-                >
-                  <option value="user">User</option>
-                  <option value="admin">Admin</option>
-                  <option value="superadmin">Super Admin</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Status</label>
-                <select
-                  value={editFormData.status || "active"}
-                  onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
-                >
-                  <option value="active">Active</option>
-                  <option value="suspended">Suspended</option>
-                  <option value="deleted">Deleted</option>
-                </select>
-              </div>
+              <label>Username</label>
+              <input
+                type="text"
+                required
+                value={editFormData.username || ""}
+                onChange={(e) =>
+                  setEditFormData({ ...editFormData, username: e.target.value })
+                }
+              />
+
+              <label>Email</label>
+              <input
+                type="email"
+                required
+                value={editFormData.email || ""}
+                onChange={(e) =>
+                  setEditFormData({ ...editFormData, email: e.target.value })
+                }
+              />
+
+              <label>Role</label>
+              <select
+                value={editFormData.role || "user"}
+                onChange={(e) =>
+                  setEditFormData({ ...editFormData, role: e.target.value })
+                }
+              >
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+                <option value="superadmin">Super Admin</option>
+              </select>
+
+              <label>Status</label>
+              <select
+                value={editFormData.status || "active"}
+                onChange={(e) =>
+                  setEditFormData({ ...editFormData, status: e.target.value })
+                }
+              >
+                <option value="active">Active</option>
+                <option value="suspended">Suspended</option>
+                <option value="deleted">Deleted</option>
+              </select>
+
               <div className="modal-actions">
-                <button type="button" className="ws-btn ghost" onClick={() => setEditModal({ open: false, user: null })}>
+                <button
+                  type="button"
+                  className="ws-btn ghost"
+                  onClick={() => setEditModal({ open: false, user: null })}
+                >
                   Cancel
                 </button>
                 <button type="submit" className="ws-btn primary">
@@ -629,7 +646,7 @@ export default function UserManagementTable() {
         </div>
       )}
 
-      {/* 🔹 No Access Modal */}
+      {/* No Access Modal */}
       {noAccessModal.open && (
         <div className="ad-modal">
           <div className="ad-modal-content ws-card">

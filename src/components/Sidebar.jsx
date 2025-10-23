@@ -7,7 +7,9 @@ import { SvgIcon, AgentViewModal } from "../pages/Workstation";
 import { getCurrentUserFromToken } from "../utils/auth";
 import { handleLogout } from "../utils/logout";
 import { getAgentsByUser, createAgent,  } from "../api/api";
+import { usePermission } from "../hooks/usePermission";
 import "../ws_css.css";
+
 
 /* ---------- Custom MBTI dropdown ---------- */
 function MbtiSelect({ label = "Personality (MBTI)", name = "agentpersonality", value, onChange }) {
@@ -17,6 +19,9 @@ function MbtiSelect({ label = "Personality (MBTI)", name = "agentpersonality", v
   ];
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
+const { level: permission, canRead, canWrite, loading: permLoading } =
+  usePermission("AGENTS");
+const [noAccessModal, setNoAccessModal] = useState({ open: false, message: "" });
 
   useEffect(() => {
     if (!open) return;
@@ -238,7 +243,9 @@ export function WorkstationSidebar({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openAdd, setOpenAdd] = useState(false);
-
+    const [noAccessModal, setNoAccessModal] = useState({ open: false, message: "" });
+const { level: permission, canRead, canWrite, loading: permLoading } =
+  usePermission("AGENTS");
   const loadAgents = async () => {
     try {
       const user = getCurrentUserFromToken();
@@ -251,8 +258,23 @@ const res = await getAgentsByUser(user.user_id || user.userid);
       setLoading(false);
     }
   };
- useEffect(() => { loadAgents(); }, [refreshKey]);
+useEffect(() => {
+  if (!permLoading && canRead) loadAgents();
+}, [permLoading, canRead, refreshKey]);
+
  
+ // 🔹 Helper for permission-protected actions
+const requireWrite = (actionName = "modify agents") => {
+  if (!canWrite) {
+    setNoAccessModal({
+      open: true,
+      message: `You don't have permission to ${actionName}.`,
+    });
+    return false;
+  }
+  return true;
+};
+
 
   const handleAddAgent = async (data) => {
     try {
@@ -276,8 +298,31 @@ const res = await getAgentsByUser(user.user_id || user.userid);
     );
   }, [agents, query]);
 
+
+  if (permLoading)
+  return (
+    <aside className="ws-sidebar expanded">
+      <div className="ws-card" style={{ padding: "24px", textAlign: "center" }}>
+        Checking access...
+      </div>
+    </aside>
+  );
+
+if (permission === "none")
+  return (
+    <aside className="ws-sidebar expanded">
+      <div className="ws-card ws-center-over-content" style={{ padding: "24px" }}>
+        <h3>You have no access to Agents.</h3>
+        <p style={{ opacity: 0.7 }}>
+          Please contact an administrator if you believe this is a mistake.
+        </p>
+      </div>
+    </aside>
+  );
+
   return (
     <>
+    
       <aside className={`ws-sidebar ${expanded ? "expanded" : ""}`}>
         <div className="ws-sidebar-scroll">
           <div className="ws-side-top">
@@ -319,7 +364,17 @@ const res = await getAgentsByUser(user.user_id || user.userid);
             {expanded && (
               <div className="ws-sec-title" style={{ display: "flex", justifyContent: "space-between" }}>
                 <span>Agents</span>
-                <button className="ws-mini-btn primary" onClick={() => setOpenAdd(true)}>+</button>
+{canWrite && (
+  <button
+    className="ws-mini-btn primary"
+    onClick={() => setOpenAdd(true)}
+    title="Add new agent"
+  >
+    +
+  </button>
+)}
+
+
               </div>
             )}
             {loading ? (
@@ -356,16 +411,34 @@ const res = await getAgentsByUser(user.user_id || user.userid);
           <div className="ws-side-section">
             <button className={`ws-theme-switch ${theme}`} onClick={onToggleTheme} />
             <a className="ws-row-btn" href="#"><span className="ico"><SvgIcon name="clock" /></span>{expanded && <span>History</span>}</a>
-            <a className="ws-row-btn" href="#"><span className="ico"><SvgIcon name="user" /></span>{expanded && <span>Profile</span>}</a>
+            <a className="ws-row-btn" href="/profile"><span className="ico"><SvgIcon name="user" /></span>{expanded && <span>Profile</span>}</a>
             <button className="ws-row-btn" onClick={handleLogout}><span className="ico"><SvgIcon name="lock" /></span>{expanded && <span>Logout</span>}</button>
           </div>
         </div>
 
         <AgentViewModal open={!!viewAgent} agent={viewAgent} onClose={() => setViewAgent(null)} />
+     {noAccessModal.open && (
+  <div className="ad-modal">
+    <div className="ad-modal-content ws-card">
+      <h3>Access Denied</h3>
+      <p>{noAccessModal.message}</p>
+      <div className="modal-actions">
+        <button
+          className="ws-btn primary"
+          onClick={() => setNoAccessModal({ open: false, message: "" })}
+        >
+          OK
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
       </aside>
 
       <AddAgentModal open={openAdd} onClose={() => setOpenAdd(false)} onSubmit={handleAddAgent} />
     </>
+    
   );
 }
 
@@ -378,20 +451,39 @@ export function WorkstationHubSidebar({ expanded, onToggleExpand, theme, onToggl
   const [agents, setAgents] = useState([]);
   const [userInfo, setUserInfo] = useState(null);
   const [openAdd, setOpenAdd] = useState(false);
+    // 🔹 Permission Control for Agents (Hub)
+  const [noAccessModal, setNoAccessModal] = useState({ open: false, message: "" });
+  const { level: permission, canRead, canWrite, loading: permLoading } =
+    usePermission("AGENTS");
 
-  useEffect(() => {
-    const decoded = getCurrentUserFromToken();
-    if (decoded) setUserInfo(decoded);
+  const requireWrite = (actionName = "modify agents") => {
+    if (!canWrite) {
+      setNoAccessModal({
+        open: true,
+        message: `You don't have permission to ${actionName}.`,
+      });
+      return false;
+    }
+    return true;
+  };
+
+
+useEffect(() => {
+  const decoded = getCurrentUserFromToken();
+  if (decoded) setUserInfo(decoded);
+
+  if (!permLoading && canRead) {
     (async () => {
       try {
         const user = getCurrentUserFromToken();
-const res = await getAgentsByUser(user.user_id || user.userid);
+        const res = await getAgentsByUser(user.user_id || user.userid);
         setAgents(res);
       } catch (err) {
         console.warn("Failed to fetch agents:", err);
       }
     })();
-  }, []);
+  }
+}, [permLoading, canRead]);
 
   const handleAddAgent = async (data) => {
     try {
@@ -404,6 +496,26 @@ const res = await getAgentsByUser(user.user_id || user.userid);
   };
 
   const filtered = agents.filter((ag) => ag.agentname.toLowerCase().includes(query.toLowerCase()));
+  if (permLoading)
+    return (
+      <aside className="ws-sidebar expanded">
+        <div className="ws-card" style={{ padding: "24px", textAlign: "center" }}>
+          Checking access...
+        </div>
+      </aside>
+    );
+
+  if (permission === "none")
+    return (
+      <aside className="ws-sidebar expanded">
+        <div className="ws-card ws-center-over-content" style={{ padding: "24px" }}>
+          <h3>You have no access to Agents.</h3>
+          <p style={{ opacity: 0.7 }}>
+            Please contact an administrator if you believe this is a mistake.
+          </p>
+        </div>
+      </aside>
+    );
 
   return (
     <>
@@ -437,7 +549,17 @@ const res = await getAgentsByUser(user.user_id || user.userid);
             {expanded && (
               <div className="ws-sec-title" style={{ display: "flex", justifyContent: "space-between" }}>
                 <span>Agents</span>
-                <button className="ws-mini-btn primary" onClick={() => setOpenAdd(true)}>+</button>
+               {canWrite && (
+  <button
+    className="ws-mini-btn primary"
+    onClick={() => setOpenAdd(true)}
+    title="Add new agent"
+  >
+    +
+  </button>
+)}
+
+
               </div>
             )}
             {filtered.map((ag) => (
@@ -466,12 +588,29 @@ const res = await getAgentsByUser(user.user_id || user.userid);
 
             <button className={`ws-theme-switch ${theme}`} onClick={onToggleTheme} />
             <a className="ws-row-btn" href="#"><span className="ico"><SvgIcon name="clock" /></span>{expanded && <span>History</span>}</a>
-            <a className="ws-row-btn" href="#"><span className="ico"><SvgIcon name="user" /></span>{expanded && <span>Profile</span>}</a>
+            <a className="ws-row-btn" href="/profile"><span className="ico"><SvgIcon name="user" /></span>{expanded && <span>Profile</span>}</a>
             <button className="ws-row-btn" onClick={handleLogout}><span className="ico"><SvgIcon name="lock" /></span>{expanded && <span>Logout</span>}</button>
           </div>
         </div>
 
         <AgentViewModal open={!!viewAgent} agent={viewAgent} onClose={() => setViewAgent(null)} />
+      {noAccessModal.open && (
+  <div className="ad-modal">
+    <div className="ad-modal-content ws-card">
+      <h3>Access Denied</h3>
+      <p>{noAccessModal.message}</p>
+      <div className="modal-actions">
+        <button
+          className="ws-btn primary"
+          onClick={() => setNoAccessModal({ open: false, message: "" })}
+        >
+          OK
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
       </aside>
 
       <AddAgentModal open={openAdd} onClose={() => setOpenAdd(false)} onSubmit={handleAddAgent} />

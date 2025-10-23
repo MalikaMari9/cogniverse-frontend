@@ -17,6 +17,8 @@ import {
   getProjectAgents,
   updateProjectAgent,
 } from "../api/api";
+import { usePermission } from "../hooks/usePermission";
+import { useNavigate } from "react-router-dom";
 
 /* ---------- Theme utilities ---------- */
 function getStoredTheme() {
@@ -125,15 +127,9 @@ function AgentCard({ agent, onRemove, onEdit }) {
           <div className="ws-tag">{agent.agentpersonality}</div>
         </div>
         <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
-          <button className="ws-icon-btn" onClick={() => onEdit(agent)}>
-            ✎
-          </button>
-          <button
-            className="ws-icon-btn ghost"
-            onClick={() => onRemove(agent.agentid)}
-          >
-            ✕
-          </button>
+          <button className="ws-icon-btn" onClick={() => onEdit?.(agent)} disabled={!onEdit}>✎</button>
+<button className="ws-icon-btn ghost" onClick={() => onRemove?.(agent.agentid)} disabled={!onRemove}>✕</button>
+
         </div>
       </div>
 
@@ -418,6 +414,10 @@ function AgentViewModal({ open, agent, onClose }) {
 /* ---------- Main Workstation Page ---------- */
 export  function WorkstationPage() {
   const { projectid } = useParams();
+  const navigate = useNavigate();
+const { level: permission, canRead, canWrite, loading: permLoading } = usePermission("AGENTS");
+const [noAccessModal, setNoAccessModal] = useState({ open: false, message: "" });
+
   const [theme, setTheme] = useState(getStoredTheme());
   const [expanded, setExpanded] = useState(true);
   const [agents, setAgents] = useState([]);
@@ -432,6 +432,13 @@ export  function WorkstationPage() {
 
   const [linking, setLinking] = useState(false);
   const [ready, setReady] = useState(false);
+
+  // 🧠 Permission redirect fix
+useEffect(() => {
+  if (!permLoading && permission === "none") {
+    navigate("/unauthorized");
+  }
+}, [permLoading, permission, navigate]);
 
 
   // 🔁 Remember last open stage
@@ -649,113 +656,157 @@ const handleAdd = async (input) => {
     setSelected((s) => s.filter((a) => a.agentid !== id));
 
   // =============== Render ===============
-  if (!ready) return null; // or <div>Loading workspace…</div>
+ // =============== Render ===============
+if (!ready) return null; // or <div>Loading workspace…</div>
 
-  return (
-    <div className={`app ws-page ${stage === "scenario" ? "no-sidebar" : ""}`}>
-      <Toaster position="top-right" toastOptions={{ duration: 2000 }} />
-      {stage !== "scenario" && (
-        <WorkstationSidebar
-          expanded={expanded}
-          onToggleExpand={() => setExpanded((e) => !e)}
-          theme={theme}
-          onToggleTheme={() =>
-            setTheme((t) => (t === "dark" ? "light" : "dark"))
-          }
-          onPickExisting={handlePickExisting}
-          selectedIds={selected.map((a) => a.agentid)}
-          refreshKey={agents.length}
-        />
-      )}
+return (
+  <div className={`app ws-page ${stage === "scenario" ? "no-sidebar" : ""}`}>
+    <Toaster position="top-right" toastOptions={{ duration: 2000 }} />
 
-      <main className="ws-main">
+    {/* ✅ Permission-safe rendering */}
+    {permLoading ? (
+      <p className="hub-loading">Checking permissions...</p>
+    ) : permission === "none" ? (
+      <p className="hub-loading">Redirecting...</p>
+    ) : (
+      <>
         {stage !== "scenario" && (
-          <header className="ws-header">
-            <h1>Agents</h1>
-            <div className="ws-head-actions">
-              <div className="ws-count">Max 5 agents • {selected.length}/5</div>
-              <button
-                className="ws-btn primary"
-                onClick={() => setOpenModal(true)}
-                disabled={selected.length >= 5}
-              >
-                + Add Agent
-              </button>
-            </div>
-          </header>
+          <WorkstationSidebar
+            expanded={expanded}
+            onToggleExpand={() => setExpanded((e) => !e)}
+            theme={theme}
+            onToggleTheme={() =>
+              setTheme((t) => (t === "dark" ? "light" : "dark"))
+            }
+            onPickExisting={handlePickExisting}
+            selectedIds={selected.map((a) => a.agentid)}
+            refreshKey={agents.length}
+          />
         )}
 
-        <section className="ws-board">
-          {stage === "cards" && (
-            <>
-              <div className="ws-board-head">
-                <h3>Your team</h3>
-                <span className="ws-count">{selected.length}/5</span>
-              </div>
-
-              <div className="ws-grid">
-                {selected.map((ag) => (
-                  <AgentCard
-                    key={ag.agentid}
-                    agent={ag}
-                    onRemove={remove}
-                    onEdit={setEditModal}
-                  />
-                ))}
-                {selected.length === 0 && (
-                  <div className="ws-empty">
-                    <p>No agents yet.</p>
-                    <p>Add a new agent or pick one from the sidebar.</p>
-                  </div>
-                )}
-              </div>
-
-              <div className="ws-next">
+        <main className="ws-main">
+          {stage !== "scenario" && (
+            <header className="ws-header">
+              <h1>Agents</h1>
+              <div className="ws-head-actions">
+                <div className="ws-count">
+                  Max 5 agents • {selected.length}/5
+                </div>
                 <button
                   className="ws-btn primary"
-                  onClick={handleProceedToGraph}
-                  disabled={selected.length < 2 || linking}
+                  onClick={() => {
+                    if (!canWrite) {
+                      setNoAccessModal({
+                        open: true,
+                        message:
+                          "You don't have permission to add agents.",
+                      });
+                      return;
+                    }
+                    setOpenModal(true);
+                  }}
+                  disabled={selected.length >= 5 || !canWrite}
+                  title={!canWrite ? "Read-only access" : ""}
                 >
-                  {linking ? "Linking..." : "Next"}
+                  + Add Agent
                 </button>
               </div>
-            </>
+            </header>
           )}
 
-          {stage === "graph" && (
-            <RelationshipGraph
-              agents={selected}
-              onBack={() => setStage("cards")}
-              onNext={() => setStage("scenario")}
-            />
-          )}
+          <section className="ws-board">
+            {stage === "cards" && (
+              <>
+                <div className="ws-board-head">
+                  <h3>Your team</h3>
+                  <span className="ws-count">{selected.length}/5</span>
+                </div>
 
-          {stage === "scenario" && (
-            <ScenarioPage
-              theme={theme}
-              onBackToWorkstation={() => setStage("cards")}
-              onBackToGraph={() => setStage("graph")}
-              selectedAgents={selected}
-            />
-          )}
-        </section>
-      </main>
+                <div className="ws-grid">
+                  {selected.map((ag) => (
+                    <AgentCard
+                      key={ag.agentid}
+                      agent={ag}
+                      onRemove={canWrite ? remove : undefined}
+                      onEdit={canWrite ? setEditModal : undefined}
+                    />
+                  ))}
+                  {selected.length === 0 && (
+                    <div className="ws-empty">
+                      <p>No agents yet.</p>
+                      <p>Add a new agent or pick one from the sidebar.</p>
+                    </div>
+                  )}
+                </div>
 
-      <AgentModal
-        open={openModal}
-        mode="add"
-        onClose={() => setOpenModal(false)}
-        onSubmit={handleAdd}
-      />
-      <AgentModal
-        open={!!editModal}
-        mode="edit"
-        initial={editModal || undefined}
-        onClose={() => setEditModal(null)}
-        onSubmit={handleEditSave}
-      />
-    </div>
-  );
+                <div className="ws-next">
+                  <button
+                    className="ws-btn primary"
+                    onClick={handleProceedToGraph}
+                    disabled={selected.length < 2 || linking}
+                  >
+                    {linking ? "Linking..." : "Next"}
+                  </button>
+                </div>
+              </>
+            )}
+
+            {stage === "graph" && (
+              <RelationshipGraph
+                agents={selected}
+                onBack={() => setStage("cards")}
+                onNext={() => setStage("scenario")}
+              />
+            )}
+
+            {stage === "scenario" && (
+              <ScenarioPage
+                theme={theme}
+                onBackToWorkstation={() => setStage("cards")}
+                onBackToGraph={() => setStage("graph")}
+                selectedAgents={selected}
+              />
+            )}
+          </section>
+        </main>
+
+        <AgentModal
+          open={openModal}
+          mode="add"
+          onClose={() => setOpenModal(false)}
+          onSubmit={handleAdd}
+        />
+        <AgentModal
+          open={!!editModal}
+          mode="edit"
+          initial={editModal || undefined}
+          onClose={() => setEditModal(null)}
+          onSubmit={handleEditSave}
+        />
+
+        {noAccessModal.open && (
+          <div className="ad-modal">
+            <div className="ad-modal-content ws-card">
+              <h3>Access Denied</h3>
+              <p>{noAccessModal.message}</p>
+              <div className="modal-actions">
+                <button
+                  className="ws-btn primary"
+                  onClick={() =>
+                    setNoAccessModal({ open: false, message: "" })
+                  }
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    )}
+  </div>
+);
+
 }
 
 // ===============================

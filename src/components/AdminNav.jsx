@@ -152,6 +152,14 @@ export function AdminNav({ theme, tab, setTab, setTheme, handleLogout }) {
           <Icon name="shield" />
           <span>Access Control</span>
         </button>
+        <button
+          className={`ad-nav-item ${tab === "creditpacks" ? "active" : ""}`}
+          onClick={() => setTab("creditpacks")}
+        >
+          <Icon name="gear" />
+          <span>Credit Packs</span>
+        </button>
+
 
         <button
           className={`ad-nav-item ${tab === "announcements" ? "active" : ""}`}

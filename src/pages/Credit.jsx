@@ -1,38 +1,15 @@
-// credit.jsx
-import React, { createContext, useContext, useRef } from 'react';
+// ===============================
+// Credit.jsx — Dynamic Credit Packs (API Integrated)
+// ===============================
+
+import React from "react";
 import Nav from "../components/Nav.jsx";
 import "../credit.css";
+import { getActiveCreditPacks } from "../api/api"; // ✅ backend integration
 
-const ScrollContext = createContext();
-
-export function ScrollProvider({ children }) {
-  const proceedToPaymentRef = useRef(null);
-
-  const scrollToProceed = () => {
-    if (proceedToPaymentRef.current) {
-      proceedToPaymentRef.current.scrollIntoView({ 
-        behavior: 'smooth',
-        block: 'center'
-      });
-    }
-  };
-
-  return (
-    <ScrollContext.Provider value={{ proceedToPaymentRef, scrollToProceed }}>
-      {children}
-    </ScrollContext.Provider>
-  );
-}
-
-export function useScroll() {
-  const context = useContext(ScrollContext);
-  if (!context) {
-    throw new Error('useScroll must be used within a ScrollProvider');
-  }
-  return context;
-}
-
-/* Local theme hook */
+// ===============================
+// Theme Hook
+// ===============================
 function useTheme() {
   const [theme, setTheme] = React.useState(
     () => localStorage.getItem("theme") || "light"
@@ -41,18 +18,28 @@ function useTheme() {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("theme", theme);
   }, [theme]);
-  const toggle = () => setTheme(t => (t === "light" ? "dark" : "light"));
+  const toggle = () => setTheme((t) => (t === "light" ? "dark" : "light"));
   return { theme, toggle };
 }
 
-/* Tiny reveal-on-scroll helper */
-function Reveal({ as: Tag = "div", variant = "up", delay = 0, children, className = "", ...rest }) {
+// ===============================
+// Reveal Animation Component
+// ===============================
+function Reveal({
+  as: Tag = "div",
+  variant = "up",
+  delay = 0,
+  children,
+  className = "",
+  ...rest
+}) {
   const ref = React.useRef(null);
   React.useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const io = new IntersectionObserver(
-      (entries) => entries.forEach(e => e.isIntersecting && el.classList.add("reveal-in")),
+      (entries) =>
+        entries.forEach((e) => e.isIntersecting && el.classList.add("reveal-in")),
       { threshold: 0.15 }
     );
     io.observe(el);
@@ -70,137 +57,139 @@ function Reveal({ as: Tag = "div", variant = "up", delay = 0, children, classNam
   );
 }
 
-/* Inline icons */
+// ===============================
+// Icon Set
+// ===============================
 const IconSpark = (p) => (
   <svg viewBox="0 0 24 24" aria-hidden="true" {...p}>
-    <path fill="currentColor" d="M12 2l1.9 5.7L20 10l-6.1 2.3L12 18l-1.9-5.7L4 10l6.1-2.3L12 2z"/>
+    <path fill="currentColor" d="M12 2l1.9 5.7L20 10l-6.1 2.3L12 18l-1.9-5.7L4 10l6.1-2.3L12 2z" />
   </svg>
 );
 const IconBolt = (p) => (
   <svg viewBox="0 0 24 24" aria-hidden="true" {...p}>
-    <path fill="currentColor" d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/>
-  </svg>
-);
-const IconGem = (p) => (
-  <svg viewBox="0 0 24 24" aria-hidden="true" {...p}>
-    <path fill="currentColor" d="M12 2l7 6-7 14L5 8l7-6zm0 4.3L8 8h8l-4-1.7z"/>
+    <path fill="currentColor" d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" />
   </svg>
 );
 const IconStars = (p) => (
   <svg viewBox="0 0 24 24" aria-hidden="true" {...p}>
-    <path fill="currentColor" d="M6 9l1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3zm12-6l1.6 4.8L24 9l-4.4 1.2L18 15l-1.6-4.8L12 9l4.4-1.2L18 3z"/>
+    <path
+      fill="currentColor"
+      d="M6 9l1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3zm12-6l1.6 4.8L24 9l-4.4 1.2L18 15l-1.6-4.8L12 9l4.4-1.2L18 3z"
+    />
+  </svg>
+);
+const IconGem = (p) => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" {...p}>
+    <path fill="currentColor" d="M12 2l7 6-7 14L5 8l7-6zm0 4.3L8 8h8l-4-1.7z" />
   </svg>
 );
 
-function PackCard({ tone = "violet", icon, name, price, badge, bullets = [], isSelected, onSelect }) {
+// ===============================
+// Pack Card
+// ===============================
+function PackCard({ tone = "violet", icon, name, price, credits, badge, bullets = [], onSelect }) {
   return (
-    <Reveal as="article" className={`pack is-${tone} ${isSelected ? 'selected' : ''}`} variant="up">
-      <div className="pack-top">
-        <div className="pack-icon">{icon}</div>
-        {badge && <span className="chip">{badge}</span>}
+    <Reveal as="article" className={`pack is-${tone}`} variant="up">
+      <div className="plan-header">
+        <div className="plan-icon">{icon}</div>
+        <div className="plan-title">
+          <h3>{name}</h3>
+          {badge && <span className="chip">{badge}</span>}
+        </div>
       </div>
-      <h3 className="pack-name">{name}</h3>
-      <div className="pack-price">
-        <span className="currency">$</span>
-        <span className="amount">{price}</span>
-        <span className="per">/ pack</span>
+
+      <div className="plan-details">
+        <p className="credit-count">{credits} Credits</p>
+        <div className="price-block">
+          <div className="price-total">${price}</div>
+          <div className="price-sub">${(price / credits).toFixed(2)} per credit</div>
+        </div>
       </div>
-      <ul className="pack-points">
-        {bullets.map((b, i) => <li key={i}>{b}</li>)}
-      </ul>
-      <button 
-        type="button" 
-        className={`btn ${isSelected ? 'secondary' : 'primary'}`}
-        aria-label={isSelected ? `Selected: ${name}` : `Select ${name}`}
-        onClick={onSelect}
-      >
-        {isSelected ? 'Selected ✓' : 'Select'}
-      </button>
+
+      {bullets.length > 0 && (
+        <ul className="plan-features">
+          {bullets.map((b, i) => (
+            <li key={i}>{b}</li>
+          ))}
+        </ul>
+      )}
+
+      <div className="plan-cta">
+        <button type="button" className="btn primary" onClick={onSelect}>
+          Buy Now
+        </button>
+      </div>
     </Reveal>
   );
 }
 
-// Pack configurations
-export const PACKS_CONFIG = {
-  starter: {
-    id: 'starter',
-    tone: "cyan",
-    icon: <IconSpark className="ico" />,
-    name: "Starter",
-    price: 5,
-    credits: 50,
-    badge: "New",
-    bullets: ["Great for trying the engine", "Light simulations & previews", "Email support"]
-  },
-  explorer: {
-    id: 'explorer',
-    tone: "violet",
-    icon: <IconBolt className="ico" />,
-    name: "Explorer",
-    price: 10,
-    credits: 120,
-    badge: "Popular",
-    bullets: ["More runs & variations", "Save scenarios", "Priority in queue"]
-  },
-  pro: {
-    id: 'pro',
-    tone: "pink",
-    icon: <IconStars className="ico" />,
-    name: "Pro",
-    price: 20,
-    credits: 300,
-    badge: "",
-    bullets: ["Batch experiments", "Download summaries", "Team sharing (basic)"]
-  },
-  studio: {
-    id: 'studio',
-    tone: "teal",
-    icon: <IconGem className="ico" />,
-    name: "Studio",
-    price: 40,
-    credits: 800,
-    badge: "Best value",
-    bullets: ["Heavy exploration", "Advanced exports", "Priority support"]
-  },
-};
-
+// ===============================
+// Main Credit Page
+// ===============================
 export default function CreditPage() {
   const { theme, toggle } = useTheme();
+  const [packs, setPacks] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
   const [selectedPack, setSelectedPack] = React.useState(null);
-  const summaryRef = React.useRef(null);
+  const [showModal, setShowModal] = React.useState(false);
 
-  const packs = Object.values(PACKS_CONFIG);
+  // ✅ Fetch active packs from backend
+  React.useEffect(() => {
+    async function fetchPacks() {
+      try {
+        const res = await getActiveCreditPacks();
+        const data = await getActiveCreditPacks();
+console.log("✅ Received credit packs:", data);
+setPacks(data);
+
+        const active = res.filter((p) => p.status === "active");
+
+        const mapped = active.map((p) => {
+          const v = p.config_value || {};
+          let icon;
+          switch (v.tone) {
+            case "cyan":
+              icon = <IconSpark className="ico" />;
+              break;
+            case "pink":
+              icon = <IconStars className="ico" />;
+              break;
+            case "teal":
+            case "gold":
+              icon = <IconGem className="ico" />;
+              break;
+            default:
+              icon = <IconBolt className="ico" />;
+          }
+          return {
+            id: p.config_key,
+            tone: v.tone || "violet",
+            icon,
+            name: v.name || p.config_key,
+            price: v.base_price_usd,
+            credits: v.credits,
+            badge: v.badge,
+            bullets: [p.description || "Flexible credit pack for all needs"],
+          };
+        });
+        setPacks(mapped);
+      } catch (err) {
+        console.error("❌ Failed to fetch credit packs:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchPacks();
+  }, []);
 
   const handleSelectPack = (pack) => {
-    const wasAlreadySelected = selectedPack?.id === pack.id;
-    
-    if (wasAlreadySelected) {
-      setSelectedPack(null);
-    } else {
-      setSelectedPack(pack);
-      
-      // Scroll to summary after a small delay to allow state update and rendering
-      setTimeout(() => {
-        if (summaryRef.current) {
-          summaryRef.current.scrollIntoView({ 
-            behavior: 'smooth',
-            block: 'center'
-          });
-          
-          // Add a slight visual highlight
-          summaryRef.current.classList.add('highlight');
-          setTimeout(() => {
-            summaryRef.current?.classList.remove('highlight');
-          }, 1500);
-        }
-      }, 100);
-    }
+    setSelectedPack(pack);
+    setShowModal(true);
   };
 
+  const handleCloseModal = () => setShowModal(false);
   const handleProceedToPayment = () => {
-    if (selectedPack) {
-      window.location.href = `/payment?pack=${selectedPack.id}`;
-    }
+    if (selectedPack) window.location.href = `/payment?pack=${selectedPack.id}`;
   };
 
   return (
@@ -212,65 +201,62 @@ export default function CreditPage() {
           Buy Credits
         </Reveal>
         <Reveal as="p" variant="up" className="credit-sub">
-          Choose a pack that fits your workflow. No commitment—add credits when you need them.
+          Choose a credit pack that fits your workflow.
         </Reveal>
       </header>
 
       <main className="credit-wrap">
         <section className="grid-credits">
-          {packs.map((p, i) => (
-            <PackCard 
-              key={i} 
-              {...p} 
-              isSelected={selectedPack?.id === p.id}
-              onSelect={() => handleSelectPack(p)}
-            />
-          ))}
+          {loading ? (
+            <div className="loading">Loading credit packs...</div>
+          ) : packs.length === 0 ? (
+            <div className="ad-empty">No active credit packs available.</div>
+          ) : (
+            packs.map((p, i) => <PackCard key={i} {...p} onSelect={() => handleSelectPack(p)} />)
+          )}
         </section>
-
-        {/* Selected Pack Summary */}
-        {selectedPack && (
-          <Reveal 
-            as="div" 
-            className="selected-summary card" 
-            variant="fade" 
-            delay={60}
-            ref={summaryRef}
-          >
-            <div className="summary-header">
-              <h3>Selected Plan: {selectedPack.name}</h3>
-              <button 
-                type="button" 
-                className="btn primary"
-                onClick={handleProceedToPayment}
-              >
-                Proceed to Payment - ${selectedPack.price}
-              </button>
-            </div>
-            <div className="summary-content">
-              <div className="pack-info">
-                <div className="credits-badge">{selectedPack.credits} credits</div>
-                <ul className="selected-features">
-                  {selectedPack.bullets.map((bullet, i) => (
-                    <li key={i}>{bullet}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-            <div className="scroll-indicator">
-              <span>↑</span>
-            </div>
-          </Reveal>
-        )}
 
         <Reveal as="div" className="credit-faq card" variant="fade" delay={60}>
           <h3>How credits work</h3>
           <p>
-            Credits power simulations, analysis passes, and exports. Pricing is pack-based so you
-            can scale as you explore.
+            Credits power simulations, analysis, and exports. Each credit equals $1 and can be spent
+            anytime — no expiration or subscription required.
           </p>
         </Reveal>
       </main>
+
+      {/* 🔹 Confirmation Modal */}
+      {showModal && selectedPack && (
+        <div className="modal-overlay" onClick={handleCloseModal}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="summary-header">
+              <h3>Confirm Purchase</h3>
+            </div>
+            <div className="summary-content">
+              <p>
+                <strong>{selectedPack.name}</strong> – {selectedPack.credits} credits total
+              </p>
+              <p>
+                Price: <strong>${selectedPack.price}</strong> (
+                {(selectedPack.price / selectedPack.credits).toFixed(2)} per credit)
+              </p>
+              <ul className="selected-features">
+                {selectedPack.bullets.map((b, i) => (
+                  <li key={i}>{b}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="summary-actions">
+              <button className="btn primary" onClick={handleProceedToPayment}>
+                Proceed to Payment
+              </button>
+              <button className="btn secondary" onClick={handleCloseModal}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <footer className="credit-footer">
         <p>© CogniVerse</p>

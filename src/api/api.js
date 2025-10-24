@@ -474,6 +474,46 @@ export const bulkDeleteUsers = async (userIds) =>
     user_ids: userIds 
   })).data;
 
+// ===============================
+// 🧾 CREDIT CONFIG API CALLS
+// ===============================
+
+// 🧩 Fetch all Credit Packs
+export const getAllCreditConfigs = async () => {
+  const res = await api.get("/credit-configs/");
+  return res.data;
+};
+
+// 🧩 Get Credit Pack by ID
+export const getCreditConfigById = async (id) => {
+  const res = await api.get(`/credit-configs/${id}`);
+  return res.data;
+};
+
+// 🧩 Create Credit Pack
+export const createCreditConfig = async (data) => {
+  const res = await api.post("/credit-configs/", data);
+  return res.data;
+};
+
+// 🧩 Update Credit Pack
+export const updateCreditConfig = async (id, data) => {
+  const res = await api.put(`/credit-configs/${id}`, data);
+  return res.data;
+};
+
+// 🧩 Delete Credit Pack
+export const deleteCreditConfig = async (id) => {
+  const res = await api.delete(`/credit-configs/${id}`);
+  return res.data;
+};
+
+// 🧩 Get public active credit packs
+export const getActiveCreditPacks = async () => {
+  const res = await api.get("/credit-configs/credit-list");
+  return res.data;
+};
+
 
 /* ===============================
    Default Export

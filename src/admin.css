@@ -18,6 +18,39 @@
   --glass-bdr:rgba(0,0,0,.10);
 }
 
+.ad-table select.ad-select {
+  height: 30px;
+  font-size: 13px;
+  border-radius: 8px;
+  padding: 4px 8px;
+  border: 1px solid var(--glass-bdr);
+  background: var(--glass);
+  color: var(--ink-1);
+}
+
+.ad-toggle input[type="checkbox"] {
+  accent-color: var(--accent-1);
+}
+.ad-toggle label {
+  user-select: none;
+}
+
+
+/* Fix for light theme (white bg + dark text) */
+[data-theme="light"] .ad-table select.ad-select {
+  background: rgba(255,255,255,0.95);
+  color: var(--ink-1);
+  border-color: rgba(0,0,0,0.12);
+}
+
+/* Fix for dark theme (dark bg + bright text) */
+[data-theme="dark"] .ad-table select.ad-select {
+  background: rgba(18,22,30,0.92);
+  color: #E9EEF7;
+  border-color: rgba(255,255,255,0.14);
+}
+
+
 /* small square icon buttons (edit / delete) */
 .ad-icon{
   display:inline-grid; place-items:center;

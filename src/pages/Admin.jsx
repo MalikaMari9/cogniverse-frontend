@@ -14,6 +14,7 @@ import AnnouncementTable from "../components/admin/AnnouncementTable.jsx";
 import NotificationTable from "../components/admin/NotificationTable.jsx";
 import MaintenanceTable from "../components/admin/MaintenanceTable.jsx";
 import UserManagementTable from "../components/admin/UserManagementTable.jsx"; // 🆕 ADD THIS
+import CreditConfig from "../components/admin/CreditConfig.jsx"; // ✅ ADD THIS
 
 // 🧩 Shared helpers (optional, if needed here)
 import { fmtDate, StatusPill } from "../components/admin//helpers.jsx";
@@ -180,11 +181,12 @@ export default function Admin() {
         {tab === "maintenance" && <MaintenanceTable Icon={Icon} />}
         {tab === "syslog" && <SystemLogTable />}
         {tab === "access" && <AccessControlTable Icon={Icon} />}
+        {tab === "creditpacks" && <CreditConfig Icon={Icon} />}  
         {tab === "announcements" && <AnnouncementTable Icon={Icon} />}
         {tab === "notify" && <NotificationTable />}
         {tab === "users" && <UserManagementTable />} {/* 🆕 ADD THIS */}
 
-        {!["config", "syslog", "access", "announcements", "notify", "users"].includes(tab) && (
+        {!["config", "syslog", "access", "announcements", "notify", "users", "creditpacks"].includes(tab) && (
           <section className="ad-card ws-card ad-empty">
             Coming soon: {tab}
           </section>

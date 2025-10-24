@@ -3,9 +3,9 @@
 // ===============================
 import React, { useEffect, useState } from "react";
 import "../ws_css.css";
-import { WorkstationHubSidebar } from "../components/Sidebar";
+import { AgentSidebar } from "../components/Sidebar";
 import { SvgIcon } from "./Workstation";
-import { getProjects, createProject, updateProject } from "../api/api";
+import { getProjects, createProject, updateProject, deleteProject } from "../api/api";
 import { useNavigate } from "react-router-dom";
 import { usePermission } from "../hooks/usePermission";
 
@@ -239,6 +239,72 @@ function EditProjectModal({ open, onClose, project, onSubmit }) {
     </div>
   );
 }
+function ProjectActions({ project, canWrite, requireWrite, onEdit, onDelete }) {
+  const [open, setOpen] = useState(false);
+  const menuRef = React.useRef(null);
+
+  // ⛔ Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    if (open) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [open]);
+
+  return (
+    <div className="hub-menu-wrap" ref={menuRef}>
+      {/* three-dot button */}
+      <button
+        className="hub-menu-btn"
+        onClick={() => setOpen((prev) => !prev)}
+        title="More actions"
+      >
+        ⋮
+      </button>
+
+      {open && (
+        <div className="hub-menu">
+          <button
+            onClick={() => {
+              if (!requireWrite("edit projects")) return;
+              onEdit(project);
+              setOpen(false);
+            }}
+            disabled={!canWrite}
+          >
+            ✏️ Edit
+          </button>
+
+          <button
+            className="danger"
+            onClick={() => {
+              if (!requireWrite("delete projects")) return;
+              if (
+                window.confirm(
+                  `Delete project "${project.projectname}"? This will archive it.`
+                )
+              ) {
+                onDelete(project);
+              }
+              setOpen(false);
+            }}
+            disabled={!canWrite}
+          >
+            🗑 Delete
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 /* ---------- Hub Page ---------- */
 export default function WorkstationHub() {
@@ -252,6 +318,10 @@ export default function WorkstationHub() {
     document.documentElement.getAttribute("data-theme") || "dark"
   );
   const [expanded, setExpanded] = useState(true);
+  const handleExpand = () => {
+  setExpanded((prev) => !prev);
+};
+
   const [projects, setProjects] = useState([]);
   const [openCreate, setOpenCreate] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -371,12 +441,13 @@ if (permission === "none") {
   return (
     <div className="hub-page ws-page">
       {/* Sidebar */}
-      <WorkstationHubSidebar
-        expanded={expanded}
-        onToggleExpand={() => setExpanded((e) => !e)}
-        theme={theme}
-        onToggleTheme={toggleTheme}
-      />
+   <AgentSidebar
+  variant="hub"
+  expanded={expanded}
+  onToggleExpand={handleExpand}
+  theme={theme}
+  onToggleTheme={toggleTheme}
+/>
 
       <main className="hub-main">
         <header className="hub-header ws-card">
@@ -445,28 +516,46 @@ if (permission === "none") {
                     {p.project_desc || "No description provided."}
                   </p>
                   <div className="hub-actions">
-                    <button
-                      className="ws-btn ghost"
-                      onClick={() => handleOpenExisting(p)}
-                    >
-                      Continue
-                    </button>
-                    <button
+                    
+                   
+  <div className="hub-actions">
+  <button
     className="ws-btn ghost"
-    onClick={() => {
-      if (!requireWrite("edit projects")) return;
-      setOpenEdit({ open: true, project: p });
-    }}
-    disabled={!canWrite}
-    title={!canWrite ? "Read-only access" : ""}
+    onClick={() => handleOpenExisting(p)}
   >
-    Edit
+    Continue
   </button>
+  <ProjectActions
+    project={p}
+    canWrite={canWrite}
+    requireWrite={requireWrite}
+    onEdit={(proj) => setOpenEdit({ open: true, project: proj })}
+    onDelete={(proj) =>
+      deleteProject(proj.projectid)
+        .then(() => reloadProjects())
+        .catch((err) => {
+          console.error("Failed to delete project:", err);
+          alert("Error deleting project: " + err.message);
+        })
+    }
+  />
+</div>
+
+  
+  
                   </div>
+                  
                 </div>
+                
               ))}
+              
+              
             </div>
+            
+            
           )}
+          
+          
           {projects.length > PROJECTS_PER_PAGE && (
   <div className="hub-pagination">
     <button

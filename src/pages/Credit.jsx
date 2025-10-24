@@ -3,7 +3,9 @@
 // ===============================
 
 import React from "react";
-import Nav from "../components/Nav.jsx";
+import NavProduct from "../components/NavProduct";
+import "../profile-nav.css";
+
 import "../credit.css";
 import { getActiveCreditPacks } from "../api/api"; // ✅ backend integration
 
@@ -127,7 +129,8 @@ function PackCard({ tone = "violet", icon, name, price, credits, badge, bullets 
 // Main Credit Page
 // ===============================
 export default function CreditPage() {
-  const { theme, toggle } = useTheme();
+  const { theme, toggle: toggleTheme } = useTheme();
+
   const [packs, setPacks] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [selectedPack, setSelectedPack] = React.useState(null);
@@ -140,39 +143,45 @@ export default function CreditPage() {
         const res = await getActiveCreditPacks();
         const data = await getActiveCreditPacks();
 console.log("✅ Received credit packs:", data);
-setPacks(data);
+const packsData = await getActiveCreditPacks();
+console.log("✅ Full response from backend:", JSON.stringify(packsData, null, 2));
+setPacks(packsData);
 
         const active = res.filter((p) => p.status === "active");
 
-        const mapped = active.map((p) => {
-          const v = p.config_value || {};
-          let icon;
-          switch (v.tone) {
-            case "cyan":
-              icon = <IconSpark className="ico" />;
-              break;
-            case "pink":
-              icon = <IconStars className="ico" />;
-              break;
-            case "teal":
-            case "gold":
-              icon = <IconGem className="ico" />;
-              break;
-            default:
-              icon = <IconBolt className="ico" />;
-          }
-          return {
-            id: p.config_key,
-            tone: v.tone || "violet",
-            icon,
-            name: v.name || p.config_key,
-            price: v.base_price_usd,
-            credits: v.credits,
-            badge: v.badge,
-            bullets: [p.description || "Flexible credit pack for all needs"],
-          };
-        });
-        setPacks(mapped);
+const mapped = active.map((p) => {
+  const v = p.config_value || {};
+  let icon;
+  switch (v.tone) {
+    case "cyan":
+      icon = <IconSpark className="ico" />;
+      break;
+    case "pink":
+      icon = <IconStars className="ico" />;
+      break;
+    case "teal":
+    case "gold":
+      icon = <IconGem className="ico" />;
+      break;
+    default:
+      icon = <IconBolt className="ico" />;
+  }
+  return {
+    id: p.config_key,
+    tone: v.tone || "violet",
+    icon,
+    name: v.name || p.config_key,
+    price: v.base_price_usd,
+    credits: v.credits,
+    badge: v.badge,
+    bullets: [p.description || "Flexible credit pack for all needs"],
+    stripe_link: p.stripe_link || v.stripe_price_id,  // ✅ add this line
+  };
+});
+console.log("🧩 Final mapped packs with links:", mapped);
+
+        const sorted = mapped.sort((a, b) => a.price - b.price);
+setPacks(sorted);
       } catch (err) {
         console.error("❌ Failed to fetch credit packs:", err);
       } finally {
@@ -188,13 +197,32 @@ setPacks(data);
   };
 
   const handleCloseModal = () => setShowModal(false);
-  const handleProceedToPayment = () => {
-    if (selectedPack) window.location.href = `/payment?pack=${selectedPack.id}`;
-  };
+const handleProceedToPayment = () => {
+  if (selectedPack) {
+    console.log("🛒 Selected pack for payment:", selectedPack);
+    const stripeLink = selectedPack.stripe_link;
+    console.log("🔗 Stripe link resolved to:", stripeLink);
+
+    if (stripeLink && stripeLink.startsWith("http")) {
+      window.open(stripeLink, "_blank", "noopener,noreferrer");
+    } else {
+      alert("Payment link not available for this pack.");
+    }
+  }
+};
+
 
   return (
     <div className="credit-page">
-      <Nav theme={theme} onToggle={toggle} />
+      <NavProduct
+  theme={theme}
+  onToggleTheme={toggleTheme}
+  active="workstation"
+  onGoWorkstation={() => (window.location.href = "/workstation")}
+  onGoGraph={() => (window.location.href = "/graph")}
+  onGoHistory={() => (window.location.href = "/history")}
+/>
+
 
       <header className="credit-hero">
         <Reveal as="h1" variant="down" className="credit-title">

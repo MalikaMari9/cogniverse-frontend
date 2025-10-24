@@ -8,7 +8,7 @@ import { createPortal } from "react-dom";
 import { useParams } from "react-router-dom";
 import RelationshipGraph from "./Graph";
 import ScenarioPage from "./ScenarioPage";
-import { WorkstationSidebar } from "../components/Sidebar";
+import { AgentSidebar } from "../components/Sidebar";
 import {
   getAgents,
   createAgent,
@@ -420,6 +420,17 @@ const [noAccessModal, setNoAccessModal] = useState({ open: false, message: "" })
 
   const [theme, setTheme] = useState(getStoredTheme());
   const [expanded, setExpanded] = useState(true);
+  const handleExpand = () => {
+  setExpanded((prev) => !prev);
+};
+const toggleTheme = () => {
+  const newTheme = theme === "dark" ? "light" : "dark";
+  setTheme(newTheme);
+  localStorage.setItem("theme", newTheme);
+  document.documentElement.setAttribute("data-theme", newTheme);
+};
+
+
   const [agents, setAgents] = useState([]);
   const [selected, setSelected] = useState([]);
   const [openModal, setOpenModal] = useState(false);
@@ -671,17 +682,17 @@ return (
     ) : (
       <>
         {stage !== "scenario" && (
-          <WorkstationSidebar
-            expanded={expanded}
-            onToggleExpand={() => setExpanded((e) => !e)}
-            theme={theme}
-            onToggleTheme={() =>
-              setTheme((t) => (t === "dark" ? "light" : "dark"))
-            }
-            onPickExisting={handlePickExisting}
-            selectedIds={selected.map((a) => a.agentid)}
-            refreshKey={agents.length}
-          />
+<AgentSidebar
+  variant="workstation"
+  expanded={expanded}
+  onToggleExpand={handleExpand}
+  theme={theme}
+  onToggleTheme={toggleTheme}
+  onPickExisting={handlePickExisting}
+  selectedIds={selected.map(a => a.agentid)}
+
+  
+/>
         )}
 
         <main className="ws-main">

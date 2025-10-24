@@ -3,7 +3,7 @@
 // ===============================
 import React, { useState, useEffect } from "react";
 import "../profile-nav.css";
-import { getUserProfile, logoutUser } from "../api/api"; // 🔥 import backend calls
+import { getUserProfile, logoutUser ,getMyBilling} from "../api/api"; // 🔥 import backend calls
 
 export default function NavProduct({
   theme = "dark",
@@ -17,17 +17,24 @@ export default function NavProduct({
   const [user, setUser] = useState(null);
 
   // ✅ Load profile info once
-  useEffect(() => {
-    async function fetchUser() {
-      try {
-        const data = await getUserProfile();
-        setUser(data);
-      } catch (err) {
-        console.warn("⚠️ Failed to load user profile", err);
-      }
+useEffect(() => {
+  async function fetchUser() {
+    try {
+      const [profile, billing] = await Promise.all([
+        getUserProfile(),
+        getMyBilling()
+      ]);
+      setUser({
+        ...profile,
+        free_credits: billing.free_credits,
+        paid_credits: billing.paid_credits,
+      });
+    } catch (err) {
+      console.warn("⚠️ Failed to load user profile or billing", err);
     }
-    fetchUser();
-  }, []);
+  }
+  fetchUser();
+}, []);
 
   // ✅ Handle logout
   const handleLogout = async () => {
@@ -134,24 +141,47 @@ export default function NavProduct({
           </div>
 
           {/* Dropdown */}
-          {dropdownOpen && (
-            <div className="pf-dropdown" role="menu">
-              <a href="/profile" className="pf-dd-item" role="menuitem">
-                Profile
-              </a>
-              <a href="/settings" className="pf-dd-item" role="menuitem">
-                Settings
-              </a>
-              <button
-                type="button"
-                className="pf-dd-item"
-                role="menuitem"
-                onClick={handleLogout}
-              >
-                Logout
-              </button>
-            </div>
-          )}
+{dropdownOpen && (
+  <div className="pf-dropdown" role="menu">
+    {/* 💳 Wallet Summary */}
+    <div className="pf-wallet-summary">
+      <div className="pf-wallet-header">Wallet</div>
+      <div className="pf-wallet-balance">
+        <div className="pf-wallet-item">
+          <span className="label">Free</span>
+          <span className="value">{user?.free_credits ?? 0}</span>
+        </div>
+        <div className="pf-wallet-item">
+          <span className="label">Paid</span>
+          <span className="value">{user?.paid_credits ?? 0}</span>
+        </div>
+        <div className="pf-wallet-divider" />
+        <div className="pf-wallet-item total">
+          <span className="label">Total</span>
+          <span className="value">
+            {(user?.free_credits ?? 0) + (user?.paid_credits ?? 0)}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <a href="/profile" className="pf-dd-item" role="menuitem">
+      Profile
+    </a>
+    <a href="/settings" className="pf-dd-item" role="menuitem">
+      Settings
+    </a>
+    <button
+      type="button"
+      className="pf-dd-item"
+      role="menuitem"
+      onClick={handleLogout}
+    >
+      Logout
+    </button>
+  </div>
+)}
+
         </div>
       </div>
     </header>

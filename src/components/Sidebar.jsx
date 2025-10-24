@@ -1,17 +1,16 @@
 // ===============================
-// components/Sidebar.jsx
+// components/AgentSidebar.jsx
 // ===============================
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { SvgIcon, AgentViewModal } from "../pages/Workstation";
 import { getCurrentUserFromToken } from "../utils/auth";
 import { handleLogout } from "../utils/logout";
-import { getAgentsByUser, createAgent,  } from "../api/api";
+import { getAgentsByUser, createAgent } from "../api/api";
 import { usePermission } from "../hooks/usePermission";
 import "../ws_css.css";
 
-
-/* ---------- Custom MBTI dropdown ---------- */
+/* ---------- MBTI Dropdown ---------- */
 function MbtiSelect({ label = "Personality (MBTI)", name = "agentpersonality", value, onChange }) {
   const options = [
     "INTJ","INTP","ENTJ","ENTP","INFJ","INFP","ENFJ","ENFP",
@@ -19,9 +18,6 @@ function MbtiSelect({ label = "Personality (MBTI)", name = "agentpersonality", v
   ];
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
-const { level: permission, canRead, canWrite, loading: permLoading } =
-  usePermission("AGENTS");
-const [noAccessModal, setNoAccessModal] = useState({ open: false, message: "" });
 
   useEffect(() => {
     if (!open) return;
@@ -35,6 +31,7 @@ const [noAccessModal, setNoAccessModal] = useState({ open: false, message: "" })
     setOpen(false);
   };
 
+  
   return (
     <label className="ws-select ws-select--custom" ref={wrapRef}>
       <span>{label}</span>
@@ -47,7 +44,7 @@ const [noAccessModal, setNoAccessModal] = useState({ open: false, message: "" })
       >
         {value}
         <svg className="chev" width="14" height="14" viewBox="0 0 24 24">
-          <path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="2"/>
+          <path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="2" />
         </svg>
       </button>
       {open && (
@@ -123,34 +120,22 @@ function AddAgentModal({ open, onClose, onSubmit }) {
           onSubmit={(e) => {
             e.preventDefault();
             onSubmit({
-  ...form,
-  agentskill: Array.isArray(form.agentskill)
-    ? form.agentskill
-    : form.agentskill
-      ? form.agentskill.split(",").map((s) => s.trim()).filter(Boolean)
-      : [],
-  agentconstraints: Array.isArray(form.agentconstraints)
-    ? form.agentconstraints
-    : form.agentconstraints
-      ? form.agentconstraints.split(",").map((s) => s.trim()).filter(Boolean)
-      : [],
-  agentquirk: Array.isArray(form.agentquirk)
-    ? form.agentquirk
-    : form.agentquirk
-      ? form.agentquirk.split(",").map((s) => s.trim()).filter(Boolean)
-      : [],
-});
-
+              ...form,
+              agentskill: form.agentskill
+                ? form.agentskill.split(",").map((s) => s.trim()).filter(Boolean)
+                : [],
+              agentconstraints: form.agentconstraints
+                ? form.agentconstraints.split(",").map((s) => s.trim()).filter(Boolean)
+                : [],
+              agentquirk: form.agentquirk
+                ? form.agentquirk.split(",").map((s) => s.trim()).filter(Boolean)
+                : [],
+            });
           }}
         >
           <label>
             <span>Name</span>
-            <input
-              name="agentname"
-              value={form.agentname}
-              onChange={handle}
-              required
-            />
+            <input name="agentname" value={form.agentname} onChange={handle} required />
           </label>
 
           <MbtiSelect
@@ -172,51 +157,27 @@ function AddAgentModal({ open, onClose, onSubmit }) {
 
           <label>
             <span>Biography</span>
-            <textarea
-              name="agentbiography"
-              rows={2}
-              value={form.agentbiography}
-              onChange={handle}
-            />
+            <textarea name="agentbiography" rows={2} value={form.agentbiography} onChange={handle} />
           </label>
 
           <label>
             <span>Constraints (comma-separated)</span>
-            <textarea
-              name="agentconstraints"
-              rows={2}
-              value={form.agentconstraints}
-              onChange={handle}
-            />
+            <textarea name="agentconstraints" rows={2} value={form.agentconstraints} onChange={handle} />
           </label>
 
           <label>
             <span>Quirks (comma-separated)</span>
-            <textarea
-              name="agentquirk"
-              rows={2}
-              value={form.agentquirk}
-              onChange={handle}
-            />
+            <textarea name="agentquirk" rows={2} value={form.agentquirk} onChange={handle} />
           </label>
 
           <label>
             <span>Motivation</span>
-            <textarea
-              name="agentmotivation"
-              rows={2}
-              value={form.agentmotivation}
-              onChange={handle}
-            />
+            <textarea name="agentmotivation" rows={2} value={form.agentmotivation} onChange={handle} />
           </label>
 
           <div className="ws-modal-actions" style={{ display: "flex", justifyContent: "center", gap: 12 }}>
-            <button type="button" className="ws-btn ghost" onClick={onClose}>
-              Cancel
-            </button>
-            <button type="submit" className="ws-btn primary">
-              Create
-            </button>
+            <button type="button" className="ws-btn ghost" onClick={onClose}>Cancel</button>
+            <button type="submit" className="ws-btn primary">Create</button>
           </div>
         </form>
       </div>
@@ -226,9 +187,10 @@ function AddAgentModal({ open, onClose, onSubmit }) {
 }
 
 /* =====================================================================
-   1️⃣ Workstation Sidebar
+   🌟 Unified Agent Sidebar (Workstation + Hub)
    ===================================================================== */
-export function WorkstationSidebar({
+export function AgentSidebar({
+  variant = "workstation", // or "hub"
   expanded,
   onToggleExpand,
   theme,
@@ -242,15 +204,26 @@ export function WorkstationSidebar({
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [limit, setLimit] = useState(8);
   const [openAdd, setOpenAdd] = useState(false);
-    const [noAccessModal, setNoAccessModal] = useState({ open: false, message: "" });
-const { level: permission, canRead, canWrite, loading: permLoading } =
-  usePermission("AGENTS");
-  const loadAgents = async () => {
+  const [noAccessModal, setNoAccessModal] = useState({ open: false, message: "" });
+  const [userInfo, setUserInfo] = useState(null);
+
+  const { level: permission, canRead, canWrite, loading: permLoading } = usePermission("AGENTS");
+
+  /* ---------- Load Agents ---------- */
+  const loadAgents = async (pageNum = 1) => {
     try {
+      setLoading(true);
       const user = getCurrentUserFromToken();
-const res = await getAgentsByUser(user.user_id || user.userid);
-      setAgents(res);
+      const res = await getAgentsByUser(user.user_id || user.userid, pageNum, query);
+      setAgents(res.agents || []);
+
+      setTotalCount(res.total_count || 0);
+      setLimit(res.limit || 8);
+      setPage(res.page || pageNum);
     } catch (err) {
       console.error("Failed to load agents:", err);
       setError("Failed to load agents");
@@ -258,78 +231,72 @@ const res = await getAgentsByUser(user.user_id || user.userid);
       setLoading(false);
     }
   };
-useEffect(() => {
-  if (!permLoading && canRead) loadAgents();
-}, [permLoading, canRead, refreshKey]);
 
- 
- // 🔹 Helper for permission-protected actions
-const requireWrite = (actionName = "modify agents") => {
-  if (!canWrite) {
-    setNoAccessModal({
-      open: true,
-      message: `You don't have permission to ${actionName}.`,
-    });
-    return false;
-  }
-  return true;
-};
+  useEffect(() => {
+    const decoded = getCurrentUserFromToken();
+    if (decoded) setUserInfo(decoded);
+    if (!permLoading && canRead) loadAgents();
+  }, [permLoading, canRead, refreshKey]);
 
-
+  
+  /* ---------- Add Agent ---------- */
   const handleAddAgent = async (data) => {
     try {
       const newA = await createAgent(data);
       setAgents((prev) => [...prev, newA]);
       setOpenAdd(false);
     } catch (err) {
-      console.error("Error creating agent:", err);
       alert("Error creating agent: " + err.message);
     }
   };
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return agents;
-    return agents.filter((ag) =>
-      [ag.agentname, ag.agentpersonality, ag.agentbiography, ag.agentconstraints]
-        .join(" ")
-        .toLowerCase()
-        .includes(q)
-    );
-  }, [agents, query]);
+  // 🔍 Debounced search fetch (runs when user types)
+useEffect(() => {
+  const delay = setTimeout(() => {
+    if (!permLoading && canRead) loadAgents(1);
+  }, 400);
+  return () => clearTimeout(delay);
+}, [query]);
 
 
+  /* ---------- Filter ---------- */
+
+
+  /* ---------- Loading + Permission ---------- */
   if (permLoading)
-  return (
-    <aside className="ws-sidebar expanded">
-      <div className="ws-card" style={{ padding: "24px", textAlign: "center" }}>
-        Checking access...
-      </div>
-    </aside>
-  );
+    return (
+      <aside className="ws-sidebar expanded">
+        <div className="ws-card" style={{ padding: "24px", textAlign: "center" }}>
+          Checking access...
+        </div>
+      </aside>
+    );
 
-if (permission === "none")
-  return (
-    <aside className="ws-sidebar expanded">
-      <div className="ws-card ws-center-over-content" style={{ padding: "24px" }}>
-        <h3>You have no access to Agents.</h3>
-        <p style={{ opacity: 0.7 }}>
-          Please contact an administrator if you believe this is a mistake.
-        </p>
-      </div>
-    </aside>
-  );
+  if (permission === "none")
+    return (
+      <aside className="ws-sidebar expanded">
+        <div className="ws-card ws-center-over-content" style={{ padding: "24px" }}>
+          <h3>You have no access to Agents.</h3>
+          <p style={{ opacity: 0.7 }}>Please contact an administrator if you believe this is a mistake.</p>
+        </div>
+      </aside>
+    );
 
+  /* ---------- Main Layout ---------- */
   return (
     <>
-    
       <aside className={`ws-sidebar ${expanded ? "expanded" : ""}`}>
         <div className="ws-sidebar-scroll">
+          {/* Header */}
           <div className="ws-side-top">
             <div className="ws-brand">
               <span className="logo"><img src="logo.png" alt="" /></span>
               {expanded && (
-                <span className="brand-text" onClick={() => (window.location.href = "/workstation")} style={{ cursor: "pointer" }}>
+                <span
+                  className="brand-text"
+                  onClick={() => (window.location.href = "/workstation")}
+                  style={{ cursor: "pointer" }}
+                >
                   Workstation
                 </span>
               )}
@@ -351,9 +318,16 @@ if (permission === "none")
                   placeholder="Search agents..."
                 />
                 {query && (
-                  <button className="ws-search-clear" onClick={() => setQuery("")}>
-                    ×
-                  </button>
+                 <button
+  className="ws-search-clear"
+  onClick={() => {
+    setQuery("");
+    loadAgents(1);
+  }}
+>
+  ×
+</button>
+
                 )}
               </div>
             </div>
@@ -364,41 +338,73 @@ if (permission === "none")
             {expanded && (
               <div className="ws-sec-title" style={{ display: "flex", justifyContent: "space-between" }}>
                 <span>Agents</span>
-{canWrite && (
-  <button
-    className="ws-mini-btn primary"
-    onClick={() => setOpenAdd(true)}
-    title="Add new agent"
-  >
-    +
-  </button>
-)}
-
-
+                {canWrite && (
+                  <button
+                    className="ws-mini-btn primary"
+                    onClick={() => setOpenAdd(true)}
+                    title="Add new agent"
+                  >
+                    +
+                  </button>
+                )}
               </div>
             )}
+
             {loading ? (
               <p style={{ padding: "12px", opacity: 0.6 }}>Loading agents...</p>
             ) : error ? (
               <p style={{ color: "red", padding: "12px" }}>{error}</p>
-            ) : filtered.length === 0 ? (
+            ) : agents.length === 0 ? (
               <p style={{ padding: "12px", opacity: 0.6 }}>No agents found.</p>
             ) : (
               <ul className="ws-agent-list">
-                {filtered.map((ag) => {
+                {agents.map((ag) => {
                   const inUse = selectedIds.includes(ag.agentid);
                   return (
-                    <li key={ag.agentid} className={`ws-agent-pill ${inUse ? "disabled" : ""}`} onClick={() => !inUse && onPickExisting(ag)}>
+                    <li
+                      key={ag.agentid}
+                      className={`ws-agent-pill ${inUse ? "disabled" : ""}`}
+                      onClick={() =>
+                        variant === "workstation" && !inUse && onPickExisting && onPickExisting(ag)
+                      }
+                    >
                       <span className="ico avatar"><SvgIcon name="robot" /></span>
                       {expanded && <span className="lbl">{ag.agentname}</span>}
                       {expanded && (
                         <span className="ws-agent-actions">
-                          <button className="ws-mini-btn" disabled={inUse} onClick={(e) => { e.stopPropagation(); if (!inUse) onPickExisting(ag); }}>
-                            Add
-                          </button>
-                          <button className="ws-mini-btn ghost" onClick={(e) => { e.stopPropagation(); setViewAgent(ag); }}>
-                            View
-                          </button>
+                          {variant === "workstation" ? (
+                            <>
+                              <button
+                                className="ws-mini-btn"
+                                disabled={inUse}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (!inUse && onPickExisting) onPickExisting(ag);
+                                }}
+                              >
+                                Add
+                              </button>
+                              <button
+                                className="ws-mini-btn ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setViewAgent(ag);
+                                }}
+                              >
+                                View
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              className="ws-mini-btn ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setViewAgent(ag);
+                              }}
+                            >
+                              View
+                            </button>
+                          )}
                         </span>
                       )}
                     </li>
@@ -406,211 +412,85 @@ if (permission === "none")
                 })}
               </ul>
             )}
-          </div>
 
-          <div className="ws-side-section">
-            <button className={`ws-theme-switch ${theme}`} onClick={onToggleTheme} />
-            <a className="ws-row-btn" href="#"><span className="ico"><SvgIcon name="clock" /></span>{expanded && <span>History</span>}</a>
-            <a className="ws-row-btn" href="/profile"><span className="ico"><SvgIcon name="user" /></span>{expanded && <span>Profile</span>}</a>
-            <button className="ws-row-btn" onClick={handleLogout}><span className="ico"><SvgIcon name="lock" /></span>{expanded && <span>Logout</span>}</button>
-          </div>
-        </div>
+{/* 🔹 Pagination Footer */}
+{totalCount > limit && (
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      gap: "8px",
+      padding: "10px 0 16px",
+    }}
+  >
+    <button
+      className="ws-btn ghost"
+      disabled={page <= 1 || loading}
+      onClick={() => loadAgents(page - 1)}
+    >
+      ‹ Prev
+    </button>
 
-        <AgentViewModal open={!!viewAgent} agent={viewAgent} onClose={() => setViewAgent(null)} />
-     {noAccessModal.open && (
-  <div className="ad-modal">
-    <div className="ad-modal-content ws-card">
-      <h3>Access Denied</h3>
-      <p>{noAccessModal.message}</p>
-      <div className="modal-actions">
-        <button
-          className="ws-btn primary"
-          onClick={() => setNoAccessModal({ open: false, message: "" })}
-        >
-          OK
-        </button>
-      </div>
-    </div>
+    <span style={{ fontSize: "13px", opacity: 0.8 }}>
+      Page {page} of {Math.ceil(totalCount / limit)}
+    </span>
+
+    <button
+      className="ws-btn ghost"
+      disabled={page >= Math.ceil(totalCount / limit) || loading}
+      onClick={() => loadAgents(page + 1)}
+    >
+      Next ›
+    </button>
   </div>
 )}
 
-      </aside>
+          </div>
 
-      <AddAgentModal open={openAdd} onClose={() => setOpenAdd(false)} onSubmit={handleAddAgent} />
-    </>
-    
-  );
-}
+          {/* Footer */}
+          <div className="ws-side-section">
+            {variant === "hub" && (
+              <div className="ws-user-greeting" style={{ padding: "10px 16px" }}>
+                {userInfo
+                  ? <>Hi, {userInfo.username || `User #${userInfo.user_id}`} 👋</>
+                  : <span style={{ opacity: 0.6 }}>Not logged in</span>}
+              </div>
+            )}
 
-/* =====================================================================
-   2️⃣ Workstation Hub Sidebar
-   ===================================================================== */
-export function WorkstationHubSidebar({ expanded, onToggleExpand, theme, onToggleTheme }) {
-  const [query, setQuery] = useState("");
-  const [viewAgent, setViewAgent] = useState(null);
-  const [agents, setAgents] = useState([]);
-  const [userInfo, setUserInfo] = useState(null);
-  const [openAdd, setOpenAdd] = useState(false);
-    // 🔹 Permission Control for Agents (Hub)
-  const [noAccessModal, setNoAccessModal] = useState({ open: false, message: "" });
-  const { level: permission, canRead, canWrite, loading: permLoading } =
-    usePermission("AGENTS");
-
-  const requireWrite = (actionName = "modify agents") => {
-    if (!canWrite) {
-      setNoAccessModal({
-        open: true,
-        message: `You don't have permission to ${actionName}.`,
-      });
-      return false;
-    }
-    return true;
-  };
-
-
-useEffect(() => {
-  const decoded = getCurrentUserFromToken();
-  if (decoded) setUserInfo(decoded);
-
-  if (!permLoading && canRead) {
-    (async () => {
-      try {
-        const user = getCurrentUserFromToken();
-        const res = await getAgentsByUser(user.user_id || user.userid);
-        setAgents(res);
-      } catch (err) {
-        console.warn("Failed to fetch agents:", err);
-      }
-    })();
-  }
-}, [permLoading, canRead]);
-
-  const handleAddAgent = async (data) => {
-    try {
-      const newA = await createAgent(data);
-      setAgents((prev) => [...prev, newA]);
-      setOpenAdd(false);
-    } catch (err) {
-      alert("Error creating agent: " + err.message);
-    }
-  };
-
-  const filtered = agents.filter((ag) => ag.agentname.toLowerCase().includes(query.toLowerCase()));
-  if (permLoading)
-    return (
-      <aside className="ws-sidebar expanded">
-        <div className="ws-card" style={{ padding: "24px", textAlign: "center" }}>
-          Checking access...
-        </div>
-      </aside>
-    );
-
-  if (permission === "none")
-    return (
-      <aside className="ws-sidebar expanded">
-        <div className="ws-card ws-center-over-content" style={{ padding: "24px" }}>
-          <h3>You have no access to Agents.</h3>
-          <p style={{ opacity: 0.7 }}>
-            Please contact an administrator if you believe this is a mistake.
-          </p>
-        </div>
-      </aside>
-    );
-
-  return (
-    <>
-      <aside className={`ws-sidebar ${expanded ? "expanded" : ""}`}>
-        <div className="ws-sidebar-scroll">
-          <div className="ws-side-top">
-            <div className="ws-brand">
-              <span className="logo"><img src="logo.png" alt="" /></span>
-              {expanded && (
-                <span className="brand-text" onClick={() => (window.location.href = "/workstation")} style={{ cursor: "pointer" }}>
-                  Workstation
-                </span>
-              )}
-            </div>
-            <button className="ws-toggle-exp" onClick={onToggleExpand}>
-              {expanded ? "«" : "»"}
+            <button className={`ws-theme-switch ${theme}`} onClick={onToggleTheme} />
+            <a className="ws-row-btn" href="#">
+              <span className="ico"><SvgIcon name="clock" /></span>
+              {expanded && <span>History</span>}
+            </a>
+            <a className="ws-row-btn" href="/profile">
+              <span className="ico"><SvgIcon name="user" /></span>
+              {expanded && <span>Profile</span>}
+            </a>
+            <button className="ws-row-btn" onClick={handleLogout}>
+              <span className="ico"><SvgIcon name="lock" /></span>
+              {expanded && <span>Logout</span>}
             </button>
           </div>
-
-          {expanded && (
-            <div className="ws-searchbar">
-              <div className="ws-search">
-                <span className="ico"><SvgIcon name="search" size={16} /></span>
-                <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search agents..." />
-                {query && <button className="ws-search-clear" onClick={() => setQuery("")}>×</button>}
-              </div>
-            </div>
-          )}
-
-          <div className="ws-side-section agents">
-            {expanded && (
-              <div className="ws-sec-title" style={{ display: "flex", justifyContent: "space-between" }}>
-                <span>Agents</span>
-               {canWrite && (
-  <button
-    className="ws-mini-btn primary"
-    onClick={() => setOpenAdd(true)}
-    title="Add new agent"
-  >
-    +
-  </button>
-)}
-
-
-              </div>
-            )}
-            {filtered.map((ag) => (
-              <li key={ag.agentid} className="ws-agent-pill">
-                <span className="ico avatar"><SvgIcon name="robot" /></span>
-                {expanded && <span className="lbl">{ag.agentname}</span>}
-                {expanded && (
-                  <button className="ws-mini-btn ghost" style={{ marginLeft: "auto" }} onClick={() => setViewAgent(ag)}>
-                    View
-                  </button>
-                )}
-              </li>
-            ))}
-          </div>
-
-          <div className="ws-side-section">
-            {userInfo ? (
-              <div className="ws-user-greeting" style={{ padding: "10px 16px" }}>
-                Hi, {userInfo.username || `User #${userInfo.user_id}`} 👋
-              </div>
-            ) : (
-              <div className="ws-user-greeting" style={{ padding: "10px 16px", opacity: 0.6 }}>
-                Not logged in
-              </div>
-            )}
-
-            <button className={`ws-theme-switch ${theme}`} onClick={onToggleTheme} />
-            <a className="ws-row-btn" href="#"><span className="ico"><SvgIcon name="clock" /></span>{expanded && <span>History</span>}</a>
-            <a className="ws-row-btn" href="/profile"><span className="ico"><SvgIcon name="user" /></span>{expanded && <span>Profile</span>}</a>
-            <button className="ws-row-btn" onClick={handleLogout}><span className="ico"><SvgIcon name="lock" /></span>{expanded && <span>Logout</span>}</button>
-          </div>
         </div>
 
         <AgentViewModal open={!!viewAgent} agent={viewAgent} onClose={() => setViewAgent(null)} />
-      {noAccessModal.open && (
-  <div className="ad-modal">
-    <div className="ad-modal-content ws-card">
-      <h3>Access Denied</h3>
-      <p>{noAccessModal.message}</p>
-      <div className="modal-actions">
-        <button
-          className="ws-btn primary"
-          onClick={() => setNoAccessModal({ open: false, message: "" })}
-        >
-          OK
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-
+        {noAccessModal.open && (
+          <div className="ad-modal">
+            <div className="ad-modal-content ws-card">
+              <h3>Access Denied</h3>
+              <p>{noAccessModal.message}</p>
+              <div className="modal-actions">
+                <button
+                  className="ws-btn primary"
+                  onClick={() => setNoAccessModal({ open: false, message: "" })}
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </aside>
 
       <AddAgentModal open={openAdd} onClose={() => setOpenAdd(false)} onSubmit={handleAddAgent} />

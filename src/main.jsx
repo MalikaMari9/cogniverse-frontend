@@ -15,7 +15,7 @@ import { withGlobalMaintenanceGuard } from "./components/withGlobalMaintenanceGu
 import PaymentPage from "./pages/payment.jsx";
 import CreditPage from './pages/Credit.jsx'
 import "./styles.css";
-
+import CreditSuccess from "./pages/CreditSuccess.jsx";
 /* ===============================
    🌍 PUBLIC PAGES
    =============================== */
@@ -76,6 +76,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route path="/about" element={<AboutPage />} />
           <Route path="/maintenance" element={<MaintenancePage />} />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
+            <Route path="/credit/success" element={<CreditSuccess />} />
 
           {/* ===============================
               🔐  AUTH

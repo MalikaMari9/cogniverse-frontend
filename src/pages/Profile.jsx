@@ -2,7 +2,7 @@ import React from "react";
 import NavProduct from "../components/NavProduct";
 import "../profile-nav.css";        // <— new CSS file shown below
 import api from "../api/axios";
-import { getUserProfile, updateUserProfile } from "../api/api";
+import { getUserProfile, updateUserProfile, getMyBilling } from "../api/api";
 
 // If you already have these helpers elsewhere, use those instead:
 function getStoredTheme() {
@@ -265,36 +265,60 @@ const DEFAULT_AVATAR =
     role: "",
     email: "",
   });
+  // 💳 Billing info state
+const [billing, setBilling] = React.useState({
+  free_credits: 0,
+  paid_credits: 0,
+  last_free_credit_date: null,
+});
+
   const [avatar, setAvatar] = React.useState("");
 
   React.useEffect(() => {
   const fetchProfile = async () => {
-  try {
-    const data = await getUserProfile();
-    console.log("Profile response:", data);
+    try {
+      const data = await getUserProfile();
+      console.log("Profile response:", data);
 
-    if (data) {
-      setForm({
-        username: data.username,
-        role: data.role,
-        email: data.email,
-      });
-      
-      // Construct full URL for profile image
-      if (data.profile_image_url) {
-        const fullAvatarUrl = `http://localhost:8000${data.profile_image_url}`;
-        console.log("Setting avatar to:", fullAvatarUrl);
-        setAvatar(fullAvatarUrl);
-      } else {
-        setAvatar(""); // or set to a default avatar
+      if (data) {
+        setForm({
+          username: data.username,
+          role: data.role,
+          email: data.email,
+        });
+
+        if (data.profile_image_url) {
+          const fullAvatarUrl = `http://localhost:8000${data.profile_image_url}`;
+          console.log("Setting avatar to:", fullAvatarUrl);
+          setAvatar(fullAvatarUrl);
+        } else {
+          setAvatar("");
+        }
       }
+    } catch (err) {
+      console.error("Failed to fetch profile", err);
     }
-  } catch (err) {
-    console.error("Failed to fetch profile", err);
-  }
-};
+  };
+
+  const fetchBilling = async () => {
+    try {
+      const billingData = await getMyBilling();
+      console.log("💳 Billing data:", billingData);
+      setBilling({
+        free_credits: billingData.free_credits ?? 0,
+        paid_credits: billingData.paid_credits ?? 0,
+        last_free_credit_date: billingData.last_free_credit_date || null,
+      });
+    } catch (err) {
+      console.error("❌ Failed to fetch billing:", err);
+    }
+  };
+
+  // ✅ Call both once on mount
   fetchProfile();
+  fetchBilling();
 }, []);
+
   const [theme, setTheme] = React.useState(getStoredTheme());
 React.useEffect(() => { applyTheme(theme); }, [theme]);
 
@@ -675,97 +699,147 @@ const handleDownloadInvoices = () => {
           </Reveal>
 
           {/* Billing (bottom-left) */}
-          <Reveal as="section" className="card billing-area" variant="fade-up" delay={60}>
-            <header className="lead">
-              <h2>Billing & subscriptions</h2>
-              <p>Manage plans, payment methods, and invoices.</p>
-            </header>
+<Reveal as="section" className="card billing-area" variant="fade-up" delay={60}>
+  <header className="lead">
+    <h2>Billing & Credits</h2>
+    <p>View and top up your credits wallet.</p>
+  </header>
 
-            {/* Tabs with correctly centered ink slider */}
-            <div className="tabs" data-tab={activeTab} ref={billingBoxRef}>
-              <span className="ink" aria-hidden />
-              <button
-                type="button"
-                className={activeTab === "overview" ? "active" : ""}
-                onClick={() => setActiveTab("overview")}
-              >
-                <IcBell /> Overview
-              </button>
-              <button
-                type="button"
-                className={activeTab === "security" ? "active" : ""}
-                onClick={() => setActiveTab("security")}
-              >
-                <IcShield /> Security
-              </button>
-              <button
-                type="button"
-                className={activeTab === "billing" ? "active" : ""}
-                onClick={() => setActiveTab("billing")}
-              >
-                <IcCard /> Billing
-              </button>
-            </div>
+  {/* Tabs with correctly centered ink slider */}
+  <div className="tabs" data-tab={activeTab} ref={billingBoxRef}>
+    <span className="ink" aria-hidden />
+    <button
+      type="button"
+      className={activeTab === "overview" ? "active" : ""}
+      onClick={() => setActiveTab("overview")}
+    >
+      <IcBell /> Overview
+    </button>
+    <button
+      type="button"
+      className={activeTab === "security" ? "active" : ""}
+      onClick={() => setActiveTab("security")}
+    >
+      <IcShield /> Security
+    </button>
+    <button
+      type="button"
+      className={activeTab === "billing" ? "active" : ""}
+      onClick={() => setActiveTab("billing")}
+    >
+      <IcCard /> Wallet
+    </button>
+  </div>
 
-            {/* Tab content */}
-            {activeTab === "overview" && (
-              <div className="rows">
-                <div className="row">
-                  <span className="label"><IcTag /> Plan</span>
-                  <span className="value chip">Pro</span>
-                </div>
-                <div className="row">
-                  <span className="label"><IcBell /> Renewal</span>
-                  <span className="value">Nov 25, 2025</span>
-                </div>
-                <div className="row">
-                  <span className="label"><IcCard /> Card</span>
-                  <span className="value">•••• 4242</span>
-                </div>
-                <div className="panel actions">
-                <button type="button" className="btn" onClick={() => openDialog('change-plan')}>Change plan</button>
-                <button type="button" className="btn primary" onClick={() => openDialog('update-payment')}>Update payment</button>
-                </div>
+  {/* Tab content */}
+  {activeTab === "overview" && (
+    <div className="rows">
+      <div className="row">
+        <span className="label"><IcTag /> Plan</span>
+        <span className="value chip">Pay-as-you-go</span>
+      </div>
+      <div className="row">
+        <span className="label"><IcBell /> Free credit refresh</span>
+        <span className="value">Every 24 hours</span>
+      </div>
+      <div className="panel actions">
+        <button type="button" className="btn primary" onClick={() => setActiveTab("billing")}>
+          View Wallet
+        </button>
+      </div>
+    </div>
+  )}
 
-              </div>
-            )}
+  {activeTab === "security" && (
+    <div className="rows">
+      <div className="row">
+        <span className="label"><IcShield /> 2-Factor Authentication</span>
+        <span className="chip ok">Enabled</span>
+      </div>
+      <div className="row">
+        <span className="label"><IcShield /> Login alerts</span>
+        <span className="value">Email & App</span>
+      </div>
+      <div className="panel actions">
+        <button type="button" className="btn" onClick={() => openDialog("manage-devices")}>
+          Manage devices
+        </button>
+        <button type="button" className="btn primary" onClick={() => openDialog("update-password")}>
+          Update password
+        </button>
+      </div>
+    </div>
+  )}
 
-            {activeTab === "security" && (
-              <div className="rows">
-                <div className="row">
-                  <span className="label"><IcShield /> 2-Factor Authentication</span>
-                  <span className="chip ok">Enabled</span>
-                </div>
-                <div className="row">
-                  <span className="label"><IcShield /> Login alerts</span>
-                  <span className="value">Email & App</span>
-                </div>
-                <div className="panel actions">
-                <button type="button" className="btn" onClick={() => openDialog('manage-devices')}>Manage devices</button>
-                <button type="button" className="btn primary" onClick={() => openDialog('update-password')}>Update password</button>
-                </div>
+  {activeTab === "billing" && (
+    <div className="rows">
+      {/* 💳 Wallet Overview */}
+<div className="pf-wallet-summary" style={{ borderRadius: 12, marginBottom: 16 }}>
+  <div className="pf-wallet-header">Credit Wallet</div>
+  <div className="pf-wallet-balance">
+    <div className="pf-wallet-item">
+      <span className="label">Free credits</span>
+      <span className="value">{billing.free_credits ?? 0}</span>
+    </div>
+    <div className="pf-wallet-item">
+      <span className="label">Paid credits</span>
+      <span className="value">{billing.paid_credits ?? 0}</span>
+    </div>
+    <div className="pf-wallet-divider" />
+    <div className="pf-wallet-item total">
+      <span className="label">Total available</span>
+      <span className="value">
+        {(billing.free_credits ?? 0) + (billing.paid_credits ?? 0)}
+      </span>
+    </div>
+  </div>
 
-              </div>
-            )}
+  {/* optional small text */}
+  {billing.last_free_credit_date && (
+    <div style={{ fontSize: "0.8rem", opacity: 0.7, marginTop: 6 }}>
+      Last refresh:{" "}
+      {new Date(billing.last_free_credit_date).toLocaleDateString()}
+    </div>
+  )}
+</div>
 
-            {activeTab === "billing" && (
-              <div className="rows">
-                <div className="row">
-                  <span className="label"><IcCard /> Default payment</span>
-                  <span className="value">Visa •••• 4242</span>
-                </div>
-                <div className="row">
-                  <span className="label"><IcTag /> Invoices</span>
-                  <span className="value">Aug–Oct 2025</span>
-                </div>
-                <div className="panel actions">
-                <button type="button" className="btn" onClick={handleDownloadInvoices}>Download invoices</button>
-                <button type="button" className="btn primary" onClick={() => openDialog('add-payment-method')}>Add payment method</button>
-                </div>
 
-              </div>
-            )}
-          </Reveal>
+      <div className="panel actions">
+        <button
+  type="button"
+  className="btn"
+  onClick={() => (window.location.href = "/credit")}
+>
+  Top up credits
+</button>
+
+        <button type="button" className="btn ghost" onClick={handleDownloadInvoices}>
+          View transactions
+        </button>
+      </div>
+
+      {/* 🧾 Recent Transactions */}
+      <div className="pf-wallet-summary" style={{ marginTop: 16, borderRadius: 12 }}>
+        <div className="pf-wallet-header">Recent Activity</div>
+        <div className="pf-wallet-balance">
+          <div className="pf-wallet-item">
+            <span className="label">+10 credits (Stripe top-up)</span>
+            <span className="value">Oct 25, 2025</span>
+          </div>
+          <div className="pf-wallet-item">
+            <span className="label">−3 credits (Simulation run)</span>
+            <span className="value">Oct 25, 2025</span>
+          </div>
+          <div className="pf-wallet-item">
+            <span className="label">+5 free credits (Daily refresh)</span>
+            <span className="value">Oct 24, 2025</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )}
+</Reveal>
+
 
           {/* Activity (right) – equal height to left stack */}
           <Reveal as="aside" className="card activity-area" variant="fade-left" delay={100}>

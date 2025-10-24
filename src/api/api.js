@@ -163,8 +163,12 @@ export const updateAgent = async (agent_id, payload) =>
 export const deleteAgent = async (agent_id) =>
   (await api.delete(`/agents/${agent_id}`)).data;
 
-export const getAgentsByUser = async (userId) =>
-  (await api.get(`/agents/user/${userId}`)).data;
+export async function getAgentsByUser(userId, page = 1, q = "") {
+  const res = await api.get(`/agents/user/${userId}`, {
+    params: { page, q },
+  });
+  return res.data;
+}
 
 
 /* ===============================
@@ -513,6 +517,66 @@ export const getActiveCreditPacks = async () => {
   const res = await api.get("/credit-configs/credit-list");
   return res.data;
 };
+
+
+// ===============================
+// 💳 BILLING & TRANSACTIONS API
+// ===============================
+
+// 🧾 Get current user's billing (auto-refresh on backend)
+export const getMyBilling = async () => (await api.get("/billing/me")).data;
+
+// 📋 Get billing for a specific user (Admin)
+export const getBillingByUserId = async (userId) =>
+  (await api.get(`/billing/${userId}`)).data;
+
+// 🧩 Get all billing records (Admin)
+export const getAllBillings = async () => (await api.get("/billing/")).data;
+
+// ➕ Create billing (Admin)
+export const createBilling = async (payload) =>
+  (await api.post("/billing/", payload)).data;
+
+// ✏️ Update billing (Admin)
+export const updateBilling = async (billingId, payload) =>
+  (await api.put(`/billing/${billingId}`, payload)).data;
+
+// 🗑 Soft delete billing (Admin)
+export const deleteBilling = async (billingId) =>
+  (await api.delete(`/billing/${billingId}`)).data;
+
+
+// ===============================
+// 💰 CREDIT TRANSACTION API
+// ===============================
+
+// 🔹 Get all credit transactions
+export const getAllTransactions = async () =>
+  (await api.get("/credit-transactions/")).data;
+
+// 🔹 Get transactions by user ID
+export const getTransactionsByUserId = async (userId) =>
+  (await api.get(`/credit-transactions/user/${userId}`)).data;
+
+// ➕ Create a new credit transaction
+export const createTransaction = async (payload) =>
+  (await api.post("/credit-transactions/", payload)).data;
+
+// ✏️ Update a credit transaction
+export const updateTransaction = async (transactionId, payload) =>
+  (await api.put(`/credit-transactions/${transactionId}`, payload)).data;
+
+// 🗑 Soft delete transaction
+export const deleteTransaction = async (transactionId) =>
+  (await api.delete(`/credit-transactions/${transactionId}`)).data;
+
+// ⚙️ Apply a transaction to billing balance
+export const applyTransaction = async (transactionId) =>
+  (await api.post(`/credit-transactions/${transactionId}/apply`)).data;
+
+// 🔄 Reverse (rollback) a transaction (Admin)
+export const reverseTransaction = async (transactionId) =>
+  (await api.post(`/credit-transactions/${transactionId}/reverse`)).data;
 
 
 /* ===============================

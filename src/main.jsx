@@ -16,6 +16,7 @@ import PaymentPage from "./pages/payment.jsx";
 import CreditPage from './pages/Credit.jsx'
 import "./styles.css";
 import CreditSuccess from "./pages/CreditSuccess.jsx";
+import CreditCancel from "./pages/CreditCancel.jsx";
 /* ===============================
    🌍 PUBLIC PAGES
    =============================== */
@@ -77,6 +78,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route path="/maintenance" element={<MaintenancePage />} />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
             <Route path="/credit/success" element={<CreditSuccess />} />
+            <Route path="/credit/cancel" element={<CreditCancel />} />
 
           {/* ===============================
               🔐  AUTH

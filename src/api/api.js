@@ -578,6 +578,17 @@ export const applyTransaction = async (transactionId) =>
 export const reverseTransaction = async (transactionId) =>
   (await api.post(`/credit-transactions/${transactionId}/reverse`)).data;
 
+// ✅ Create Stripe Checkout Session
+export const createPaymentSession = async (packKey) => {
+  const res = await api.post("/payments/create-session", { pack_key: packKey });
+  return res.data;
+};
+
+// ✅ (Optional) Verify success or get details
+export const verifyPaymentSession = async (sessionId) => {
+  const res = await api.get(`/payments/verify-session/${sessionId}`);
+  return res.data;
+};
 
 /* ===============================
    Default Export

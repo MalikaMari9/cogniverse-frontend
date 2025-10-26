@@ -42,7 +42,7 @@ function useReveal({ once = true, threshold = 0.12 } = {}) {
 }
 
 function Reveal({ as:Tag='div', className='', variant='fade-up', delay=0, children, ...rest }) {
-  const ref = useReveal({ once: true })
+  const ref = useReveal({ once : true })
   return (
     <Tag
       ref={ref}
@@ -60,18 +60,36 @@ function Reveal({ as:Tag='div', className='', variant='fade-up', delay=0, childr
 ========================= */
 export default function ContactPage() {
   const { theme, toggle } = useTheme()
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
 
-  // simple mailto handler
-  const onSubmit = (e) => {
-    e.preventDefault()
-    const form = new FormData(e.currentTarget)
-    const name = form.get('name') || ''
-    const email = form.get('email') || ''
-    const subject = form.get('subject') || 'Hello CogniVerse'
-    const message = form.get('message') || ''
-    const body = encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\n${message}`)
-    window.location.href = `mailto:cogniverse123@gmail.com?subject=${encodeURIComponent(subject)}&body=${body}`
+  const onSubmit = async (e) => {
+  e.preventDefault()
+  setIsSubmitting(true)
+  
+  const form = e.currentTarget // Store reference to the form
+  const formData = new FormData(form)
+  
+  try {
+    const res = await fetch("http://127.0.0.1:8000/contacts/contact/", {
+      method: "POST",
+      body: formData
+    })
+
+    if (!res.ok) {
+      const errorData = await res.json()
+      throw new Error(errorData.detail || `Server error: ${res.status}`)
+    }
+
+    const result = await res.json()
+    alert(result.message)
+    form.reset() // Use the stored form reference instead of e.currentTarget
+  } catch (err) {
+    console.error("Contact form error:", err)
+    alert(`Error: ${err.message}`)
+  } finally {
+    setIsSubmitting(false)
   }
+}
 
   return (
     <div className="app contact-page">
@@ -84,75 +102,71 @@ export default function ContactPage() {
           {/* Left copy column */}
           <Reveal as="div" className="left" variant="fade-right">
             <h1 className="contact-title">
-              We’re ready to help you and answer your questions
+              We're ready to help you and answer your questions
             </h1>
 
             <p className="lead">
               Want to bring behavioral intelligence to your organization?
-              Let’s build better teams together.
+              Let's build better teams together.
             </p>
 
             <div className="info-cards">
               {/* Call */}
-                <div className="mini">
+              <div className="mini">
                 <div className="mini-head">
-                    <span className="icon-chip" aria-hidden="true">
-                    {/* phone */}
+                  <span className="icon-chip" aria-hidden="true">
                     <svg viewBox="0 0 24 24" width="16" height="16">
-                        <path d="M22 16.5v3a2 2 0 0 1-2.2 2A19.8 19.8 0 0 1 4.5 6.2 19.8 19.8 0 0 1 2.5 4.2 2 2 0 0 1 4.5 2h3a2 2 0 0 1 2 1.7c.1.8.3 1.6.6 2.4a2 2 0 0 1-.5 2.1L8.6 10a15.6 15.6 0 0 0 6 6l1.3-1c.6-.5 1.4-.6 2.1-.5.8.3 1.6.5 2.4.6A2 2 0 0 1 22 16.5Z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M22 16.5v3a2 2 0 0 1-2.2 2A19.8 19.8 0 0 1 4.5 6.2 19.8 19.8 0 0 1 2.5 4.2 2 2 0 0 1 4.5 2h3a2 2 0 0 1 2 1.7c.1.8.3 1.6.6 2.4a2 2 0 0 1-.5 2.1L8.6 10a15.6 15.6 0 0 0 6 6l1.3-1c.6-.5 1.4-.6 2.1-.5.8.3 1.6.5 2.4.6A2 2 0 0 1 22 16.5Z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
-                    </span>
-                    <h3>Call Center</h3>
+                  </span>
+                  <h3>Call Center</h3>
                 </div>
                 <p>+95 9 7632 85340</p>
-                </div>
+              </div>
 
-                {/* Email */}
-                <div className="mini">
+              {/* Email */}
+              <div className="mini">
                 <div className="mini-head">
-                    <span className="icon-chip" aria-hidden="true">
-                    {/* mail */}
+                  <span className="icon-chip" aria-hidden="true">
                     <svg viewBox="0 0 24 24" width="16" height="16">
-                        <rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" strokeWidth="2"/>
-                        <path d="M3 7l9 6 9-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" strokeWidth="2"/>
+                      <path d="M3 7l9 6 9-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
-                    </span>
-                    <h3>Email</h3>
+                  </span>
+                  <h3>Email</h3>
                 </div>
                 <p><a href="mailto:cogniverse123@gmail.com">cogniverse123@gmail.com</a></p>
-                </div>
+              </div>
 
-                {/* Social */}
-                <div className="mini">
+              {/* Social */}
+              <div className="mini">
                 <div className="mini-head">
-                    <span className="icon-chip" aria-hidden="true">
-                    {/* share/link */}
+                  <span className="icon-chip" aria-hidden="true">
                     <svg viewBox="0 0 24 24" width="16" height="16">
-                        <path d="M10 13a5 5 0 0 0 7.1 0l2.1-2.1a5 5 0 0 0-7.1-7.1L11 5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M14 11a5 5 0 0 0-7.1 0L4.8 13.1a5 5 0 0 0 7.1 7.1L13 19" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M10 13a5 5 0 0 0 7.1 0l2.1-2.1a5 5 0 0 0-7.1-7.1L11 5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M14 11a5 5 0 0 0-7.1 0L4.8 13.1a5 5 0 0 0 7.1 7.1L13 19" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
-                    </span>
-                    <h3>Social</h3>
+                  </span>
+                  <h3>Social</h3>
                 </div>
 
                 <p className="social">
-                    <a href="#" className="social-link" aria-label="X">
+                  <a href="#" className="social-link" aria-label="X">
                     <span className="brand-chip x" aria-hidden="true">X</span>
                     <span>X</span>
-                    </a>
-                    <span className="dot" />
-                    <a href="#" className="social-link" aria-label="LinkedIn" target="_blank" rel="noopener">
+                  </a>
+                  <span className="dot" />
+                  <a href="#" className="social-link" aria-label="LinkedIn" target="_blank" rel="noopener">
                     <span className="brand-chip in" aria-hidden="true">in</span>
                     <span>LinkedIn</span>
-                    </a>
-                    <span className="dot" />
-                    <a href="#" className="social-link" aria-label="GitHub" target="_blank" rel="noopener">
+                  </a>
+                  <span className="dot" />
+                  <a href="#" className="social-link" aria-label="GitHub" target="_blank" rel="noopener">
                     <span className="brand-chip gh" aria-hidden="true">GH</span>
                     <span>GitHub</span>
-                    </a>
+                  </a>
                 </p>
-                </div>
-
+              </div>
             </div>
           </Reveal>
 
@@ -166,25 +180,43 @@ export default function ContactPage() {
             <form className="contact-form" onSubmit={onSubmit}>
               <label>
                 <span>Full name</span>
-                <input name="name" type="text" autoComplete="name" required />
-              </label>
-
-              <label>
-                <span>Email</span>
-                <input name="email" type="email" autoComplete="email" required />
+                <input 
+                  name="name" 
+                  type="text" 
+                  autoComplete="name" 
+                  required 
+                  disabled={isSubmitting}
+                />
               </label>
 
               <label>
                 <span>Subject</span>
-                <input name="subject" type="text" placeholder="e.g., Leadership forecast" />
+                <input 
+                  name="subject" 
+                  type="text" 
+                  placeholder="e.g., Leadership forecast" 
+                  disabled={isSubmitting}
+                />
               </label>
 
               <label className="wide">
                 <span>Message</span>
-                <textarea name="message" rows="5" placeholder="Tell us briefly what you need…" />
+                <textarea 
+                  name="message" 
+                  rows="5" 
+                  placeholder="Tell us briefly what you need…" 
+                  required
+                  disabled={isSubmitting}
+                />
               </label>
 
-              <button className="btn primary" type="submit">Send a message</button>
+              <button 
+                className="btn primary" 
+                type="submit" 
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Sending...' : 'Send a message'}
+              </button>
             </form>
           </Reveal>
         </div>

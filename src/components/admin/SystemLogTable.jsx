@@ -36,32 +36,44 @@ export default function SystemLogTable() {
 
   // paging
   const [page, setPage] = React.useState(1);
+  const [totalPages, setTotalPages] = React.useState(1);
   const pageSize = 10;
 
   // permissions
   const { level: permission, canRead, canWrite, loading: permLoading } =
     usePermission("SYSTEM_LOGS");
 
-  // ===============================
-  // 🔹 LOAD LOGS
-  // ===============================
-  const loadLogs = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await getSystemLogs();
-      setRows(data);
-    } catch (err) {
-      console.error("❌ Failed to load system logs:", err);
-      setError("Failed to load system logs");
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  React.useEffect(() => {
-    if (!permLoading && canRead) loadLogs();
-  }, [permLoading, canRead]);
+const [limit, setLimit] = React.useState(10);
+const [total, setTotal] = React.useState(0);
+
+const loadLogs = async (pageParam = page) => {
+  try {
+    setLoading(true);
+    setError(null);
+
+const params = { page: pageParam }; // ✅ no limit — backend picks from config
+
+
+    const res = await getSystemLogs(params);
+
+    setRows(res.items || []);
+    setPage(res.page);
+    setTotalPages(res.total_pages);
+    setLimit(res.limit);
+    setTotal(res.total);
+  } catch (err) {
+    console.error("❌ Failed to load system logs:", err);
+    setError("Failed to load system logs");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+React.useEffect(() => {
+  if (!permLoading && canRead) loadLogs(page);
+}, [permLoading, canRead, page]);
 
   // ===============================
   // 🔹 PERMISSION CHECK
@@ -135,9 +147,9 @@ export default function SystemLogTable() {
     return String(A).localeCompare(String(B)) * dir;
   });
 
-  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
-  const safePage = Math.min(page, totalPages);
-  const pageRows = sorted.slice((safePage - 1) * pageSize, safePage * pageSize);
+
+const safePage = Math.min(page, totalPages);
+const pageRows = rows; // backend already paginated
 
   const toggleSelectAll = () => {
     if (selectedLogs.size === pageRows.length) setSelectedLogs(new Set());
@@ -393,27 +405,27 @@ export default function SystemLogTable() {
         </table>
       </div>
 
-      <footer className="adm-foot">
-        <div>
-          Page {safePage}/{totalPages} • {sorted.length} total logs
-        </div>
-        <div className="adm-pager">
-          <button
-            className="ws-btn ghost"
-            disabled={safePage <= 1}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-          >
-            Prev
-          </button>
-          <button
-            className="ws-btn ghost"
-            disabled={safePage >= totalPages}
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-          >
-            Next
-          </button>
-        </div>
-      </footer>
+<footer className="adm-foot">
+  <div>
+    Page {safePage}/{totalPages} • {total} total logs
+  </div>
+  <div className="adm-pager">
+    <button
+      className="ws-btn ghost"
+      disabled={safePage <= 1}
+      onClick={() => setPage((p) => Math.max(1, p - 1))}
+    >
+      Prev
+    </button>
+    <button
+      className="ws-btn ghost"
+      disabled={safePage >= totalPages}
+      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+    >
+      Next
+    </button>
+  </div>
+</footer>
 
       {/* 🔹 No Access Modal */}
       {noAccessModal.open && (

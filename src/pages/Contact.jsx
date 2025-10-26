@@ -63,33 +63,33 @@ export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
 
   const onSubmit = async (e) => {
-  e.preventDefault()
-  setIsSubmitting(true)
-  
-  const form = e.currentTarget // Store reference to the form
-  const formData = new FormData(form)
-  
-  try {
-    const res = await fetch("http://127.0.0.1:8000/contacts/contact/", {
-      method: "POST",
-      body: formData
-    })
+    e.preventDefault()
+    setIsSubmitting(true)
+    
+    const form = e.currentTarget
+    const formData = new FormData(form)
+    
+    try {
+      const res = await fetch("http://127.0.0.1:8000/contacts/contact/", {
+        method: "POST",
+        body: formData
+      })
 
-    if (!res.ok) {
-      const errorData = await res.json()
-      throw new Error(errorData.detail || `Server error: ${res.status}`)
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.detail || `Server error: ${res.status}`)
+      }
+
+      const result = await res.json()
+      alert(result.message)
+      form.reset()
+    } catch (err) {
+      console.error("Contact form error:", err)
+      alert(`Error: ${err.message}`)
+    } finally {
+      setIsSubmitting(false)
     }
-
-    const result = await res.json()
-    alert(result.message)
-    form.reset() // Use the stored form reference instead of e.currentTarget
-  } catch (err) {
-    console.error("Contact form error:", err)
-    alert(`Error: ${err.message}`)
-  } finally {
-    setIsSubmitting(false)
   }
-}
 
   return (
     <div className="app contact-page">
@@ -179,12 +179,23 @@ export default function ContactPage() {
 
             <form className="contact-form" onSubmit={onSubmit}>
               <label>
-                <span>Full name</span>
+                <span>Full name *</span>
                 <input 
                   name="name" 
                   type="text" 
                   autoComplete="name" 
                   required 
+                  disabled={isSubmitting}
+                />
+              </label>
+
+              <label>
+                <span>Your email</span>
+                <input 
+                  name="email" 
+                  type="email" 
+                  autoComplete="email" 
+                  placeholder="your.email@example.com"
                   disabled={isSubmitting}
                 />
               </label>
@@ -200,7 +211,7 @@ export default function ContactPage() {
               </label>
 
               <label className="wide">
-                <span>Message</span>
+                <span>Message *</span>
                 <textarea 
                   name="message" 
                   rows="5" 

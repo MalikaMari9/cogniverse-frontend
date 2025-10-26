@@ -15,7 +15,7 @@ import NotificationTable from "../components/admin/NotificationTable.jsx";
 import MaintenanceTable from "../components/admin/MaintenanceTable.jsx";
 import UserManagementTable from "../components/admin/UserManagementTable.jsx"; // 🆕 ADD THIS
 import CreditConfig from "../components/admin/CreditConfig.jsx"; // ✅ ADD THIS
-
+import CreditTransactionTable from "../components/admin/CreditTransactionTable.jsx";
 // 🧩 Shared helpers (optional, if needed here)
 import { fmtDate, StatusPill } from "../components/admin//helpers.jsx";
 
@@ -166,13 +166,15 @@ export default function Admin() {
       <main className="ad-main">
         <header className="ad-head ws-card">
         <div className="title">
-          {tab === "config" && "Access Config"}
+          {tab === "config" && "System Config"}
           {tab === "maintenance" && "System Maintenance"}
           {tab === "syslog" && "System Log"}
           {tab === "access" && "Access Control"}
+          {tab === "creditpacks" && "Credit Packs"}
           {tab === "announcements" && "Announcements"}
           {tab === "notify" && "Notification"}
           {tab === "users" && "User Management"} {/* 🆕 ADD THIS */}
+          {tab === "credittransactions" && "Credit Transactions"}
         </div>
       </header>
 
@@ -185,8 +187,9 @@ export default function Admin() {
         {tab === "announcements" && <AnnouncementTable Icon={Icon} />}
         {tab === "notify" && <NotificationTable />}
         {tab === "users" && <UserManagementTable />} {/* 🆕 ADD THIS */}
+        {tab === "credittransactions" && <CreditTransactionTable Icon={Icon} />}
 
-        {!["config", "syslog", "access", "announcements", "notify", "users", "creditpacks"].includes(tab) && (
+        {!["config", "syslog", "access", "announcements", "notify", "users", "creditpacks", "credittransactions", "maintenance"].includes(tab) && (
           <section className="ad-card ws-card ad-empty">
             Coming soon: {tab}
           </section>

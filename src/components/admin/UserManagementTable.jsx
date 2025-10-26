@@ -26,12 +26,14 @@ export default function UserManagementTable() {
   });
   const [createModal, setCreateModal] = React.useState(false);
   const [editModal, setEditModal] = React.useState({ open: false, user: null });
+const [alertModal, setAlertModal] = React.useState({ open: false, message: "" });
+
 
   // Form states
   const [formData, setFormData] = React.useState({
     username: "",
     email: "",
-    password: "",
+
     role: "user",
   });
   const [editFormData, setEditFormData] = React.useState({});
@@ -45,10 +47,13 @@ export default function UserManagementTable() {
   const [sortBy, setSortBy] = React.useState("created_at");
   const [sortDir, setSortDir] = React.useState("desc");
 
-  // paging
-  const [page, setPage] = React.useState(1);
-  const [totalUsers, setTotalUsers] = React.useState(0);
-  const pageSize = 10;
+// paging
+const [page, setPage] = React.useState(1);
+const [limit, setLimit] = React.useState(null);   // backend-defined page size
+const [totalUsers, setTotalUsers] = React.useState(0);
+const [totalPages, setTotalPages] = React.useState(1);
+const [openId, setOpenId] = React.useState(null);
+
 
   // permissions
   const { level: permission, canRead, canWrite, loading: permLoading } =
@@ -61,22 +66,39 @@ export default function UserManagementTable() {
     try {
       setLoading(true);
       setError(null);
-      const params = {
-        page,
-        page_size: pageSize,
-        ...(role !== "all" && { role }),
-        ...(status !== "all" && { status }),
-      };
-      const data = await getAllUsers(params);
-      setUsers(data.users);
-      setTotalUsers(data.total);
+const params = {
+  page,
+  ...(role !== "all" && { role }),
+  ...(status !== "all" && { status }),
+  // ⚠️ intentionally not sending page_size — backend will use config value
+};
+
+const data = await getAllUsers(params);
+
+// new response structure from backend
+setUsers(data.items || []);
+setTotalUsers(data.total || 0);
+setLimit(data.limit || null);
+setTotalPages(data.total_pages || 1);
+
     } catch (err) {
-      console.error("❌ Failed to load users:", err);
-      setError("Failed to load users");
-    } finally {
+  console.error("❌ Failed to create user:", err);
+  const msg = err.response?.data?.detail || "Failed to create user";
+  setAlertModal({ open: true, message: msg });
+}
+finally {
       setLoading(false);
     }
   };
+
+  React.useEffect(() => {
+  const handleClickOutside = (e) => {
+    if (!e.target.closest(".dropdown")) setOpenId(null);
+  };
+  document.addEventListener("click", handleClickOutside);
+  return () => document.removeEventListener("click", handleClickOutside);
+}, []);
+
 
   React.useEffect(() => {
     if (!permLoading && canRead) loadUsers();
@@ -104,14 +126,22 @@ export default function UserManagementTable() {
     if (!requireWrite("create")) return;
 
     try {
-      await createUser(formData);
+      await createUser({
+  username: formData.username,
+  email: formData.email,
+  password: null, // ✅ explicitly null so backend uses defaultPassword
+  role: formData.role,
+});
+
       setCreateModal(false);
-      setFormData({ username: "", email: "", password: "", role: "user" });
+      setFormData({ username: "", email: "",  role: "user" });
       loadUsers();
     } catch (err) {
-      console.error("❌ Failed to create user:", err);
-      setError(err.response?.data?.detail || "Failed to create user");
-    }
+  console.error("❌ Failed to create user:", err);
+  const msg = err.response?.data?.detail || "Failed to create user";
+  setAlertModal({ open: true, message: msg });
+}
+
   };
 
   const handleEditUser = async (e) => {
@@ -124,9 +154,11 @@ export default function UserManagementTable() {
       setEditFormData({});
       loadUsers();
     } catch (err) {
-      console.error("❌ Failed to update user:", err);
-      setError(err.response?.data?.detail || "Failed to update user");
-    }
+  console.error("❌ Failed to update user:", err);
+  const msg = err.response?.data?.detail || "Failed to update user";
+  setAlertModal({ open: true, message: msg });
+}
+
   };
 
   const handleStatusChange = async (userId, newStatus) => {
@@ -149,9 +181,11 @@ export default function UserManagementTable() {
       await deleteUser(userId);
       loadUsers();
     } catch (err) {
-      console.error("❌ Failed to delete user:", err);
-      setError(err.response?.data?.detail || "Failed to delete user");
-    }
+  console.error("❌ Failed to delete user:", err);
+  const msg = err.response?.data?.detail || "Failed to delete user";
+  setAlertModal({ open: true, message: msg });
+}
+
   };
 
   const handleHardDelete = async (userId) => {
@@ -225,7 +259,7 @@ export default function UserManagementTable() {
     return String(A).localeCompare(String(B)) * dir;
   });
 
-  const totalPages = Math.max(1, Math.ceil(totalUsers / pageSize));
+  
   const safePage = Math.min(page, totalPages);
 
   const toggleSelectAll = () => {
@@ -272,23 +306,7 @@ export default function UserManagementTable() {
   // ===============================
   return (
     <div className="adm-card">
-      {error && (
-        <div className="ad-alert error" style={{ marginBottom: "1rem" }}>
-          {error}
-          <button
-            onClick={() => setError(null)}
-            style={{
-              marginLeft: "auto",
-              background: "none",
-              border: "none",
-              color: "inherit",
-              cursor: "pointer",
-            }}
-          >
-            ×
-          </button>
-        </div>
-      )}
+     
 
       <header className="adm-head">
         <div className="adm-title">User Management</div>
@@ -410,88 +428,129 @@ export default function UserManagementTable() {
                     <StatusPill value={user.status} />
                   </td>
                   <td className="muted">{fmtDate(user.created_at)}</td>
-                  <td className="actions">
-                    <button
-                      className="ws-btn ghost sm"
-                      title="Edit"
-                      onClick={() => {
-                        if (!requireWrite("edit")) return;
-                        setEditModal({ open: true, user });
-                        setEditFormData({
-                          username: user.username,
-                          email: user.email,
-                          role: user.role,
-                          status: user.status,
-                        });
-                      }}
-                    >
-                      Edit
-                    </button>
+<td className="actions">
+  <div className="dropdown" style={{ position: "relative" }}>
+    <button
+      className="action-menu"
+      onClick={(e) => {
+        e.stopPropagation();
+        setOpenId(openId === user.userid ? null : user.userid);
+      }}
+    >
+      ⋮
+    </button>
 
-                    {user.status === "active" ? (
-                      <button
-                        className="ws-btn warning sm"
-                        title="Suspend"
-                        onClick={() => {
-                          if (!requireWrite("suspend")) return;
-                          handleStatusChange(user.userid, "suspended");
-                        }}
-                      >
-                        Suspend
-                      </button>
-                    ) : user.status === "suspended" ? (
-                      <button
-                        className="ws-btn success sm"
-                        title="Activate"
-                        onClick={() => {
-                          if (!requireWrite("activate")) return;
-                          handleStatusChange(user.userid, "active");
-                        }}
-                      >
-                        Activate
-                      </button>
-                    ) : null}
+{openId === user.userid && (
+  <div
+    className="dropdown-content"
+    style={{
+      position: "absolute",
+      right: -10,
+      top: "120%",
+      background: "var(--glass)",
+      border: "1px solid var(--glass-bdr)",
+      borderRadius: "10px",
+      boxShadow: "0 6px 20px rgba(0,0,0,.25)",
+      minWidth: "160px",
+      zIndex: 99,
+      padding: "4px 0",
+    }}
+    onClick={(e) => e.stopPropagation()}
+  >
+    {/* 🚫 Disable all actions for superadmin */}
+    {user.role === "superadmin" ? (
+      <button className="ad-item" disabled style={{ opacity: 0.6, cursor: "not-allowed" }}>
+        Super Admin — locked
+      </button>
+    ) : (
+      <>
+        <button
+          className="ad-item"
+          onClick={() => {
+            if (!requireWrite("edit")) return;
+            setEditModal({ open: true, user });
+            setEditFormData({
+              username: user.username,
+              email: user.email,
+              role: user.role,
+              status: user.status,
+            });
+            setOpenId(null);
+          }}
+        >
+          Edit
+        </button>
 
-                    {status === "deleted" && user.status === "deleted" ? (
-                      <>
-                        <button
-                          className="ws-btn success sm"
-                          title="Activate"
-                          onClick={() => {
-                            if (!requireWrite("activate")) return;
-                            handleStatusChange(user.userid, "active");
-                          }}
-                        >
-                          Activate
-                        </button>
-                        <button
-                          className="ws-btn danger sm hard-delete"
-                          title="Permanently Delete"
-                          onClick={() => {
-                            if (!requireWrite("hard delete")) return;
-                            handleHardDelete(user.userid);
-                          }}
-                          style={{
-                            fontSize: "0.875rem",
-                            padding: "0.5rem 0.5rem",
-                          }}
-                        >
-                          Hard Delete
-                        </button>
-                      </>
-                    ) : user.status !== "deleted" ? (
-                      <button
-                        className="ws-btn danger sm"
-                        title="Delete (Soft)"
-                        onClick={() => {
-                          if (!requireWrite("delete")) return;
-                          handleDeleteUser(user.userid);
-                        }}
-                      >
-                        Delete
-                      </button>
-                    ) : null}
-                  </td>
+        {user.status === "active" && (
+          <button
+            className="ad-item"
+            onClick={() => {
+              if (!requireWrite("suspend")) return;
+              handleStatusChange(user.userid, "suspended");
+              setOpenId(null);
+            }}
+          >
+            Suspend
+          </button>
+        )}
+
+        {user.status === "suspended" && (
+          <button
+            className="ad-item"
+            onClick={() => {
+              if (!requireWrite("activate")) return;
+              handleStatusChange(user.userid, "active");
+              setOpenId(null);
+            }}
+          >
+            Activate
+          </button>
+        )}
+
+        {user.status === "deleted" ? (
+          <>
+            <button
+              className="ad-item"
+              onClick={() => {
+                if (!requireWrite("activate")) return;
+                handleStatusChange(user.userid, "active");
+                setOpenId(null);
+              }}
+            >
+              Restore
+            </button>
+            <button
+              className="ad-item danger"
+              onClick={() => {
+                if (!requireWrite("hard delete")) return;
+                handleHardDelete(user.userid);
+                setOpenId(null);
+              }}
+            >
+              Hard Delete
+            </button>
+          </>
+        ) : (
+          <button
+            className="ad-item danger"
+            onClick={() => {
+              if (!requireWrite("delete")) return;
+              handleDeleteUser(user.userid);
+              setOpenId(null);
+            }}
+          >
+            Delete
+          </button>
+        )}
+      </>
+    )}
+  </div>
+)}
+
+  </div>
+</td>
+
+
                 </tr>
               ))
             )}
@@ -500,10 +559,11 @@ export default function UserManagementTable() {
       </div>
 
       {/* Pagination */}
-      <footer className="adm-foot">
-        <div>
-          Page {safePage}/{totalPages} • {totalUsers} total users
-        </div>
+<footer className="adm-foot">
+  <div>
+    Page {safePage}/{totalPages} • showing {limit ?? "?"} per page • {totalUsers} total users
+  </div>
+
         <div className="adm-pager">
           <button
             className="ws-btn ghost"
@@ -544,13 +604,7 @@ export default function UserManagementTable() {
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
 
-              <label>Password</label>
-              <input
-                type="password"
-                required
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              />
+
 
               <label>Role</label>
               <select
@@ -663,6 +717,25 @@ export default function UserManagementTable() {
           </div>
         </div>
       )}
+      {/* Error Popup */}
+{alertModal.open && (
+  <div className="ad-modal">
+    <div className="ad-modal-content ws-card">
+      <h3>Error</h3>
+      <p>{alertModal.message}</p>
+      <div className="modal-actions">
+        <button
+          className="ws-btn primary"
+          onClick={() => setAlertModal({ open: false, message: "" })}
+        >
+          OK
+        </button>
+      </div>
     </div>
+  </div>
+)}
+
+    </div>
+    
   );
 }

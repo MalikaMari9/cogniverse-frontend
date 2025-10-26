@@ -18,6 +18,114 @@
   --glass-bdr:rgba(0,0,0,.10);
 }
 
+/* === Fixed 3-Dot Dropdown for User Actions === */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.action-menu {
+  background: transparent;
+  border: none;
+  font-size: 1.3rem;
+  color: var(--ink-2);
+  cursor: pointer;
+  padding: 0 0.4rem;
+  line-height: 1;
+  transition: color 0.15s ease;
+}
+.action-menu:hover {
+  color: var(--ink-1);
+}
+
+.dropdown-content {
+  position: absolute;
+  right: 0;
+  top: 120%;
+  background: var(--glass);
+  border: 1px solid var(--glass-bdr);
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.25);
+  min-width: 180px;
+  z-index: 100;
+  backdrop-filter: blur(8px) saturate(120%);
+}
+
+
+/* Light & dark theme fixes */
+[data-theme="light"] .dropdown-content {
+  background: rgba(255,255,255,0.98);
+  border-color: rgba(0,0,0,0.08);
+}
+[data-theme="dark"] .dropdown-content {
+  background: rgba(18,22,30,0.96);
+  border-color: rgba(255,255,255,0.1);
+}
+
+/* --- stable dropdown (no hover) --- */
+.dropdown-content button.ad-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  color: var(--ink-1);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.dropdown-content button.ad-item:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+[data-theme="light"] .dropdown-content button.ad-item:hover {
+  background: rgba(0,0,0,0.06);
+}
+
+.dropdown-content button.ad-item.danger {
+  color: var(--danger);
+}
+
+
+
+
+/* Buttons inside the menu */
+.dropdown-content button {
+  display: block;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--ink-1);
+  text-align: left;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.dropdown-content button:hover {
+  background: rgba(255,255,255,.08);
+}
+[data-theme="light"] .dropdown-content button:hover {
+  background: rgba(0,0,0,.06);
+}
+
+.dropdown-content button.danger {
+  color: var(--danger);
+}
+
+
+
+/* Ensure table cell doesn’t clip the dropdown */
+.adm-table-wrap,
+.adm-card,
+.adm-table td.actions {
+  overflow: visible !important;
+}
+
+
 .ad-table select.ad-select {
   height: 30px;
   font-size: 13px;

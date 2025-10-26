@@ -126,7 +126,7 @@ export function AdminNav({ theme, tab, setTab, setTheme, handleLogout }) {
           onClick={() => setTab("config")}
         >
           <Icon name="gear" />
-          <span>Access Config</span>
+          <span>System Config</span>
         </button>
 
         <button
@@ -185,6 +185,14 @@ export function AdminNav({ theme, tab, setTab, setTheme, handleLogout }) {
           <Icon name="users" />
           <span>User Management</span>
         </button>
+        <button
+  className={`ad-nav-item ${tab === "credittransactions" ? "active" : ""}`}
+  onClick={() => setTab("credittransactions")}
+>
+  <Icon name="doc" />
+  <span>Credit Transactions</span>
+</button>
+
       </nav>
 
       <div className="ad-sb-foot">

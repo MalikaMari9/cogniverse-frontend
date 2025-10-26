@@ -564,6 +564,10 @@ export const deleteBilling = async (billingId) =>
 export const getAllTransactions = async () =>
   (await api.get("/credit-transactions/")).data;
 
+export const getCreditTransactions = async (params = {}) =>
+  (await api.get("/credit-transactions/", { params })).data;
+
+
 // 🔹 Get transactions by user ID
 export const getTransactionsByUserId = async (userId) =>
   (await api.get(`/credit-transactions/user/${userId}`)).data;

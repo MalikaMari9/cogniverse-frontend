@@ -42,7 +42,7 @@ export default function AccessControlTable({ Icon }) {
           module_desc: r.module_desc,
           user_access: r.user_access || "none",
           admin_access: r.admin_access || "none",
-          superadmin_access: r.superadmin_access || "none",
+          superadmin_access: "write",
           is_critical: r.is_critical,
           created_at: r.created_at
             ? new Date(r.created_at).toISOString().slice(0, 16).replace("T", " ")
@@ -413,21 +413,24 @@ function AccessControlModal({ open, initial, onClose, onSave, ACCESS_LEVELS }) {
             />
           </label>
 
-          {["user_access", "admin_access", "superadmin_access"].map((key) => (
-            <label key={key}>
-              <span>{key}</span>
-              <select
-                value={form[key]}
-                onChange={(e) => u(key, e.target.value)}
-              >
-                {ACCESS_LEVELS.map((lvl) => (
-                  <option key={lvl} value={lvl}>
-                    {lvl}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ))}
+{["user_access", "admin_access", "superadmin_access"].map((key) => (
+  <label key={key}>
+    <span>{key}</span>
+    <select
+      value={form[key]}
+      onChange={(e) => u(key, e.target.value)}
+      disabled={key === "superadmin_access"} // 🔒 prevent edits
+      title={key === "superadmin_access" ? "SuperAdmin always has write access" : ""}
+    >
+      {ACCESS_LEVELS.map((lvl) => (
+        <option key={lvl} value={lvl}>
+          {lvl}
+        </option>
+      ))}
+    </select>
+  </label>
+))}
+
 
           <label>
             <span>is_critical</span>

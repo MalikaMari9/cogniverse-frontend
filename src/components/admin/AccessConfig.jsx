@@ -23,6 +23,7 @@ export default function AccessConfig({ Icon }) {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState("");
   const [noAccessModal, setNoAccessModal] = React.useState({ open: false, message: "" });
+const [validationError, setValidationError] = React.useState({ open: false, message: "" });
 
   const pageSize = 8;
   const { level: permission, canRead, canWrite, loading: permLoading } =
@@ -50,9 +51,11 @@ export default function AccessConfig({ Icon }) {
       }));
       setRows(data);
     } catch (err) {
-      console.error("❌ Failed to fetch configs:", err);
-      setError("Failed to load configurations. Please try again later.");
-    } finally {
+  console.error("❌ Failed to fetch configs:", err);
+  setError("Failed to load configurations. Please try again later.");
+}
+
+finally {
       setLoading(false);
     }
   };
@@ -81,9 +84,11 @@ export default function AccessConfig({ Icon }) {
       await fetchConfigs();
       setAddModal(false);
     } catch (err) {
-      console.error("❌ Failed to add config:", err);
-      alert("Failed to add configuration.");
-    }
+  console.error("❌ Failed to fetch configs:", err);
+  setError("Failed to load configurations. Please try again later.");
+}
+
+
   };
 
   // ===============================
@@ -98,9 +103,15 @@ export default function AccessConfig({ Icon }) {
       });
       await fetchConfigs();
     } catch (err) {
-      console.error("❌ Failed to update config:", err);
-      alert("Failed to update configuration.");
-    }
+  console.error("❌ Failed to update config:", err);
+  const msg =
+    err.response?.data?.detail ||
+    err.message ||
+    "Failed to update configuration.";
+  setValidationError({ open: true, message: msg });
+}
+
+
   };
 
   // ===============================
@@ -237,56 +248,80 @@ export default function AccessConfig({ Icon }) {
               <th></th>
             </tr>
           </thead>
-          <tbody>
-            {pageRows.map((r) => (
-              <tr key={r.configID}>
-                <td className="mono">{r.configID}</td>
-                <td className="mono">{r.config_key}</td>
-                <td className="mono">{r.config_value}</td>
-                <td>{r.description}</td>
-                <td className="mono">{r.created_at}</td>
-                <td className="mono">{r.updated_at}</td>
-                <td className="actions">
-                  <button
-                    className="ad-icon"
-                    title={canWrite ? "Edit" : "View-only"}
-                    onClick={() =>
-                      canWrite
-                        ? openEdit(r)
-                        : setNoAccessModal({
-                            open: true,
-                            message: "You don't have permission to edit configurations.",
-                          })
-                    }
-                  >
-                    <Icon name="edit" />
-                  </button>
-                  <button
-                    className="ad-icon danger"
-                    title={canWrite ? "Delete" : "View-only"}
-                    onClick={() =>
-                      canWrite
-                        ? delRow(r.configID)
-                        : setNoAccessModal({
-                            open: true,
-                            message: "You don't have permission to delete configurations.",
-                          })
-                    }
-                    disabled={!canWrite}
-                  >
-                    <Icon name="trash" />
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {pageRows.length === 0 && !loading && (
-              <tr>
-                <td colSpan={7} className="ad-empty">
-                  No configs match your filters.
-                </td>
-              </tr>
-            )}
-          </tbody>
+<tbody>
+  {pageRows.map((r) => {
+    const isSensitive = /password/i.test(r.config_key);
+
+    return (
+      <tr key={r.configID}>
+        <td className="mono">{r.configID}</td>
+        <td className="mono">{r.config_key}</td>
+
+        {/* 🔒 Mask passwords visually */}
+        <td className="mono">
+          {isSensitive
+            ? <span style={{
+                backgroundColor: "var(--ink-5)",
+              
+                borderRadius: "4px",
+                display: "inline-block",
+                width: "100px",
+                textAlign: "center",
+              }}>
+                ••••••••
+              </span>
+            : r.config_value}
+        </td>
+
+        <td>{r.description}</td>
+        <td className="mono">{r.created_at}</td>
+        <td className="mono">{r.updated_at}</td>
+
+        <td className="actions">
+          <button
+            className="ad-icon"
+            title={canWrite ? "Edit" : "View-only"}
+            onClick={() =>
+              canWrite
+                ? openEdit(r)
+                : setNoAccessModal({
+                    open: true,
+                    message: "You don't have permission to edit configurations.",
+                  })
+            }
+          >
+            <Icon name="edit" />
+          </button>
+
+          <button
+            className="ad-icon danger"
+            title={canWrite ? "Delete" : "View-only"}
+            onClick={() =>
+              canWrite
+                ? delRow(r.configID)
+                : setNoAccessModal({
+                    open: true,
+                    message: "You don't have permission to delete configurations.",
+                  })
+            }
+            disabled={!canWrite}
+          >
+            <Icon name="trash" />
+          </button>
+        </td>
+      </tr>
+    );
+  })}
+
+  {pageRows.length === 0 && !loading && (
+    <tr>
+      <td colSpan={7} className="ad-empty">
+        No configs match your filters.
+      </td>
+    </tr>
+  )}
+</tbody>
+
         </table>
       </div>
 
@@ -384,6 +419,28 @@ export default function AccessConfig({ Icon }) {
           </div>
         </div>
       )}
+      {/* 🔹 Validation Error Modal */}
+{validationError.open && (
+  <div className="ad-modal">
+    <div className="ad-modal-content ws-card">
+      <h3 style={{ color: "var(--danger)", marginBottom: "8px" }}>
+        Validation Error
+      </h3>
+      <p style={{ color: "var(--ink-2)", whiteSpace: "pre-wrap" }}>
+        {validationError.message}
+      </p>
+      <div className="modal-actions" style={{ marginTop: "12px" }}>
+        <button
+          className="ws-btn primary"
+          onClick={() => setValidationError({ open: false, message: "" })}
+        >
+          OK
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
     </section>
   );
 }

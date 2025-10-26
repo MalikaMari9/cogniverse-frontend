@@ -25,12 +25,15 @@ export default function AnnouncementTable({ Icon }) {
     message: "",
   });
 
+  const [limit, setLimit] = React.useState(null); // from backend config (LogPaginationLimit)
+const [total, setTotal] = React.useState(0);
+const [totalPages, setTotalPages] = React.useState(1);
   const [q, setQ] = React.useState("");
   const [status, setStatus] = React.useState("all");
   const [sortBy, setSortBy] = React.useState("created_at");
   const [sortDir, setSortDir] = React.useState("desc");
   const [page, setPage] = React.useState(1);
-  const pageSize = 8;
+  
 
   const { level: permission, canRead, canWrite, loading: permLoading } =
     usePermission("ANNOUNCEMENTS");
@@ -38,19 +41,29 @@ export default function AnnouncementTable({ Icon }) {
   // ===============================
   // 🔹 LOAD ANNOUNCEMENTS
   // ===============================
-  const loadAnnouncements = async () => {
-    try {
-      setLoading(true);
-      setError("");
-      const data = await getAnnouncements();
-      setRows(data);
-    } catch (err) {
-      console.error("❌ Failed to load announcements:", err);
-      setError("Failed to load announcements");
-    } finally {
-      setLoading(false);
-    }
-  };
+const loadAnnouncements = async () => {
+  try {
+    setLoading(true);
+    setError("");
+
+    // 🧩 Use backend pagination (LogPaginationLimit)
+    const params = { page };
+    const data = await getAnnouncements(params);
+
+    // backend returns { items, total, limit, total_pages }
+    setRows(data.items || []);
+    setTotal(data.total || 0);
+    setLimit(data.limit || null);
+    setTotalPages(data.total_pages || 1);
+
+  } catch (err) {
+    console.error("❌ Failed to load announcements:", err);
+    setError("Failed to load announcements");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   React.useEffect(() => {
     if (!permLoading && canRead) loadAnnouncements();
@@ -148,9 +161,6 @@ export default function AnnouncementTable({ Icon }) {
     return String(A).localeCompare(String(B)) * dir;
   });
 
-  const pages = Math.max(1, Math.ceil(sorted.length / pageSize));
-  const safePage = Math.min(page, pages);
-  const pageRows = sorted.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   const toggleSort = (key) => {
     if (sortBy === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -280,14 +290,14 @@ export default function AnnouncementTable({ Icon }) {
             </tr>
           </thead>
           <tbody>
-            {pageRows.length === 0 ? (
+            {rows.length === 0 ? (
               <tr>
                 <td colSpan={7}>
                   <div className="adm-empty">No announcements</div>
                 </td>
               </tr>
             ) : (
-              pageRows.map((r) => (
+              rows.map((r) => (
                 <tr key={r.announcementid}>
                   <td>
                     <button
@@ -329,25 +339,28 @@ export default function AnnouncementTable({ Icon }) {
         </table>
       </div>
 
-      <footer className="adm-foot">
-        <div>Page {safePage}/{pages}</div>
-        <div className="adm-pager">
-          <button
-            className="ws-btn ghost"
-            disabled={safePage <= 1}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-          >
-            Prev
-          </button>
-          <button
-            className="ws-btn ghost"
-            disabled={safePage >= pages}
-            onClick={() => setPage((p) => Math.min(pages, p + 1))}
-          >
-            Next
-          </button>
-        </div>
-      </footer>
+<footer className="adm-foot">
+  <div>
+    Page {page}/{totalPages} • showing {limit ?? "?"} per page • {total} total
+  </div>
+  <div className="adm-pager">
+    <button
+      className="ws-btn ghost"
+      disabled={page <= 1}
+      onClick={() => setPage((p) => Math.max(1, p - 1))}
+    >
+      Prev
+    </button>
+    <button
+      className="ws-btn ghost"
+      disabled={page >= totalPages}
+      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+    >
+      Next
+    </button>
+  </div>
+</footer>
+
 
       {/* 🔹 Modals */}
       {modal.open && (

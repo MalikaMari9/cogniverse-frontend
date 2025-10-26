@@ -120,7 +120,14 @@ export const changePassword = async (payload) => {
 /* ===============================
    📁 PROJECT ROUTES
 =============================== */
-export const getProjects = async () => (await api.get("/projects/")).data;
+export const getProjects = async (page = 1, limit = null) => {
+  const params = {};
+  if (page) params.page = page;
+  if (limit) params.limit = limit;
+  const res = await api.get("/projects/", { params });
+  return res.data;
+};
+
 export const createProject = async (payload) => (await api.post("/projects/", payload)).data;
 export const updateProject = async (project_id, payload) => (await api.put(`/projects/${project_id}`, payload)).data;
 export const deleteProject = async (project_id) => (await api.delete(`/projects/${project_id}`)).data;

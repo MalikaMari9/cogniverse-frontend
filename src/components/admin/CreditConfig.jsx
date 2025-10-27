@@ -11,6 +11,7 @@ import {
   deleteCreditConfig,
 } from "../../api/api";
 import { usePermission } from "../../hooks/usePermission";
+import ModalPortal from "./ModalPortal";
 
 export default function CreditConfig({ Icon }) {
   const [rows, setRows] = React.useState([]);
@@ -35,6 +36,11 @@ export default function CreditConfig({ Icon }) {
   React.useEffect(() => {
     if (!permLoading && canRead) fetchCreditConfigs();
   }, [permLoading, canRead]);
+  
+React.useEffect(() => {
+  const hasModal = modal?.open || addModal || noAccessModal?.open;
+  document.body.classList.toggle("modal-open", !!hasModal);
+}, [modal?.open, addModal, noAccessModal?.open]);
 
   const fetchCreditConfigs = async () => {
     setLoading(true);
@@ -365,6 +371,7 @@ const handleStatusChange = async (r, newStatus) => {
 
       {/* 🔹 Edit Modal */}
       {modal.open && (
+        <ModalPortal>
         <div className="ad-modal">
           <div className="ad-modal-content ws-card">
             <h3>Edit Credit Pack</h3>
@@ -438,35 +445,42 @@ const handleStatusChange = async (r, newStatus) => {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* 🔹 Add Modal */}
-      {addModal && (
-        <div className="ad-modal">
-          <div className="ad-modal-content ws-card">
-            <h3>Add Credit Pack</h3>
-            <AddCreditPackForm onCancel={() => setAddModal(false)} onSubmit={handleAdd} />
-          </div>
-        </div>
-      )}
+{addModal && (
+  <ModalPortal>
+    <div className="ad-modal">
+      <div className="ad-modal-content ws-card">
+        <h3>Add Credit Pack</h3>
+        <AddCreditPackForm onCancel={() => setAddModal(false)} onSubmit={handleAdd} />
+      </div>
+    </div>
+  </ModalPortal>
+)}
+
 
       {/* 🔹 Access Modal */}
-      {noAccessModal.open && (
-        <div className="ad-modal">
-          <div className="ad-modal-content ws-card">
-            <h3>Access Denied</h3>
-            <p>{noAccessModal.message}</p>
-            <div className="modal-actions">
-              <button
-                className="ws-btn primary"
-                onClick={() => setNoAccessModal({ open: false, message: "" })}
-              >
-                OK
-              </button>
-            </div>
-          </div>
+{noAccessModal.open && (
+  <ModalPortal>
+    <div className="ad-modal">
+      <div className="ad-modal-content ws-card">
+        <h3>Access Denied</h3>
+        <p>{noAccessModal.message}</p>
+        <div className="modal-actions">
+          <button
+            className="ws-btn primary"
+            onClick={() => setNoAccessModal({ open: false, message: "" })}
+          >
+            OK
+          </button>
         </div>
-      )}
+      </div>
+    </div>
+  </ModalPortal>
+)}
+
     </section>
   );
 }

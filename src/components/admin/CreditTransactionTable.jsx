@@ -194,9 +194,9 @@ export default function CreditTransactionTable({ Icon }) {
                   <td className="mono" data-label="ID">
                     #{r.transactionid}
                   </td>
-                  <td className="mono" data-label="Username">
-                    {r.username || "—"}
-                  </td>
+<td className="mono truncate" data-label="Username" title={r.username}>
+  <span className="truncate">{r.username || "—"}</span>
+</td>
                   <td className="mono" data-label="Type">
                     {r.credit_type}
                   </td>
@@ -211,17 +211,16 @@ export default function CreditTransactionTable({ Icon }) {
                   <td className="mono" data-label="Credit">
                     {r.amount}
                   </td>
-                  <td className="mono truncate" data-label="Reason">
-                    {r.reason || "—"}
-                  </td>
+<td className="mono truncate" data-label="Reason" title={r.reason}>
+  <span className="truncate">{r.reason || "—"}</span>
+</td>
                   <td className="mono" data-label="Status">
                     <StatusPill value={r.status} />
                   </td>
-                 <td className="mono" data-label="PaymentID" title={r.stripe_payment_intent_id}>
+<td className="mono truncate" data-label="PaymentID" title={r.stripe_payment_intent_id}>
   <span className="truncate">{r.stripe_payment_intent_id || "—"}</span>
 </td>
-
-<td className="mono" data-label="StripeID" title={r.stripe_session_id}>
+<td className="mono truncate" data-label="StripeID" title={r.stripe_session_id}>
   <span className="truncate">{r.stripe_session_id || "—"}</span>
 </td>
 

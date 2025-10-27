@@ -217,7 +217,7 @@
 .ad-actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:4px; }
 
 /* mobile modal */
-@media (max-width: 640px){
+@media (max-width: 760px){
   .ad-modal{ top:4svh; width:96vw; max-height:86svh; }
   .ad-form{ grid-template-columns: 1fr; }
 }
@@ -243,7 +243,7 @@
 /* table can scroll horizontally on small screens */
 .ad-table-wrap{ overflow:auto; }
 .ad-table{ min-width:860px; }         /* keep columns readable */
-@media (max-width: 640px){
+@media (max-width: 760px){
   .ad-table{ min-width:720px; }
 }
 
@@ -390,6 +390,8 @@
   border-color: rgba(255,255,255,.14); background: rgba(18,22,30,.92); color:#E9EEF7;
 }
 .ad-actions{ grid-column:1 / span 2; display:flex; justify-content:flex-end; gap:8px; }
+
+
 
 /* ---------- Cards & buttons (if you don't have ws-card / ws-btn) ---------- */
 /* (Optional) fallback minimal styles */
@@ -626,11 +628,15 @@
 }
 
 /* responsive improvement */
-@media (max-width: 640px) {
+@media (max-width: 760px) {
   .ad-modal-content.ws-card {
     padding: 16px;
     gap: 10px;
     max-height: 88vh;
+    max-width: 400px;
+    margin-left: auto;      /* takes remaining space on the left */
+    margin-right: auto;   
+    
   }
   .modal-actions {
     flex-direction: column;
@@ -898,4 +904,10 @@
   }
 }
 
+
+
+
+body.modal-open {
+  overflow: hidden;
+}
 

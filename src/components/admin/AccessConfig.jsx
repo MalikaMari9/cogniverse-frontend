@@ -10,7 +10,7 @@ import {
   deleteConfig,
 } from "../../api/api";
 import { usePermission } from "../../hooks/usePermission";
-
+import ModalPortal from "./ModalPortal";
 export default function AccessConfig({ Icon }) {
   // ===============================
   // 🔹 STATES
@@ -35,6 +35,15 @@ const [validationError, setValidationError] = React.useState({ open: false, mess
   React.useEffect(() => {
     if (!permLoading && canRead) fetchConfigs();
   }, [permLoading, canRead]);
+
+  React.useEffect(() => {
+  const hasModal =
+    modal?.open ||
+    addModal ||
+    noAccessModal?.open ||
+    validationError?.open;
+  document.body.classList.toggle("modal-open", !!hasModal);
+}, [modal?.open, addModal, noAccessModal?.open, validationError?.open]);
 
   const fetchConfigs = async () => {
     setLoading(true);
@@ -354,6 +363,7 @@ finally {
 
       {/* 🔹 Edit Modal */}
       {modal.open && (
+        <ModalPortal>
         <div className="ad-modal">
           <div className="ad-modal-content ws-card">
             <h3>Edit Configuration</h3>
@@ -393,10 +403,12 @@ finally {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* 🔹 Add Modal */}
       {addModal && (
+        <ModalPortal>
         <div className="ad-modal">
           <div className="ad-modal-content ws-card">
             <h3>Add Configuration</h3>
@@ -406,10 +418,12 @@ finally {
             />
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* 🔹 No Access Modal */}
       {noAccessModal.open && (
+        <ModalPortal>
         <div className="ad-modal">
           <div className="ad-modal-content ws-card">
             <h3>Access Denied</h3>
@@ -424,9 +438,11 @@ finally {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
       {/* 🔹 Validation Error Modal */}
 {validationError.open && (
+  <ModalPortal>
   <div className="ad-modal">
     <div className="ad-modal-content ws-card">
       <h3 style={{ color: "var(--danger)", marginBottom: "8px" }}>
@@ -445,6 +461,7 @@ finally {
       </div>
     </div>
   </div>
+  </ModalPortal>
 )}
 
     </section>

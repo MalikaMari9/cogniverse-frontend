@@ -1,14 +1,15 @@
 // ===============================
-// SystemLogTable.jsx — With Permission Popup (CSS Preserved)
+// SystemLogTable.jsx — With Permission Popup + Client modal
 // ===============================
 import React from "react";
-import { fmtDate, StatusPill } from "./helpers";
+import { fmtDate } from "./helpers";
 import {
   getSystemLogs,
   deleteSystemLog,
   deleteSystemLogs,
 } from "../../api/api";
 import { usePermission } from "../../hooks/usePermission";
+import ModalPortal from "./ModalPortal";
 
 export default function SystemLogTable() {
   // ===============================
@@ -22,6 +23,12 @@ export default function SystemLogTable() {
     open: false,
     message: "",
   });
+
+  // NEW: Client modal state
+  const [clientModal, setClientModal] = React.useState({
+    open: false,
+    row: null,
+  }); // NEW
 
   // filters
   const [q, setQ] = React.useState("");
@@ -43,37 +50,37 @@ export default function SystemLogTable() {
   const { level: permission, canRead, canWrite, loading: permLoading } =
     usePermission("SYSTEM_LOGS");
 
+  const [limit, setLimit] = React.useState(10);
+  const [total, setTotal] = React.useState(0);
 
-const [limit, setLimit] = React.useState(10);
-const [total, setTotal] = React.useState(0);
+  const loadLogs = async (pageParam = page) => {
+    try {
+      setLoading(true);
+      setError(null);
 
-const loadLogs = async (pageParam = page) => {
-  try {
-    setLoading(true);
-    setError(null);
+      const params = { page: pageParam }; // ✅ no limit — backend picks from config
+      const res = await getSystemLogs(params);
 
-const params = { page: pageParam }; // ✅ no limit — backend picks from config
+      setRows(res.items || []);
+      setPage(res.page);
+      setTotalPages(res.total_pages);
+      setLimit(res.limit);
+      setTotal(res.total);
+    } catch (err) {
+      console.error("❌ Failed to load system logs:", err);
+      setError("Failed to load system logs");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  React.useEffect(() => {
+    if (!permLoading && canRead) loadLogs(page);
+  }, [permLoading, canRead, page]);
 
-    const res = await getSystemLogs(params);
-
-    setRows(res.items || []);
-    setPage(res.page);
-    setTotalPages(res.total_pages);
-    setLimit(res.limit);
-    setTotal(res.total);
-  } catch (err) {
-    console.error("❌ Failed to load system logs:", err);
-    setError("Failed to load system logs");
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-React.useEffect(() => {
-  if (!permLoading && canRead) loadLogs(page);
-}, [permLoading, canRead, page]);
+  React.useEffect(() => {
+    document.body.classList.toggle("modal-open", noAccessModal.open || clientModal.open);
+  }, [noAccessModal.open, clientModal.open]); // NEW: include clientModal
 
   // ===============================
   // 🔹 PERMISSION CHECK
@@ -109,9 +116,7 @@ React.useEffect(() => {
     if (!requireWrite("delete")) return;
     if (selectedLogs.size === 0) return;
 
-    if (
-      !window.confirm(`Are you sure you want to delete ${selectedLogs.size} logs?`)
-    )
+    if (!window.confirm(`Are you sure you want to delete ${selectedLogs.size} logs?`))
       return;
 
     try {
@@ -147,9 +152,8 @@ React.useEffect(() => {
     return String(A).localeCompare(String(B)) * dir;
   });
 
-
-const safePage = Math.min(page, totalPages);
-const pageRows = rows; // backend already paginated
+  const safePage = Math.min(page, totalPages);
+  const pageRows = rows; // backend already paginated
 
   const toggleSelectAll = () => {
     if (selectedLogs.size === pageRows.length) setSelectedLogs(new Set());
@@ -171,6 +175,7 @@ const pageRows = rows; // backend already paginated
   };
 
   const downloadCSV = () => {
+    // NOTE: Keep ip_address + browser_info in CSV even though table combines them
     const header = [
       "logid",
       "action_type",
@@ -195,6 +200,10 @@ const pageRows = rows; // backend already paginated
     a.remove();
     URL.revokeObjectURL(url);
   };
+
+  // helpers – open/close client modal
+  const openClientModal = (row) => setClientModal({ open: true, row }); // NEW
+  const closeClientModal = () => setClientModal({ open: false, row: null }); // NEW
 
   // ===============================
   // 🔹 CONDITIONAL RENDERS
@@ -311,28 +320,32 @@ const pageRows = rows; // backend already paginated
         </div>
       </header>
 
-      <div className="ad-table-wrap system-logs">
-        <table className="ad-table system-logs">
+      <div
+        className="ad-table-wrap system-logs"
+        style={{ overflowX: "auto", overflowY: "visible", maxWidth: "100%" }} // ensures L↔R scroll
+      >
+<table
+  className="ad-table system-logs"
+  style={{ width: "max-content", minWidth: "100%", tableLayout: "auto" }}
+>
+
           <thead>
             <tr>
-              <th>
-                <input
-                  type="checkbox"
-                  checked={pageRows.length > 0 && selectedLogs.size === pageRows.length}
-                  onChange={toggleSelectAll}
-                />
-              </th>
               <th onClick={() => setSort("logid")}>logID</th>
               <th onClick={() => setSort("action_type")}>action_type</th>
               <th onClick={() => setSort("username")}>user</th>
               <th>details</th>
-              <th onClick={() => setSort("ip_address")}>ip_address</th>
-              <th>browser_info</th>
-              <th onClick={() => setSort("status")}>status</th>
+
+              {/* CHANGED: combine IP + Browser into "client" */}
+              <th /* sortable by ip_address for consistency */ onClick={() => setSort("ip_address")}>
+                client
+              </th>
+
               <th onClick={() => setSort("created_at")}>created_at</th>
               <th>actions</th>
             </tr>
           </thead>
+
           <tbody>
             {loading ? (
               <tr>
@@ -349,99 +362,164 @@ const pageRows = rows; // backend already paginated
                 </td>
               </tr>
             ) : (
-              pageRows.map((r) => (
-                <tr key={r.logid}>
-                  <td>
-                    <input
-                      type="checkbox"
-                      checked={selectedLogs.has(r.logid)}
-                      onChange={() => toggleLogSelection(r.logid)}
-                    />
-                  </td>
-                  <td data-label="logID" className="mono">#{r.logid}</td>
-               
-                   <td data-label="Action" className="mono">
-  <span className="truncate">{r.action_type}</span>
-</td>
-                 <td data-label="User" className="mono">
-  <span className="truncate">{r.username || "System"}</span>
-</td>
-                  <td className="mono" data-label="Details" title={r.details}>
-  <span className="truncate">{r.details || "—"}</span>
-</td>
-                 <td className="mono" data-label="IP" title={r.ip_address}>
-  <span className="truncate">{r.ip_address}</span>
-</td>
-                 <td className="mono" data-label="Browser" title={r.browser_info}>
-  <span className="truncate">{r.browser_info || "—"}</span>
-</td>
-                  <td data-label="Status">
-                    <StatusPill value={r.status} />
-                  </td>
-                  <td className="mono" data-label="Date">{fmtDate(r.created_at)}</td>
-                  <td className="actions" data-label="Actions">
-                    <button
-                      className="ws-btn danger sm"
-                      title={canWrite ? "Delete" : "Read-only"}
-                      disabled={!canWrite}
-                      onClick={() =>
-                        canWrite
-                          ? deleteLog(r.logid)
-                          : setNoAccessModal({
-                              open: true,
-                              message:
-                                "You don't have permission to delete system logs.",
-                            })
-                      }
+              pageRows.map((r) => {
+                const ip = r.ip_address || "—";
+                const br = r.browser_info || "—";
+                const clientShort =
+                  ip !== "—" && br !== "—"
+                    ? `${ip} · ${String(br).slice(0, 22)}${String(br).length > 22 ? "…" : ""}`
+                    : ip !== "—"
+                    ? ip
+                    : br;
+
+                return (
+                  <tr key={r.logid}>
+                    <td className="mono" data-label="logID">
+                      #{r.logid}
+                    </td>
+
+                    <td className="mono truncate" data-label="Action" title={r.action_type}>
+                      <span className="truncate">{r.action_type}</span>
+                    </td>
+
+                    <td className="mono truncate" data-label="User" title={r.username || "System"}>
+                      <span className="truncate">{r.username || "System"}</span>
+                    </td>
+
+                    <td className="mono truncate" data-label="Details" title={r.details}>
+                      <span className="truncate">{r.details || "—"}</span>
+                    </td>
+
+                    {/* NEW: single Client cell opens modal */}
+                    <td
+                      className="mono truncate"
+                      data-label="Client"
+                      title={`${ip} • ${br}`}
                     >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))
+                      <button
+                        type="button"
+                        onClick={() => openClientModal(r)}
+                        className="ws-btn ghost"
+                        style={{
+                          padding: "6px 8px",
+                          borderRadius: 8,
+                          whiteSpace: "nowrap",
+                        }}
+                        title="View client details"
+                      >
+                        {clientShort}
+                      </button>
+                    </td>
+
+                    <td
+                      className="mono truncate"
+                      data-label="Date"
+                      title={fmtDate(r.created_at)}
+                    >
+                      <span className="truncate">{fmtDate(r.created_at)}</span>
+                    </td>
+
+                    <td className="actions" data-label="Actions">
+                      <button
+                        className="ws-btn danger sm"
+                        title={canWrite ? "Delete" : "Read-only"}
+                        disabled={!canWrite}
+                        onClick={() =>
+                          canWrite
+                            ? deleteLog(r.logid)
+                            : setNoAccessModal({
+                                open: true,
+                                message:
+                                  "You don't have permission to delete system logs.",
+                              })
+                        }
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
       </div>
 
-<footer className="adm-foot">
-  <div>
-    Page {safePage}/{totalPages} • {total} total logs
-  </div>
-  <div className="adm-pager">
-    <button
-      className="ws-btn ghost"
-      disabled={safePage <= 1}
-      onClick={() => setPage((p) => Math.max(1, p - 1))}
-    >
-      Prev
-    </button>
-    <button
-      className="ws-btn ghost"
-      disabled={safePage >= totalPages}
-      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-    >
-      Next
-    </button>
-  </div>
-</footer>
+      <footer className="adm-foot">
+        <div>
+          Page {safePage}/{totalPages} • {total} total logs
+        </div>
+        <div className="adm-pager">
+          <button
+            className="ws-btn ghost"
+            disabled={safePage <= 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+          >
+            Prev
+          </button>
+          <button
+            className="ws-btn ghost"
+            disabled={safePage >= totalPages}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+          >
+            Next
+          </button>
+        </div>
+      </footer>
 
       {/* 🔹 No Access Modal */}
       {noAccessModal.open && (
-        <div className="ad-modal">
-          <div className="ad-modal-content ws-card">
-            <h3>Access Denied</h3>
-            <p>{noAccessModal.message}</p>
-            <div className="modal-actions">
-              <button
-                className="ws-btn primary"
-                onClick={() => setNoAccessModal({ open: false, message: "" })}
-              >
-                OK
-              </button>
+        <ModalPortal>
+          <div className="ad-modal">
+            <div className="ad-modal-content ws-card">
+              <h3>Access Denied</h3>
+              <p>{noAccessModal.message}</p>
+              <div className="modal-actions">
+                <button
+                  className="ws-btn primary"
+                  onClick={() => setNoAccessModal({ open: false, message: "" })}
+                >
+                  OK
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </ModalPortal>
+      )}
+
+      {/* 🔹 Client Details Modal (IP + Browser) */}
+      {clientModal.open && clientModal.row && (
+        <ModalPortal>
+          <div className="ad-modal">
+            <div className="ad-modal-content ws-card">
+              <h3 style={{ marginBottom: 8 }}>Client details</h3>
+              <div style={{ display: "grid", gap: 8 }}>
+                <label>
+                  <span style={{ fontWeight: 700, opacity: 0.8 }}>IP address</span>
+                  <input
+                    readOnly
+                    value={clientModal.row.ip_address || "—"}
+                    style={{ width: "100%" }}
+                  />
+                </label>
+                <label>
+                  <span style={{ fontWeight: 700, opacity: 0.8 }}>Browser / User agent</span>
+                  <textarea
+                    readOnly
+                    rows={4}
+                    value={clientModal.row.browser_info || "—"}
+                    style={{ width: "100%", resize: "vertical" }}
+                  />
+                </label>
+              </div>
+              <div className="modal-actions">
+                <button className="ws-btn ghost" onClick={closeClientModal}>
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
       )}
     </section>
   );

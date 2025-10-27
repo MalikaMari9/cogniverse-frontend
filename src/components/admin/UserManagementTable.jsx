@@ -11,7 +11,7 @@ import {
   bulkDeleteUsers,
 } from "../../api/api";
 import { usePermission } from "../../hooks/usePermission";
-
+import ModalPortal from "./ModalPortal";
 export default function UserManagementTable() {
   // ===============================
   // 🔹 STATES
@@ -98,6 +98,15 @@ finally {
   document.addEventListener("click", handleClickOutside);
   return () => document.removeEventListener("click", handleClickOutside);
 }, []);
+
+React.useEffect(() => {
+  const hasModal =
+    createModal ||
+    editModal?.open ||
+    noAccessModal?.open ||
+    alertModal?.open;
+  document.body.classList.toggle("modal-open", !!hasModal);
+}, [createModal, editModal?.open, noAccessModal?.open, alertModal?.open]);
 
 
   React.useEffect(() => {
@@ -589,6 +598,7 @@ finally {
 
       {/* Create Modal */}
       {createModal && (
+        <ModalPortal>
         <div className="ad-modal">
           <div className="ad-modal-content ws-card">
             <h3>Create New User</h3>
@@ -636,10 +646,12 @@ finally {
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* Edit Modal */}
       {editModal.open && (
+        <ModalPortal>
         <div className="ad-modal">
           <div className="ad-modal-content ws-card">
             <h3>Edit User</h3>
@@ -703,10 +715,12 @@ finally {
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* No Access Modal */}
       {noAccessModal.open && (
+        <ModalPortal>
         <div className="ad-modal">
           <div className="ad-modal-content ws-card">
             <h3>Access Denied</h3>
@@ -721,9 +735,11 @@ finally {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
       {/* Error Popup */}
 {alertModal.open && (
+  <ModalPortal>
   <div className="ad-modal">
     <div className="ad-modal-content ws-card">
       <h3>Error</h3>
@@ -738,6 +754,7 @@ finally {
       </div>
     </div>
   </div>
+  </ModalPortal>
 )}
 
     </section>

@@ -6,7 +6,7 @@ import React from "react";
 import { fmtDate } from "./helpers";
 import { getAllMaintenance, updateMaintenance } from "../../api/api";
 import { usePermission } from "../../hooks/usePermission";
-
+import ModalPortal from "./ModalPortal";
 export default function MaintenanceTable({ Icon }) {
   const [rows, setRows] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
@@ -25,6 +25,12 @@ export default function MaintenanceTable({ Icon }) {
     if (permLoading) return;
     if (canRead) fetchMaintenance();
   }, [permLoading, canRead]);
+
+  React.useEffect(() => {
+  const hasModal =
+    modal?.open || confirmModal?.open || noAccessModal?.open;
+  document.body.classList.toggle("modal-open", !!hasModal);
+}, [modal?.open, confirmModal?.open, noAccessModal?.open]);
 
   const fetchMaintenance = async () => {
     setLoading(true);
@@ -200,6 +206,7 @@ export default function MaintenanceTable({ Icon }) {
 
       {/* 🔹 Edit Message Modal */}
       {modal.open && (
+        <ModalPortal>
         <div className="ad-modal">
           <div className="ad-modal-content ws-card">
             <h3>Edit Maintenance Message</h3>
@@ -228,10 +235,12 @@ export default function MaintenanceTable({ Icon }) {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* 🔹 Confirm Maintenance Modal */}
       {confirmModal.open && (
+        <ModalPortal>
         <div className="ad-modal">
           <div className="ad-modal-content ws-card">
             <h3>
@@ -257,10 +266,12 @@ export default function MaintenanceTable({ Icon }) {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* 🔹 No Access Modal */}
       {noAccessModal.open && (
+        <ModalPortal>
         <div className="ad-modal">
           <div className="ad-modal-content ws-card">
             <h3>Access Denied</h3>
@@ -275,6 +286,7 @@ export default function MaintenanceTable({ Icon }) {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
     </section>
   );

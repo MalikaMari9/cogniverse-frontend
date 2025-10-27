@@ -10,7 +10,7 @@ import {
   deleteAnnouncement,
 } from "../../api/api";
 import { usePermission } from "../../hooks/usePermission";
-
+import ModalPortal from "./ModalPortal";
 export default function AnnouncementTable({ Icon }) {
   // ===============================
   // 🔹 STATES
@@ -68,6 +68,12 @@ const loadAnnouncements = async () => {
   React.useEffect(() => {
     if (!permLoading && canRead) loadAnnouncements();
   }, [permLoading, canRead]);
+
+  React.useEffect(() => {
+  const hasModal =
+    modal?.open || view?.open || noAccessModal?.open;
+  document.body.classList.toggle("modal-open", !!hasModal);
+}, [modal?.open, view?.open, noAccessModal?.open]);
 
   // ===============================
   // 🔹 PERMISSION CHECK
@@ -365,24 +371,29 @@ const loadAnnouncements = async () => {
 
       {/* 🔹 Modals */}
       {modal.open && (
+        <ModalPortal>
         <AnnouncementModal
           open={modal.open}
           initial={modal.data}
           onClose={closeModal}
           onSave={saveRow}
         />
+        </ModalPortal>
       )}
 
       {view.open && (
+        <ModalPortal>
         <AnnouncementViewModal
           open={view.open}
           data={view.data}
           onClose={closeView}
         />
+        </ModalPortal>
       )}
 
       {/* 🔹 No Access Modal */}
       {noAccessModal.open && (
+        <ModalPortal>
         <div className="ad-modal">
           <div className="ad-modal-content ws-card">
             <h3>Access Denied</h3>
@@ -397,6 +408,7 @@ const loadAnnouncements = async () => {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
     </section>
   );
@@ -426,6 +438,7 @@ function AnnouncementModal({ open, initial, onClose, onSave }) {
   if (!open) return null;
 
   return (
+    <ModalPortal>
     <>
       <div className="ad-backdrop" onClick={onClose} />
       <div className="ad-modal ws-card">
@@ -473,6 +486,7 @@ function AnnouncementModal({ open, initial, onClose, onSave }) {
         </form>
       </div>
     </>
+    </ModalPortal>
   );
 }
 
@@ -480,6 +494,7 @@ function AnnouncementModal({ open, initial, onClose, onSave }) {
 function AnnouncementViewModal({ open, data, onClose }) {
   if (!open || !data) return null;
   return (
+    <ModalPortal>
     <>
       <div className="ad-backdrop" onClick={onClose} />
       <div className="ad-modal ws-card">
@@ -497,6 +512,8 @@ function AnnouncementViewModal({ open, data, onClose }) {
           </div>
         </div>
       </div>
+      
     </>
+    </ModalPortal>
   );
 }

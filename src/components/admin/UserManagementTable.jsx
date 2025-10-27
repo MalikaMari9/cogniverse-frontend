@@ -27,6 +27,7 @@ export default function UserManagementTable() {
   const [createModal, setCreateModal] = React.useState(false);
   const [editModal, setEditModal] = React.useState({ open: false, user: null });
 const [alertModal, setAlertModal] = React.useState({ open: false, message: "" });
+const [creating, setCreating] = React.useState(false);
 
 
   // Form states
@@ -130,28 +131,31 @@ React.useEffect(() => {
   // ===============================
   // 🔹 USER OPERATIONS
   // ===============================
-  const handleCreateUser = async (e) => {
-    e.preventDefault();
-    if (!requireWrite("create")) return;
+const handleCreateUser = async (e) => {
+  e.preventDefault();
+  if (!requireWrite("create")) return;
 
-    try {
-      await createUser({
-  username: formData.username,
-  email: formData.email,
-  password: null, // ✅ explicitly null so backend uses defaultPassword
-  role: formData.role,
-});
+  try {
+    setCreating(true);
+    await createUser({
+      username: formData.username,
+      email: formData.email,
+      password: null, // ✅ backend will use defaultPassword
+      role: formData.role,
+    });
 
-      setCreateModal(false);
-      setFormData({ username: "", email: "",  role: "user" });
-      loadUsers();
-    } catch (err) {
-  console.error("❌ Failed to create user:", err);
-  const msg = err.response?.data?.detail || "Failed to create user";
-  setAlertModal({ open: true, message: msg });
-}
+    setCreateModal(false);
+    setFormData({ username: "", email: "", role: "user" });
+    loadUsers();
+  } catch (err) {
+    console.error("❌ Failed to create user:", err);
+    const msg = err.response?.data?.detail || "Failed to create user";
+    setAlertModal({ open: true, message: msg });
+  } finally {
+    setCreating(false);
+  }
+};
 
-  };
 
   const handleEditUser = async (e) => {
     e.preventDefault();
@@ -631,18 +635,31 @@ React.useEffect(() => {
                 <option value="superadmin">Super Admin</option>
               </select>
 
-              <div className="modal-actions">
-                <button
-                  type="button"
-                  className="ws-btn ghost"
-                  onClick={() => setCreateModal(false)}
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="ws-btn primary">
-                  Create User
-                </button>
-              </div>
+<div className="modal-actions">
+  <button
+    type="button"
+    className="ws-btn ghost"
+    disabled={creating}
+    onClick={() => setCreateModal(false)}
+  >
+    Cancel
+  </button>
+  <button
+    type="submit"
+    className={`ws-btn primary ${creating ? "loading" : ""}`}
+    disabled={creating}
+  >
+    {creating ? (
+      <>
+        <div className="sc-spinner tiny" />
+        <span style={{ marginLeft: 6 }}>Creating…</span>
+      </>
+    ) : (
+      "Create User"
+    )}
+  </button>
+</div>
+
             </form>
           </div>
         </div>

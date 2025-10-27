@@ -21,22 +21,52 @@ function useTheme() {
   return { theme, toggle };
 }
 
+/* ============== Toast Component ============== */
+function Toast({ message, type = "info", onClose, duration = 4000 }) {
+  React.useEffect(() => {
+    if (!message) return;
+    const timer = setTimeout(() => onClose(), duration);
+    return () => clearTimeout(timer);
+  }, [message, duration, onClose]);
+
+  return (
+    <div className={`toast ${type}`}>
+      <div className="toast-content">{message}</div>
+      <div className="toast-bar" />
+    </div>
+  );
+}
+
+/* ============== Helper: Parse API Errors ============== */
+function parseError(err) {
+  if (!err) return "An unknown error occurred.";
+
+  if (err.response?.data) {
+    const data = err.response.data;
+
+    // FastAPI validation error format
+    if (Array.isArray(data.detail) && data.detail[0]?.msg) {
+      return data.detail[0].msg;
+    }
+
+    if (typeof data.detail === "string") return data.detail;
+    if (data.message) return data.message;
+  }
+
+  if (err.message) return err.message;
+  return "Something went wrong. Please try again.";
+}
+
 /* ============== Forgot Password Page ============== */
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState(""); // success | error | info
+  const [toast, setToast] = useState({ message: "", type: "" });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { theme, toggle } = useTheme();
 
-  const showMessage = (text, type = "info") => {
-    setMessage(text);
-    setMessageType(type);
-    setTimeout(() => {
-      setMessage("");
-      setMessageType("");
-    }, 4000);
+  const showToast = (message, type = "info") => {
+    setToast({ message, type });
   };
 
   const handleSubmit = async (e) => {
@@ -44,9 +74,18 @@ export default function ForgotPasswordPage() {
     setLoading(true);
     try {
       const res = await requestPasswordReset(email);
-      showMessage(res.message || "✅ Reset link sent successfully!", "success");
+      showToast(res.message || "✅ Reset link sent successfully!", "success");
+      setEmail("");
     } catch (err) {
-      showMessage("❌ " + (err.message || "Failed to send reset link"), "error");
+      console.error("❌ Password reset error:", err);
+      let msg = parseError(err);
+
+      // Friendly replacement for validation messages
+      if (msg.toLowerCase().includes("valid email")) {
+        msg = "Please enter a valid email address.";
+      }
+
+      showToast("❌ " + msg, "error");
     } finally {
       setLoading(false);
     }
@@ -107,18 +146,15 @@ export default function ForgotPasswordPage() {
                     style={{ animationDelay: "120ms" }}
                     disabled={loading}
                   >
-                    {loading ? "Sending..." : "Send Reset Link"}
+                    {loading ? (
+                      <>
+                        <div className="sc-spinner tiny" />
+                        <span style={{ marginLeft: 6 }}>Sending...</span>
+                      </>
+                    ) : (
+                      "Send Reset Link"
+                    )}
                   </button>
-
-                  {message && (
-                    <div
-                      className={`toast fade-item ${messageType}`}
-                      style={{ animationDelay: "160ms" }}
-                      role="status"
-                    >
-                      {message}
-                    </div>
-                  )}
 
                   <p
                     className="swap fade-item"
@@ -139,6 +175,15 @@ export default function ForgotPasswordPage() {
           </div>
         </section>
       </main>
+
+      {/* Toast Notification */}
+      {toast.message && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ message: "", type: "" })}
+        />
+      )}
 
       {/* Footer */}
       <footer className="footer">

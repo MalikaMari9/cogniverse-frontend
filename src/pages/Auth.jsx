@@ -284,16 +284,7 @@ setTimeout(() => {
                     {isLoading ? "Please wait..." : (tab === "login" ? "Log in" : "Create account")}  {/* 🆕 UPDATE text */}
                   </button>
 
-                  {message && (
-                    <div 
-                      className={`toast fade-item ${messageType}`} 
-                      style={{ animationDelay: "300ms" }} 
-                      role="status" 
-                      aria-live="polite"
-                    >
-                      {message}
-                    </div>
-                  )}
+                
 
                   <div className="or fade-item" style={{ animationDelay: "320ms" }}>
                     <span>or continue with</span>
@@ -319,9 +310,21 @@ setTimeout(() => {
         </section>
       </main>
 
+
+      {message && (
+        <div
+          className={`toast ${messageType}`}
+          role="status"
+          aria-live="polite"
+        >
+          {message}
+        </div>
+      )}
+
       <footer className="footer">
         <p>© CogniVerse</p>
       </footer>
+
     </div>
   );
 }

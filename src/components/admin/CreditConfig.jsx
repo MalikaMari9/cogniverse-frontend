@@ -213,63 +213,66 @@ const handleStatusChange = async (r, newStatus) => {
   return (
     <section className="ad-card ws-card">
       {/* 🔹 Topbar */}
-      <div
-        className="ad-topbar"
-        style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}
-      >
-        <div className="ad-toggle" style={{ display: "flex", alignItems: "center", marginLeft: 16 }}>
-  <input
-    type="checkbox"
-    id="showArchived"
-    checked={showArchived}
-    onChange={(e) => setShowArchived(e.target.checked)}
-    style={{ marginRight: 6, cursor: "pointer" }}
-  />
-  <label htmlFor="showArchived" style={{ fontSize: "0.9rem", color: "var(--ink-2)", cursor: "pointer" }}>
-    Show Archived
-  </label>
-</div>
+<header className="adm-head">
+  <div className="adm-title" style={{ fontWeight: 600, marginRight: 12 }}>
+    Credit Packs
+  </div>
+  <div className="adm-tools">
+    <div className="ad-toggle" style={{ display: "flex", alignItems: "center" }}>
+      <input
+        type="checkbox"
+        id="showArchived"
+        checked={showArchived}
+        onChange={(e) => setShowArchived(e.target.checked)}
+        style={{ marginRight: 6, cursor: "pointer" }}
+      />
+      <label htmlFor="showArchived" style={{ fontSize: "0.9rem", color: "var(--ink-2)", cursor: "pointer" }}>
+        Show Archived
+      </label>
+    </div>
 
-        <div className="ws-search" style={{ flex: 1, maxWidth: 280 }}>
-          <span className="ico">
-            <Icon name="search" />
-          </span>
-          <input
-            type="text"
-            value={q}
-            onChange={(e) => {
-              setQ(e.target.value);
-              setPage(1);
-            }}
-            placeholder="Search credit packs..."
-          />
-          {q && (
-            <button
-              className="ws-search-clear"
-              onClick={() => setQ("")}
-              aria-label="Clear search"
-            >
-              ×
-            </button>
-          )}
-        </div>
-
+    <div className="ws-search" style={{ flex: 1, minWidth: 220, maxWidth: 300 }}>
+      <span className="ico"><Icon name="search" /></span>
+      <input
+        type="text"
+        value={q}
+        onChange={(e) => {
+          setQ(e.target.value);
+          setPage(1);
+        }}
+        placeholder="Search credit packs…"
+      />
+      {q && (
         <button
-          className="ws-btn primary"
-          onClick={() =>
-            canWrite
-              ? setAddModal(true)
-              : setNoAccessModal({
-                  open: true,
-                  message: "You don't have permission to add credit packs.",
-                })
-          }
-          style={{ marginLeft: "auto" }}
-          disabled={!canWrite}
+          className="ws-search-clear"
+          onClick={() => {
+            setQ("");
+            setPage(1);
+          }}
         >
-          + Add Pack
+          ×
         </button>
-      </div>
+      )}
+    </div>
+
+    <button
+      className="ws-btn primary"
+      onClick={() =>
+        canWrite
+          ? setAddModal(true)
+          : setNoAccessModal({
+              open: true,
+              message: "You don't have permission to add credit packs.",
+            })
+      }
+      disabled={!canWrite}
+      title={!canWrite ? "Read-only access" : ""}
+    >
+      + Add Pack
+    </button>
+  </div>
+</header>
+
 
       {/* 🔹 Table */}
       {loading && <div className="ad-loading">Loading credit packs...</div>}

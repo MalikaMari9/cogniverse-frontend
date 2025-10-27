@@ -5,7 +5,7 @@
 import React from "react";
 import "../admin.css";
 import { AdminNav } from "../components/AdminNav.jsx";
-
+import { logoutUser } from "../api/api.js"; // adjust path if needed
 // 🧩 Import tab modules
 import AccessConfig from "../components/admin/AccessConfig.jsx";
 import SystemLogTable from "../components/admin/SystemLogTable.jsx";
@@ -18,6 +18,7 @@ import CreditConfig from "../components/admin/CreditConfig.jsx"; // ✅ ADD THIS
 import CreditTransactionTable from "../components/admin/CreditTransactionTable.jsx";
 // 🧩 Shared helpers (optional, if needed here)
 import { fmtDate, StatusPill } from "../components/admin//helpers.jsx";
+import { handleLogout } from "../utils/logout.js";
 
 /* ----------------------- tiny SVG icons (inline) ----------------------- */
 const Icon = ({ name, size = 18 }) => {
@@ -144,12 +145,6 @@ export default function Admin() {
     localStorage.setItem("admin_tab", tab);
   }, [tab]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("admin_tab"); // optional: clear saved tab on logout
-    sessionStorage.clear();
-    window.location.href = "/login";
-  };
 
   return (
     <div className="ad-shell">

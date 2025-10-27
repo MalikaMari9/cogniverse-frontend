@@ -189,55 +189,54 @@ finally {
   return (
     <section className="ad-card ws-card">
       {/* Header controls */}
-      <div
-        className="ad-topbar"
-        style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}
-      >
-        <div className="ws-search" style={{ flex: 1, maxWidth: 280 }}>
-          <span className="ico">
-            <Icon name="search" />
-          </span>
-          <input
-            type="text"
-            value={q}
-            onChange={(e) => {
-              setQ(e.target.value);
-              setPage(1);
-            }}
-            placeholder="Search configs..."
-            aria-label="Search configs"
-          />
-          {q && (
-            <button
-              className="ws-search-clear"
-              onClick={() => {
-                setQ("");
-                setPage(1);
-              }}
-              aria-label="Clear search"
-            >
-              ×
-            </button>
-          )}
-        </div>
-
+      
+<header className="adm-head">
+  <div className="adm-title" style={{ fontWeight: 600, marginRight: 12 }}>
+    System Config
+  </div>
+  <div className="adm-tools">
+    <div className="ws-search" style={{ flex: 1, minWidth: 220, maxWidth: 300 }}>
+      <span className="ico"><Icon name="search" /></span>
+      <input
+        type="text"
+        value={q}
+        onChange={(e) => {
+          setQ(e.target.value);
+          setPage(1);
+        }}
+        placeholder="Search configs…"
+      />
+      {q && (
         <button
-          className="ws-btn primary"
-          onClick={() =>
-            canWrite
-              ? setAddModal(true)
-              : setNoAccessModal({
-                  open: true,
-                  message: "You don't have permission to add configurations.",
-                })
-          }
-          style={{ marginLeft: "auto" }}
-          disabled={!canWrite}
-          title={!canWrite ? "Read-only access" : ""}
+          className="ws-search-clear"
+          onClick={() => {
+            setQ("");
+            setPage(1);
+          }}
         >
-          + Add Config
+          ×
         </button>
-      </div>
+      )}
+    </div>
+
+    <button
+      className="ws-btn primary"
+      onClick={() =>
+        canWrite
+          ? setAddModal(true)
+          : setNoAccessModal({
+              open: true,
+              message: "You don't have permission to add configurations.",
+            })
+      }
+      disabled={!canWrite}
+      title={!canWrite ? "Read-only access" : ""}
+    >
+      + Add Config
+    </button>
+  </div>
+</header>
+
 
       {/* Loading/error */}
       {loading && <div className="ad-loading">Loading configurations...</div>}

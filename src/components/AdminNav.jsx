@@ -113,6 +113,8 @@ export const Icon = ({ name, size = 18 }) => {
 
 /* ---------------------------- Sidebar + Theme ---------------------------- */
 export function AdminNav({ theme, tab, setTab, setTheme, handleLogout }) {
+
+  
   return (
     <aside className="ad-sb">
       <div className="ad-logo">
@@ -194,32 +196,51 @@ export function AdminNav({ theme, tab, setTab, setTheme, handleLogout }) {
 </button>
 
       </nav>
+{/* ======================= */}
+{/* Sidebar footer actions */}
+{/* ======================= */}
+<div className="ad-sb-foot" style={{ flexDirection: "column", gap: "10px" }}>
+  {/* Profile */}
+  <button
+    className="ad-nav-item"
+    onClick={() => (window.location.href = "/profile")}
+    title="Profile"
+    style={{ justifyContent: "center" }}
+  >
+    <Icon name="users" />
+    <span>Profile</span>
+  </button>
 
-      <div className="ad-sb-foot">
-        <button
-          className={`ad-theme ${theme}`}
-          onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
-          aria-label="Toggle theme"
-          title="Toggle theme"
-        >
-          <span className="knob" />
-          <span className="sun">
-            <Icon name="sun" size={14} />
-          </span>
-          <span className="moon">
-            <Icon name="moon" size={14} />
-          </span>
-        </button>
+  {/* Theme toggle (centered, untouched CSS) */}
+  <div style={{ display: "flex", justifyContent: "center" }}>
+    <button
+      className={`ad-theme ${theme}`}
+      onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
+      aria-label="Toggle theme"
+      title="Toggle theme"
+    >
+      <span className="knob" />
+      <span className="sun">
+        <Icon name="sun" size={14} />
+      </span>
+      <span className="moon">
+        <Icon name="moon" size={14} />
+      </span>
+    </button>
+  </div>
 
-        <button
-          className="ad-nav-item logout-btn"
-          onClick={handleLogout}
-          title="Logout"
-        >
-          <Icon name="logout" />
-          <span>Logout</span>
-        </button>
-      </div>
+  {/* Logout */}
+  <button
+    className="ad-nav-item logout-btn"
+    onClick={handleLogout}
+    title="Logout"
+    style={{ justifyContent: "center" }}
+  >
+    <Icon name="logout" />
+    <span>Logout</span>
+  </button>
+</div>
+
     </aside>
   );
 }

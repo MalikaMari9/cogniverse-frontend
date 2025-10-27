@@ -159,6 +159,36 @@
 }
 
 
+
+/* ✅ Dark theme: make all selects readable inside modals or tables */
+[data-theme="dark"] select,
+[data-theme="dark"] .ad-select,
+[data-theme="dark"] .adm-select {
+  background-color: rgba(25, 30, 40, 0.96);   /* solid dark glass */
+  color: #E9EEF7;                             /* bright text */
+  border: 1px solid rgba(255,255,255,0.15);
+  appearance: none;
+  background-image: linear-gradient(
+    180deg,
+    rgba(255,255,255,0.06),
+    rgba(255,255,255,0.02)
+  );
+}
+
+
+[data-theme="dark"] select option {
+  background-color: #161b25;                  /* dropdown list bg */
+  color: #E9EEF7;
+}
+
+/* optional hover polish */
+[data-theme="dark"] select:hover,
+[data-theme="dark"] .ad-select:hover,
+[data-theme="dark"] .adm-select:hover {
+  border-color: rgba(255,255,255,0.25);
+  background-color: rgba(30,35,45,0.98);
+}
+
 /* small square icon buttons (edit / delete) */
 .ad-icon{
   display:inline-grid; place-items:center;
@@ -262,6 +292,24 @@
   .ad-select{ flex:0 0 150px; }
 }
 
+
+/* --- Sidebar footer (stacked layout) --- */
+.ad-sb-foot.stacked {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;    /* stack vertically */
+  align-items: stretch;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--glass-bdr);
+}
+
+/* make footer buttons full width */
+.ad-sb-foot.stacked .ad-nav-item,
+.ad-sb-foot.stacked .ad-theme {
+  width: 100%;
+  justify-content: center;
+}
 
 
 

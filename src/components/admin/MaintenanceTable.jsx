@@ -128,14 +128,27 @@ export default function MaintenanceTable({ Icon }) {
   // ✅ Authorized (read/write)
   return (
     <section className="ad-card ws-card">
-      <div className="ad-topbar" style={{ marginBottom: 12 }}>
-        <h3>Maintenance Control</h3>
-        {permission && (
-          <span className="perm-label">
-            Access Level: <b>{permission}</b>
-          </span>
-        )}
+<header className="adm-head">
+  <div className="adm-title" style={{ fontWeight: 600, marginRight: 12 }}>
+    Maintenance Control
+  </div>
+
+  <div className="adm-tools" style={{ display: "flex", alignItems: "center", gap: 12 }}>
+    {permission && (
+      <div
+        className="perm-label"
+        style={{
+          fontSize: "0.9rem",
+          opacity: 0.8,
+          color: "var(--ink-2)",
+        }}
+      >
+        Access Level: <b style={{ color: "var(--ink-1)" }}>{permission}</b>
       </div>
+    )}
+  </div>
+</header>
+
 
       {loading && <div className="ad-loading">Loading maintenance...</div>}
       {error && <div className="ad-error">{error}</div>}

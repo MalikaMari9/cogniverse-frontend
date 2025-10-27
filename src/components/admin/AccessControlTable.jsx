@@ -249,73 +249,62 @@ React.useEffect(() => {
                 </tr>
               ) : (
                 pageRows.map((r) => (
-                 <tr key={r.accessID}>
-  {/* module_key */}
-  <td className="mono truncate" data-label="Key" title={r.module_key}>
-    <span className="truncate">{r.module_key}</span>
-  </td>
+                  <tr key={r.accessID}>
+                   <td className="mono" data-label="Key" title={r.module_key}>
+  <span className="truncate">{r.module_key}</span>
+</td>
 
-  {/* module_desc */}
-  <td className="mono truncate" data-label="Description" title={r.module_desc}>
-    <span className="truncate">{r.module_desc || "—"}</span>
-  </td>
-
-  {/* user_access */}
-  <td className="mono truncate" data-label="User Access" title={r.user_access}>
-    <span className={`ad-chip ${r.user_access}`}>{r.user_access}</span>
-  </td>
-
-  {/* admin_access */}
-  <td className="mono truncate" data-label="Admin Access" title={r.admin_access}>
-    <span className={`ad-chip ${r.admin_access}`}>{r.admin_access}</span>
-  </td>
-
-  {/* superadmin_access */}
-  <td className="mono truncate" data-label="Superadmin Access" title={r.superadmin_access}>
-    <span className={`ad-chip ${r.superadmin_access}`}>{r.superadmin_access}</span>
-  </td>
-
-  {/* is_critical */}
-  <td className="mono" data-label="Critical">
-    <label className="acx-switch sm">
-      <input
-        type="checkbox"
-        checked={!!r.is_critical}
-        onChange={async () =>
-          canWrite
-            ? await updateAccessControl(r.accessID, {
-                is_critical: !r.is_critical,
-              }).then(fetchAccessControls)
-            : setNoAccessModal({
-                open: true,
-                message:
-                  "You don't have permission to update critical status.",
-              })
-        }
-      />
-      <span className="track">
-        <span className="knob" />
-      </span>
-    </label>
-  </td>
-
-  {/* updated_at */}
-  <td className="mono truncate" data-label="Updated" title={r.updated_at}>
-    <span className="truncate">{r.updated_at}</span>
-  </td>
-
-  {/* actions */}
-  <td className="mono" data-label="Actions">
-    <button
-      className="ad-icon"
-      title={canWrite ? "Edit" : "View-only"}
-      onClick={() => openEdit(r)}
-    >
-      <Icon name="edit" />
-    </button>
-  </td>
-</tr>
-
+                  <td data-label="Description" className="mono" title={r.module_desc}>
+  <span className="truncate">{r.module_desc || "—"}</span>
+</td>
+                    <td data-label="User Access" className="mono">
+                      <span className={`ad-chip ${r.user_access}`}>
+                        {r.user_access}
+                      </span>
+                    </td>
+                    <td data-label="Admin Access" className="mono">
+                      <span className={`ad-chip ${r.admin_access}`}>
+                        {r.admin_access}
+                      </span>
+                    </td>
+                    <td data-label="Superadmin Access" className="mono">
+                      <span className={`ad-chip ${r.superadmin_access}`}>
+                        {r.superadmin_access}
+                      </span>
+                    </td>
+                    <td data-label="Critical">
+                      <label className="acx-switch sm">
+                        <input
+                          type="checkbox"
+                          checked={!!r.is_critical}
+                          onChange={async () =>
+                            canWrite
+                              ? await updateAccessControl(r.accessID, {
+                                  is_critical: !r.is_critical,
+                                }).then(fetchAccessControls)
+                              : setNoAccessModal({
+                                  open: true,
+                                  message:
+                                    "You don't have permission to update critical status.",
+                                })
+                          }
+                        />
+                        <span className="track">
+                          <span className="knob" />
+                        </span>
+                      </label>
+                    </td>
+                    <td className="mono" data-label="Updated">{r.updated_at}</td>
+                    <td className="mono" data-label="Actions">
+                      <button
+                        className="ad-icon"
+                        title={canWrite ? "Edit" : "View-only"}
+                        onClick={() => openEdit(r)}
+                      >
+                        <Icon name="edit" />
+                      </button>
+                    </td>
+                  </tr>
                 ))
               )}
             </tbody>
@@ -403,24 +392,22 @@ function AccessControlModal({ open, initial, onClose, onSave, ACCESS_LEVELS }) {
   if (!open) return null;
 
   return (
-      <ModalPortal>
-    <>
-      <div className="ad-backdrop" onClick={onClose} />
-      <div className="ad-modal ws-card">
-        <div className="ad-modal-head">
-          <h3>{form.accessID ? "Edit access rule" : "New access rule"}</h3>
-          <button className="ad-icon" onClick={onClose} aria-label="Close">
-            ✕
-          </button>
-        </div>
-        <form
-          className="ad-form"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!form.module_key) return;
-            onSave(form);
-          }}
-        >
+     <ModalPortal>
+  <div className="ad-modal">
+    <div className="ad-modal-content ws-card">
+      <div className="ad-modal-head">
+        <h3>{form.accessID ? "Edit access rule" : "New access rule"}</h3>
+       
+      </div>
+
+      <form
+        className="ad-form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!form.module_key) return;
+          onSave(form);
+        }}
+      >
           <label>
             <span>module_key</span>
             <input
@@ -471,17 +458,17 @@ function AccessControlModal({ open, initial, onClose, onSave, ACCESS_LEVELS }) {
             </label>
           </label>
 
-          <div className="ad-actions">
-            <button type="button" className="ws-btn ghost" onClick={onClose}>
-              Cancel
-            </button>
-            <button className="ws-btn primary" type="submit">
-              Save
-            </button>
-          </div>
-        </form>
-      </div>
-    </>
-      </ModalPortal>
+  <div className="modal-actions">
+          <button type="button" className="ws-btn ghost" onClick={onClose}>
+            Cancel
+          </button>
+          <button className="ws-btn primary" type="submit">
+            Save
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</ModalPortal>
   );
 }

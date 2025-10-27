@@ -438,14 +438,14 @@ function AnnouncementModal({ open, initial, onClose, onSave }) {
   if (!open) return null;
 
   return (
-    <ModalPortal>
-    <>
-      <div className="ad-backdrop" onClick={onClose} />
-      <div className="ad-modal ws-card">
-        <div className="ad-modal-head">
-          <h3>{form.announcementid ? "Edit announcement" : "New announcement"}</h3>
-          <button className="ad-icon" onClick={onClose}>✕</button>
-        </div>
+<ModalPortal>
+  <div className="ad-modal">
+    <div className="ad-modal-content ws-card">
+      {/* header */}
+      <div className="ad-modal-head">
+        <h3>{form.announcementid ? "Edit announcement" : "New announcement"}</h3>
+        
+      </div>
         <form className="ad-form" onSubmit={handleSubmit}>
           <label>
             <span>Title *</span>
@@ -484,9 +484,9 @@ function AnnouncementModal({ open, initial, onClose, onSave }) {
             </button>
           </div>
         </form>
-      </div>
-    </>
-    </ModalPortal>
+    </div>
+  </div>
+</ModalPortal>
   );
 }
 
@@ -494,15 +494,14 @@ function AnnouncementModal({ open, initial, onClose, onSave }) {
 function AnnouncementViewModal({ open, data, onClose }) {
   if (!open || !data) return null;
   return (
-    <ModalPortal>
-    <>
-      <div className="ad-backdrop" onClick={onClose} />
-      <div className="ad-modal ws-card">
-        <div className="ad-modal-head">
-          <h3>{data.title}</h3>
-          <button className="ad-icon" onClick={onClose}>✕</button>
-        </div>
-        <div style={{ display: "grid", gap: 10 }}>
+<ModalPortal>
+  <div className="ad-modal">
+    <div className="ad-modal-content ws-card">
+      <div className="ad-modal-head">
+        <h3>{data.title}</h3>
+       
+      </div>
+      <div style={{ display: "grid", gap: 10 }}>
           <div><strong>created_by:</strong> {data.created_by_username || "—"}</div>
           <div><strong>status:</strong> <StatusPill value={data.status} /></div>
           <div><strong>content:</strong></div>
@@ -510,10 +509,9 @@ function AnnouncementViewModal({ open, data, onClose }) {
           <div className="muted">
             created_at: {fmtDate(data.created_at)} | updated_at: {fmtDate(data.updated_at)}
           </div>
-        </div>
       </div>
-      
-    </>
-    </ModalPortal>
+    </div>
+  </div>
+</ModalPortal>
   );
 }

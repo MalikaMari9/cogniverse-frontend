@@ -861,18 +861,24 @@
 /* 🧩 Fix mobile stacked table alignment for SystemLogTable */
 @media (max-width: 760px) {
   .ad-table.system-logs tbody td {
-    justify-content: space-between !important;
+    display: flex !important;
+    justify-content: flex-start !important;
     align-items: flex-start !important;
+    gap: 8px;
   }
 
   .ad-table.system-logs tbody td::before {
+    flex: 0 0 118px;          /* tweak 100–140px to taste */
     text-align: left !important;
-    flex: 1;
+    margin: 0;
   }
 
   .ad-table.system-logs tbody td > * {
-    flex: 1;
+    flex: 1 1 0;              /* can shrink */
+    min-width: 0;             /* 🔑 lets flex items actually shrink */
     text-align: right !important;
+    white-space: normal;      /* stop single-line forcing */
+    overflow-wrap: anywhere;  /* break long UA strings / tokens */
   }
 }
 

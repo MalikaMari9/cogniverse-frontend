@@ -880,6 +880,8 @@
     white-space: normal;      /* stop single-line forcing */
     overflow-wrap: anywhere;  /* break long UA strings / tokens */
   }
+
+  
 }
 
 /* ✅ System logs: make stacked rows align like AccessConfig on mobile */
@@ -917,3 +919,52 @@ body.modal-open {
   overflow: hidden;
 }
 
+
+/* ✅ SystemLogTable mobile: lock label lane + right-align values */
+@media (max-width: 760px) {
+  /* Make each cell a 2-column grid: [label | value] */
+  .ad-table.system-logs tbody td {
+    display: grid !important;
+    grid-template-columns: 132px 1fr; /* tweak 120–150px to taste */
+    align-items: start !important;
+    gap: 8px;
+    padding: 6px 0 !important;
+  }
+
+  /* Put the generated label in column 1 */
+  .ad-table.system-logs tbody td::before {
+    grid-column: 1;
+    margin: 0;                 /* kill leftover inline gaps */
+    text-align: left !important;
+    white-space: nowrap;
+  }
+
+  /* Put the content in column 2 and let it wrap on the right edge */
+  .ad-table.system-logs tbody td > * {
+    grid-column: 2;
+    min-width: 0;              /* 🔑 allow actual shrinking */
+    margin-left: 0;
+    justify-self: end;         /* hug right */
+    text-align: right !important;
+    white-space: normal;       /* allow wrapping for long UA strings */
+    overflow-wrap: anywhere;   /* break very long tokens */
+  }
+
+  /* Actions row = full-width row at the bottom of the card */
+  .ad-table.system-logs td.actions {
+    grid-template-columns: 1fr;   /* single lane */
+    justify-content: flex-end !important;
+    gap: 8px;
+    border-top: 1px solid var(--glass-bdr);
+    margin-top: 8px;
+    padding-top: 8px !important;
+  }
+
+  /* Make the small “Client” ghost button behave nicely in tight space */
+  .ad-table.system-logs td[data-label="Client"] .ws-btn {
+    padding: 4px 6px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

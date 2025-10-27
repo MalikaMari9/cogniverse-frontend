@@ -608,3 +608,26 @@ export const verifyPaymentSession = async (sessionId) => {
    Default Export
 =============================== */
 export default api;
+
+/* ===============================
+   Forgot Password API
+=============================== */
+export async function requestPasswordReset(email) {
+  const res = await fetch("http://127.0.0.1:8000/auth/forgot-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function resetPassword(token, new_password) {
+  const res = await fetch("http://127.0.0.1:8000/auth/reset-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, new_password }),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}

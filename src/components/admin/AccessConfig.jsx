@@ -273,11 +273,11 @@ finally {
             : r.config_value}
         </td>
 
-        <td data-label="Description">{r.description}</td>
+        <td data-label="Description" className="mono">{r.description}</td>
         <td className="mono" data-label="Created">{r.created_at}</td>
         <td className="mono" data-label="Updated">{r.updated_at}</td>
 
-        <td className="actions" data-label="Actions">
+        <td className="mono" data-label="Actions">
           <button
             className="ad-icon"
             title={canWrite ? "Edit" : "View-only"}

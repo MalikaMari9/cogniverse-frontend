@@ -246,18 +246,18 @@ export default function AccessControlTable({ Icon }) {
                 pageRows.map((r) => (
                   <tr key={r.accessID}>
                     <td className="mono" data-label="Key">{r.module_key}</td>
-                    <td data-label="Description">{r.module_desc}</td>
-                    <td data-label="User Access">
+                    <td data-label="Description" className="mono">{r.module_desc}</td>
+                    <td data-label="User Access" className="mono">
                       <span className={`ad-chip ${r.user_access}`}>
                         {r.user_access}
                       </span>
                     </td>
-                    <td data-label="Admin Access">
+                    <td data-label="Admin Access" className="mono">
                       <span className={`ad-chip ${r.admin_access}`}>
                         {r.admin_access}
                       </span>
                     </td>
-                    <td data-label="Superadmin Access">
+                    <td data-label="Superadmin Access" className="mono">
                       <span className={`ad-chip ${r.superadmin_access}`}>
                         {r.superadmin_access}
                       </span>
@@ -285,7 +285,7 @@ export default function AccessControlTable({ Icon }) {
                       </label>
                     </td>
                     <td className="mono" data-label="Updated">{r.updated_at}</td>
-                    <td className="actions" data-label="Actions">
+                    <td className="mono" data-label="Actions">
                       <button
                         className="ad-icon"
                         title={canWrite ? "Edit" : "View-only"}

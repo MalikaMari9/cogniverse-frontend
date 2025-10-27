@@ -218,7 +218,8 @@ const loadAnnouncements = async () => {
   // 🔹 MAIN RENDER
   // ===============================
   return (
-    <div className="adm-card">
+  <section className="ad-card ws-card">
+
       {error && (
         <div className="ad-alert error" style={{ marginBottom: "1rem" }}>
           {error}
@@ -276,8 +277,8 @@ const loadAnnouncements = async () => {
         </div>
       </header>
 
-      <div className="adm-table-wrap">
-        <table className="adm-table">
+      <div className="ad-table-wrap">
+        <table className="ad-table">
           <thead>
             <tr>
               <th onClick={() => toggleSort("title")}>title</th>
@@ -299,7 +300,7 @@ const loadAnnouncements = async () => {
             ) : (
               rows.map((r) => (
                 <tr key={r.announcementid}>
-                  <td>
+                  <td data-label="Title">
                     <button
                       className="ws-btn ghost"
                       onClick={() => openView(r)}
@@ -307,14 +308,14 @@ const loadAnnouncements = async () => {
                       {r.title}
                     </button>
                   </td>
-                  <td className="truncate">{r.content}</td>
-                  <td>{r.created_by_username || "—"}</td>
-                  <td>
+                  <td className="truncate mono" data-label="Content">{r.content}</td>
+                  <td data-label="Publisher" className="truncate mono">{r.created_by_username || "—"}</td>
+                  <td data-label="Status" className="truncate mono">
                     <StatusPill value={r.status} />
                   </td>
-                  <td className="mono">{fmtDate(r.created_at)}</td>
-                  <td className="mono">{fmtDate(r.updated_at)}</td>
-                  <td className="actions">
+                  <td className="mono" data-label="Created">{fmtDate(r.created_at)}</td>
+                  <td className="mono" data-label="Updated">{fmtDate(r.updated_at)}</td>
+                  <td className="mono" data-label="Actions">
                     <button
                       className="ad-icon"
                       title={canWrite ? "Edit" : "View-only"}
@@ -397,7 +398,7 @@ const loadAnnouncements = async () => {
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 }
 

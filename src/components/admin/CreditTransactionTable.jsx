@@ -1,5 +1,5 @@
 // ===============================
-// CreditTransactionTable.jsx — Admin Credit Transaction Logs
+// CreditTransactionTable.jsx — Unified Admin Layout (AccessConfig Style)
 // ===============================
 import React from "react";
 import { fmtDate, StatusPill } from "./helpers";
@@ -29,7 +29,6 @@ export default function CreditTransactionTable({ Icon }) {
     try {
       setLoading(true);
       setError("");
-
       const params = { page };
       const data = await getCreditTransactions(params);
 
@@ -85,7 +84,7 @@ export default function CreditTransactionTable({ Icon }) {
   // 🔹 MAIN RENDER
   // ────────────────────────────────────────────────
   return (
-    <div className="adm-card">
+    <section className="ad-card ws-card">
       {error && (
         <div className="ad-alert error" style={{ marginBottom: "1rem" }}>
           {error}
@@ -104,39 +103,61 @@ export default function CreditTransactionTable({ Icon }) {
         </div>
       )}
 
-      <header className="adm-head">
-        <div className="adm-title">Credit Transactions</div>
-        <div className="adm-tools">
+      {/* Header / Filters */}
+      <div className="ad-topbar" style={{ flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+        <div className="adm-title" style={{ fontWeight: 600, marginRight: 12 }}>
+          Credit Transactions
+        </div>
+
+        <div className="ws-search" style={{ flex: 1, minWidth: 220, maxWidth: 300 }}>
+          <span className="ico">
+            <Icon name="search" />
+          </span>
           <input
-            className="adm-input"
-            placeholder="Search username / pack / status / reason…"
+            type="text"
             value={q}
             onChange={(e) => {
               setQ(e.target.value);
               setPage(1);
             }}
+            placeholder="Search username / pack / status / reason…"
+            aria-label="Search transactions"
           />
-          <select
-            className="adm-select"
-            value={status}
-            onChange={(e) => {
-              setStatus(e.target.value);
-              setPage(1);
-            }}
-          >
-            <option value="all">All status</option>
-            <option value="success">Success</option>
-            <option value="pending">Pending</option>
-            <option value="failed">Failed</option>
-          </select>
-          <button className="ws-btn ghost" onClick={loadTransactions}>
-            <Icon name="refresh" /> Refresh
-          </button>
+          {q && (
+            <button
+              className="ws-search-clear"
+              onClick={() => {
+                setQ("");
+                setPage(1);
+              }}
+            >
+              ×
+            </button>
+          )}
         </div>
-      </header>
 
-      <div className="adm-table-wrap">
-        <table className="adm-table">
+        <select
+          className="ad-select"
+          value={status}
+          onChange={(e) => {
+            setStatus(e.target.value);
+            setPage(1);
+          }}
+        >
+          <option value="all">All status</option>
+          <option value="success">Success</option>
+          <option value="pending">Pending</option>
+          <option value="failed">Failed</option>
+        </select>
+
+        <button className="ws-btn ghost" onClick={loadTransactions}>
+          <Icon name="refresh" /> Refresh
+        </button>
+      </div>
+
+      {/* Table */}
+      <div className="ad-table-wrap">
+        <table className="ad-table">
           <thead>
             <tr>
               <th>ID</th>
@@ -170,28 +191,43 @@ export default function CreditTransactionTable({ Icon }) {
             ) : (
               filtered.map((r) => (
                 <tr key={r.transactionid}>
-                  <td className="mono" data-label="ID">#{r.transactionid}</td>
-                  <td className="mono" data-label="Username">{r.username || "—"}</td>
-                  <td className="mono" data-label="Type">{r.credit_type}</td>
-                  <td className="mono" data-label="PackID">{r.packid || "—"}</td>
+                  <td className="mono" data-label="ID">
+                    #{r.transactionid}
+                  </td>
+                  <td className="mono" data-label="Username">
+                    {r.username || "—"}
+                  </td>
+                  <td className="mono" data-label="Type">
+                    {r.credit_type}
+                  </td>
+                  <td className="mono" data-label="PackID">
+                    {r.packid || "—"}
+                  </td>
                   <td className="mono" data-label="Amount">
-  {r.amount_paid_usd
-    ? `$${parseFloat(r.amount_paid_usd).toFixed(2)}`
-    : "—"}
-</td>
-
-                  <td className="mono" data-label="Credit">{r.amount}</td>
-                  <td className="mono" data-label="Reason">{r.reason || "—"}</td>
+                    {r.amount_paid_usd
+                      ? `$${parseFloat(r.amount_paid_usd).toFixed(2)}`
+                      : "—"}
+                  </td>
+                  <td className="mono" data-label="Credit">
+                    {r.amount}
+                  </td>
+                  <td className="mono truncate" data-label="Reason">
+                    {r.reason || "—"}
+                  </td>
                   <td className="mono" data-label="Status">
                     <StatusPill value={r.status} />
                   </td>
-                  <td className="mono truncate" data-label="PaymentID" title={r.stripe_payment_intent_id}>
-                    {r.stripe_payment_intent_id || "—"}
+                 <td className="mono" data-label="PaymentID" title={r.stripe_payment_intent_id}>
+  <span className="truncate">{r.stripe_payment_intent_id || "—"}</span>
+</td>
+
+<td className="mono" data-label="StripeID" title={r.stripe_session_id}>
+  <span className="truncate">{r.stripe_session_id || "—"}</span>
+</td>
+
+                  <td className="mono" data-label="Date">
+                    {fmtDate(r.created_at)}
                   </td>
-                  <td className="mono truncate" data-label="StripeID" title={r.stripe_session_id}>
-                    {r.stripe_session_id || "—"}
-                  </td>
-                  <td className="mono" data-label="Date">{fmtDate(r.created_at)}</td>
                 </tr>
               ))
             )}
@@ -199,11 +235,12 @@ export default function CreditTransactionTable({ Icon }) {
         </table>
       </div>
 
-      <footer className="adm-foot">
-        <div>
+      {/* Pagination */}
+      <div className="ad-pager">
+        <div className="ad-pagebar">
           Page {page}/{totalPages} • showing {limit ?? "?"} per page • {total} total
         </div>
-        <div className="adm-pager">
+        <div>
           <button
             className="ws-btn ghost"
             disabled={page <= 1}
@@ -219,7 +256,7 @@ export default function CreditTransactionTable({ Icon }) {
             Next
           </button>
         </div>
-      </footer>
-    </div>
+      </div>
+    </section>
   );
 }

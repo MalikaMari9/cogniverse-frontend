@@ -220,7 +220,7 @@ const pageRows = rows; // backend already paginated
   // 🔹 RENDER MAIN
   // ===============================
   return (
-    <div className="adm-card">
+    <section className="ad-card ws-card">
       {error && (
         <div className="ad-alert error" style={{ marginBottom: "1rem" }}>
           {error}
@@ -311,8 +311,8 @@ const pageRows = rows; // backend already paginated
         </div>
       </header>
 
-      <div className="adm-table-wrap system-logs">
-        <table className="adm-table system-logs">
+      <div className="ad-table-wrap system-logs">
+        <table className="ad-table system-logs">
           <thead>
             <tr>
               <th>
@@ -358,29 +358,25 @@ const pageRows = rows; // backend already paginated
                       onChange={() => toggleLogSelection(r.logid)}
                     />
                   </td>
-                  <td data-label="logID">#{r.logid}</td>
-                  <td>{r.action_type}</td>
-                  <td>
+                  <td data-label="logID" className="mono">#{r.logid}</td>
+                  <td data-label="Action " className="mono">{r.action_type}</td>
+                  <td data-label="User" className="mono">
                     <div className="adm-user">
-                      <div className="avatar sm" aria-hidden>
-                        🧑
-                      </div>
-                      <div>
-                        <div className="name">{r.username || "System"}</div>
-                        <div className="muted">
-                          {r.userid ? `ID: ${r.userid}` : "System"}
-                        </div>
-                      </div>
+                     
+                      
+                     {r.username || "System"}
+                       
+                    
                     </div>
                   </td>
-                  <td className="truncate">{r.details}</td>
-                  <td>{r.ip_address}</td>
-                  <td className="muted">{r.browser_info}</td>
-                  <td>
+                  <td className="truncate mono" data-label="Details">{r.details}</td>
+                  <td data-label="IP" className="mono">{r.ip_address}</td>
+                  <td className="mono" data-label="Browser">{r.browser_info}</td>
+                  <td data-label="Status">
                     <StatusPill value={r.status} />
                   </td>
-                  <td className="muted">{fmtDate(r.created_at)}</td>
-                  <td className="actions">
+                  <td className="mono" data-label="Date">{fmtDate(r.created_at)}</td>
+                  <td className="actions" data-label="Actions">
                     <button
                       className="ws-btn danger sm"
                       title={canWrite ? "Delete" : "Read-only"}
@@ -444,6 +440,6 @@ const pageRows = rows; // backend already paginated
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 }

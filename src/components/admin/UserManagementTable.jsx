@@ -305,7 +305,7 @@ finally {
   // 🔹 RENDER MAIN
   // ===============================
   return (
-    <div className="adm-card">
+     <section className="ad-card ws-card">
      
 
       <header className="adm-head">
@@ -373,8 +373,8 @@ finally {
         </div>
       </header>
 
-      <div className="adm-table-wrap">
-        <table className="adm-table">
+      <div className="ad-table-wrap">
+        <table className="ad-table">
           <thead>
             <tr>
               <th>
@@ -411,24 +411,29 @@ finally {
             ) : (
               sorted.map((user) => (
                 <tr key={user.userid}>
-                  <td>
+                  <td >
                     <input
                       type="checkbox"
                       checked={selectedUsers.has(user.userid)}
                       onChange={() => toggleUserSelection(user.userid)}
                     />
                   </td>
-                  <td>#{user.userid}</td>
-                  <td>{user.username}</td>
-                  <td>{user.email}</td>
-                  <td>
+                  <td className="mono" data-label="UserID">#{user.userid}</td>
+                  <td className="mono" data-label="Username">
+  <span className="truncate">{user.username}</span>
+</td>
+<td className="mono" data-label="Email">
+  <span className="truncate">{user.email}</span>
+</td>
+
+                  <td className="mono" data-label="Role">
                     <span className={`role-badge role-${user.role}`}>{user.role}</span>
                   </td>
-                  <td>
+                  <td className="mono" data-label="UserStatus">
                     <StatusPill value={user.status} />
                   </td>
-                  <td className="muted">{fmtDate(user.created_at)}</td>
-<td className="actions">
+                  <td className="mono" data-label="Username">{fmtDate(user.created_at)}</td>
+<td className="mono" data-label="Actions" >
   <div className="dropdown" style={{ position: "relative" }}>
     <button
       className="action-menu"
@@ -735,7 +740,7 @@ finally {
   </div>
 )}
 
-    </div>
+    </section>
     
   );
 }

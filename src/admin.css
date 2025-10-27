@@ -850,3 +850,52 @@
   backdrop-filter: blur(6px);
   transform: translateY(4px);
 }
+
+
+/* 🧩 Fix mobile stacked table alignment for SystemLogTable */
+@media (max-width: 760px) {
+  .ad-table.system-logs tbody td {
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+  }
+
+  .ad-table.system-logs tbody td::before {
+    text-align: left !important;
+    flex: 1;
+  }
+
+  .ad-table.system-logs tbody td > * {
+    flex: 1;
+    text-align: right !important;
+  }
+}
+
+/* ✅ System logs: make stacked rows align like AccessConfig on mobile */
+@media (max-width: 760px) {
+  /* Give the generated labels a fixed lane on the left */
+  .ad-table.system-logs tbody td::before {
+    flex: 0 0 132px;           /* tweak width to taste (120–150) */
+    text-align: left !important;
+  }
+
+  /* Everything on the value side should hug the right edge */
+  .ad-table.system-logs tbody td > * {
+    margin-left: auto;         /* pushes value to the right */
+    text-align: right !important;
+  }
+
+  /* The 'User' cell uses .adm-user (flex), so force it to behave like a right-aligned block */
+  .ad-table.system-logs tbody td[data-label="User"] .adm-user {
+    display: block !important;
+    width: 100%;
+    text-align: right !important;
+    justify-content: flex-end !important; /* safety if flex sneaks back in */
+  }
+
+  /* Multi-line values (e.g., Browser) should align to the right edge too */
+  .ad-table.system-logs tbody td[data-label="Browser"] {
+    align-items: flex-start !important;   /* label top-left, value top-right */
+  }
+}
+
+

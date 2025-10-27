@@ -150,17 +150,17 @@ export default function MaintenanceTable({ Icon }) {
             {rows.map((r) => (
               <tr key={r.maintenanceid}>
                 <td className="mono" data-label="ID">{r.maintenanceid}</td>
-                <td data-label="Key">{r.module_key}</td>
-                <td data-label="Status"> 
+                <td  className="mono"data-label="Key">{r.module_key}</td>
+                <td  className="mono" data-label="Status"> 
                   <span
                     className={`status-pill ${r.under_maintenance ? "inactive" : "active"}`}
                   >
                     {r.under_maintenance ? "Under Maintenance" : "Active"}
                   </span>
                 </td>
-                <td data-label="Message">{r.message}</td>
+                <td className="mono" data-label="Message">{r.message}</td>
                 <td className="mono" data-label="Updated">{r.updated_at}</td>
-                <td className="actions" data-label="Actions">
+                <td className="mono" data-label="Actions">
                   <button
                     className={`ws-btn ${r.under_maintenance ? "primary" : "danger"}`}
                     onClick={() => openConfirm(r)}

@@ -360,18 +360,18 @@ const pageRows = rows; // backend already paginated
                   </td>
                   <td data-label="logID" className="mono">#{r.logid}</td>
                   <td data-label="Action " className="mono">{r.action_type}</td>
-                  <td data-label="User" className="mono">
-                    <div className="adm-user">
-                     
-                      
-                     {r.username || "System"}
-                       
-                    
-                    </div>
-                  </td>
-                  <td className="truncate mono" data-label="Details">{r.details}</td>
-                  <td data-label="IP" className="mono">{r.ip_address}</td>
-                  <td className="mono" data-label="Browser">{r.browser_info}</td>
+                 <td data-label="User" className="mono">
+  <span className="truncate">{r.username || "System"}</span>
+</td>
+                  <td className="mono" data-label="Details" title={r.details}>
+  <span className="truncate">{r.details || "—"}</span>
+</td>
+                 <td className="mono" data-label="IP" title={r.ip_address}>
+  <span className="truncate">{r.ip_address}</span>
+</td>
+                 <td className="mono" data-label="Browser" title={r.browser_info}>
+  <span className="truncate">{r.browser_info || "—"}</span>
+</td>
                   <td data-label="Status">
                     <StatusPill value={r.status} />
                   </td>

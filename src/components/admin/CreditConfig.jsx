@@ -294,9 +294,13 @@ const handleStatusChange = async (r, newStatus) => {
                 <td className="mono" data-label="Price">{r.price}</td>
                 <td className="mono" data-label="Discount">{r.discount}</td>
                 <td className="mono" data-label="Badge">{r.badge}</td>
-                <td className="mono" data-label="Description">{r.description?.slice(0, 25) || "-"}</td>
- 
-                <td className="mono"  data-label="Stripe ID">{r.stripe_id}</td>
+               <td className="mono" data-label="Description" title={r.description || "-"}>
+  <span className="truncate">{r.description || "—"}</span>
+</td>
+
+               <td className="mono" data-label="Stripe ID" title={r.stripe_id}>
+  <span className="truncate">{r.stripe_id || "—"}</span>
+</td>
                 <td className="mono"  data-label="Status">
   <select
     className="ad-select"

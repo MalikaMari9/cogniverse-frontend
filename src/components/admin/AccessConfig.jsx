@@ -258,23 +258,29 @@ finally {
         <td className="mono" data-label="Key">{r.config_key}</td>
 
         {/* 🔒 Mask passwords visually */}
-        <td className="mono" data-label="Value">
-          {isSensitive
-            ? <span style={{
-                backgroundColor: "var(--ink-5)",
-              
-                borderRadius: "4px",
-                display: "inline-block",
-                width: "100px",
-                textAlign: "center",
-              }}>
-                ••••••••
-              </span>
-            : r.config_value}
-        </td>
+       {/* 🔒 Mask passwords visually */}
+<td className="mono" data-label="Value" title={isSensitive ? "Hidden value" : r.config_value}>
+  {isSensitive ? (
+    <span
+      style={{
+        backgroundColor: "var(--ink-5)",
+        borderRadius: "4px",
+        display: "inline-block",
+        width: "100px",
+        textAlign: "center",
+      }}
+    >
+      ••••••••
+    </span>
+  ) : (
+    <span className="truncate">{r.config_value || "—"}</span>
+  )}
+</td>
 
-        <td data-label="Description" className="mono">{r.description}</td>
-        <td className="mono" data-label="Created">{r.created_at}</td>
+<td data-label="Description" className="mono" title={r.description}>
+  <span className="truncate">{r.description || "—"}</span>
+</td>
+      <td className="mono" data-label="Created">{r.created_at}</td>
         <td className="mono" data-label="Updated">{r.updated_at}</td>
 
         <td className="mono" data-label="Actions">

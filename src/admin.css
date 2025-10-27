@@ -633,9 +633,9 @@
     padding: 16px;
     gap: 10px;
     max-height: 88vh;
-    max-width: 400px;
+    max-width: 300px;
     margin-left: auto;      /* takes remaining space on the left */
-    margin-right: auto;   
+    margin-right: 15px;   
     
   }
   .modal-actions {

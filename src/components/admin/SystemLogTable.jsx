@@ -359,7 +359,10 @@ const pageRows = rows; // backend already paginated
                     />
                   </td>
                   <td data-label="logID" className="mono">#{r.logid}</td>
-                  <td data-label="Action " className="mono">{r.action_type}</td>
+               
+                   <td data-label="Action" className="mono">
+  <span className="truncate">{r.action_type}</span>
+</td>
                  <td data-label="User" className="mono">
   <span className="truncate">{r.username || "System"}</span>
 </td>

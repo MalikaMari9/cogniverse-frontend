@@ -245,8 +245,13 @@ export default function AccessControlTable({ Icon }) {
               ) : (
                 pageRows.map((r) => (
                   <tr key={r.accessID}>
-                    <td className="mono" data-label="Key">{r.module_key}</td>
-                    <td data-label="Description" className="mono">{r.module_desc}</td>
+                   <td className="mono" data-label="Key" title={r.module_key}>
+  <span className="truncate">{r.module_key}</span>
+</td>
+
+                  <td data-label="Description" className="mono" title={r.module_desc}>
+  <span className="truncate">{r.module_desc || "—"}</span>
+</td>
                     <td data-label="User Access" className="mono">
                       <span className={`ad-chip ${r.user_access}`}>
                         {r.user_access}

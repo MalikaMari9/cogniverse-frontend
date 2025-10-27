@@ -432,7 +432,7 @@ finally {
                   <td className="mono" data-label="UserStatus">
                     <StatusPill value={user.status} />
                   </td>
-                  <td className="mono" data-label="Username">{fmtDate(user.created_at)}</td>
+                  <td className="mono" data-label="Created">{fmtDate(user.created_at)}</td>
 <td className="mono" data-label="Actions" >
   <div className="dropdown" style={{ position: "relative" }}>
     <button

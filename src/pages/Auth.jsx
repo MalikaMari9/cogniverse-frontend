@@ -34,7 +34,7 @@ function useTheme() {
 
 /* ============== Reveal Animation Wrapper ============== */
 
-function Reveal({ as: Tag = "div", variant = "fade-up", delay = 0, className = "", children, ...rest }) {
+export function Reveal({ as: Tag = "div", variant = "fade-up", delay = 0, className = "", children, ...rest }) {
   const ref = React.useRef(null);
   React.useEffect(() => {
     const el = ref.current; if (!el) return;
@@ -272,7 +272,7 @@ setTimeout(() => {
                       <input type="checkbox" name="remember" disabled={isLoading}/>
                       <span>Remember me</span>
                     </label>
-                    <a className="link" href="#forgot">Forgot password?<span className="arr">→</span></a>
+                    <a className="link" href="/forgot-password">Forgot password?<span className="arr">→</span></a>
                   </div>
 
                   <button 

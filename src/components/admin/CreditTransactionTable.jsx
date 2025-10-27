@@ -103,57 +103,56 @@ export default function CreditTransactionTable({ Icon }) {
         </div>
       )}
 
-      {/* Header / Filters */}
-      <div className="ad-topbar" style={{ flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
-        <div className="adm-title" style={{ fontWeight: 600, marginRight: 12 }}>
-          Credit Transactions
-        </div>
-
-        <div className="ws-search" style={{ flex: 1, minWidth: 220, maxWidth: 300 }}>
-          <span className="ico">
-            <Icon name="search" />
-          </span>
-          <input
-            type="text"
-            value={q}
-            onChange={(e) => {
-              setQ(e.target.value);
-              setPage(1);
-            }}
-            placeholder="Search username / pack / status / reason…"
-            aria-label="Search transactions"
-          />
-          {q && (
-            <button
-              className="ws-search-clear"
-              onClick={() => {
-                setQ("");
-                setPage(1);
-              }}
-            >
-              ×
-            </button>
-          )}
-        </div>
-
-        <select
-          className="ad-select"
-          value={status}
-          onChange={(e) => {
-            setStatus(e.target.value);
+<header className="adm-head">
+  <div className="adm-title">Credit Transactions</div>
+  <div className="adm-tools">
+    <div className="ws-search" style={{ flex: 1, maxWidth: 300 }}>
+      <span className="ico">
+        <Icon name="search" />
+      </span>
+      <input
+        type="text"
+        value={q}
+        onChange={(e) => {
+          setQ(e.target.value);
+          setPage(1);
+        }}
+        placeholder="Search username / pack / status / reason…"
+        aria-label="Search transactions"
+      />
+      {q && (
+        <button
+          className="ws-search-clear"
+          onClick={() => {
+            setQ("");
             setPage(1);
           }}
         >
-          <option value="all">All status</option>
-          <option value="success">Success</option>
-          <option value="pending">Pending</option>
-          <option value="failed">Failed</option>
-        </select>
-
-        <button className="ws-btn ghost" onClick={loadTransactions}>
-          <Icon name="refresh" /> Refresh
+          ×
         </button>
-      </div>
+      )}
+    </div>
+
+    <select
+      className="adm-select"
+      value={status}
+      onChange={(e) => {
+        setStatus(e.target.value);
+        setPage(1);
+      }}
+    >
+      <option value="all">All status</option>
+      <option value="success">Success</option>
+      <option value="pending">Pending</option>
+      <option value="failed">Failed</option>
+    </select>
+
+    <button className="ws-btn ghost" onClick={loadTransactions}>
+      <Icon name="refresh" /> Refresh
+    </button>
+  </div>
+</header>
+
 
       {/* Table */}
       <div className="ad-table-wrap">

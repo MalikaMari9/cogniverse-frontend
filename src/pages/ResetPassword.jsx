@@ -4,6 +4,24 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { resetPassword } from "../api/api";
 import { Reveal } from "./Auth";
 
+/* ============== Theme Hook (same as AuthPage) ============== */
+function useTheme() {
+  const [theme, setTheme] = React.useState(
+    () => document.documentElement.getAttribute("data-theme") || "dark"
+  );
+
+  React.useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    try {
+      localStorage.setItem("theme", theme);
+    } catch {}
+  }, [theme]);
+
+  const toggle = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
+  return { theme, toggle };
+}
+
+/* ============== Reset Password Page ============== */
 export default function ResetPasswordPage() {
   const [params] = useSearchParams();
   const token = params.get("token");
@@ -13,6 +31,7 @@ export default function ResetPasswordPage() {
   const [messageType, setMessageType] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { theme, toggle } = useTheme();
 
   const showMessage = (text, type = "info") => {
     setMessage(text);
@@ -33,7 +52,7 @@ export default function ResetPasswordPage() {
     setLoading(true);
     try {
       const res = await resetPassword(token, password);
-      showMessage(res.message, "success");
+      showMessage(res.message || "✅ Password successfully reset!", "success");
       setTimeout(() => navigate("/login"), 2500);
     } catch (err) {
       showMessage("❌ " + (err.message || "Reset failed"), "error");
@@ -53,8 +72,10 @@ export default function ResetPasswordPage() {
                 <p className="eyebrow">Set New Password</p>
                 <h1>Update your password</h1>
                 <p className="muted">
-                  Enter a strong new password below. Your new password will take effect immediately.
+                  Enter a strong new password below. Your new password will take
+                  effect immediately.
                 </p>
+
                 <div className="illus" aria-hidden="true">
                   <div className="orb o1" />
                   <div className="orb o2" />
@@ -67,7 +88,11 @@ export default function ResetPasswordPage() {
             <section className="auth-form ws-card">
               <Reveal className="auth-card card" variant="fade-left" delay={60}>
                 <form onSubmit={handleSubmit} className="form" noValidate>
-                  <label htmlFor="password" className="fade-item" style={{ animationDelay: "40ms" }}>
+                  <label
+                    htmlFor="password"
+                    className="fade-item"
+                    style={{ animationDelay: "40ms" }}
+                  >
                     New Password
                   </label>
                   <input
@@ -83,7 +108,11 @@ export default function ResetPasswordPage() {
                     disabled={loading}
                   />
 
-                  <label htmlFor="confirm" className="fade-item" style={{ animationDelay: "120ms" }}>
+                  <label
+                    htmlFor="confirm"
+                    className="fade-item"
+                    style={{ animationDelay: "120ms" }}
+                  >
                     Confirm Password
                   </label>
                   <input
@@ -100,7 +129,9 @@ export default function ResetPasswordPage() {
                   />
 
                   <button
-                    className={`btn primary fade-item ${loading ? "loading" : ""}`}
+                    className={`btn primary fade-item ${
+                      loading ? "loading" : ""
+                    }`}
                     type="submit"
                     style={{ animationDelay: "200ms" }}
                     disabled={loading}
@@ -118,7 +149,10 @@ export default function ResetPasswordPage() {
                     </div>
                   )}
 
-                  <p className="swap fade-item" style={{ animationDelay: "280ms" }}>
+                  <p
+                    className="swap fade-item"
+                    style={{ animationDelay: "280ms" }}
+                  >
                     <button
                       type="button"
                       onClick={() => navigate("/login")}
@@ -134,8 +168,18 @@ export default function ResetPasswordPage() {
           </div>
         </section>
       </main>
+
+      {/* Footer with Theme Toggle */}
       <footer className="footer">
         <p>© CogniVerse</p>
+        <button
+          onClick={toggle}
+          className="theme-toggle"
+          title="Toggle theme"
+          aria-label="Toggle theme"
+        >
+          {theme === "dark" ? "☀️" : "🌙"}
+        </button>
       </footer>
     </div>
   );

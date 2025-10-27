@@ -170,28 +170,28 @@ export default function CreditTransactionTable({ Icon }) {
             ) : (
               filtered.map((r) => (
                 <tr key={r.transactionid}>
-                  <td>#{r.transactionid}</td>
-                  <td>{r.username || "—"}</td>
-                  <td>{r.credit_type}</td>
-                  <td>{r.packid || "—"}</td>
-                  <td>
+                  <td className="mono" data-label="ID">#{r.transactionid}</td>
+                  <td className="mono" data-label="Username">{r.username || "—"}</td>
+                  <td className="mono" data-label="Type">{r.credit_type}</td>
+                  <td className="mono" data-label="PackID">{r.packid || "—"}</td>
+                  <td className="mono" data-label="Amount">
   {r.amount_paid_usd
     ? `$${parseFloat(r.amount_paid_usd).toFixed(2)}`
     : "—"}
 </td>
 
-                  <td>{r.amount}</td>
-                  <td>{r.reason || "—"}</td>
-                  <td>
+                  <td className="mono" data-label="Credit">{r.amount}</td>
+                  <td className="mono" data-label="Reason">{r.reason || "—"}</td>
+                  <td className="mono" data-label="Status">
                     <StatusPill value={r.status} />
                   </td>
-                  <td className="mono truncate" title={r.stripe_payment_intent_id}>
+                  <td className="mono truncate" data-label="PaymentID" title={r.stripe_payment_intent_id}>
                     {r.stripe_payment_intent_id || "—"}
                   </td>
-                  <td className="mono truncate" title={r.stripe_session_id}>
+                  <td className="mono truncate" data-label="StripeID" title={r.stripe_session_id}>
                     {r.stripe_session_id || "—"}
                   </td>
-                  <td className="mono">{fmtDate(r.created_at)}</td>
+                  <td className="mono" data-label="Date">{fmtDate(r.created_at)}</td>
                 </tr>
               ))
             )}

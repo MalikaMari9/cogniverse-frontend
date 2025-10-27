@@ -288,16 +288,16 @@ const handleStatusChange = async (r, newStatus) => {
           <tbody>
             {pageRows.map((r) => (
               <tr key={r.id}>
-                <td className="mono">{r.id}</td>
-                <td className="mono">{r.config_key}</td>
-                <td>{r.credits}</td>
-                <td>{r.price}</td>
-                <td>{r.discount}</td>
-                <td>{r.badge}</td>
-                <td>{r.description?.slice(0, 25) || "-"}</td>
+                <td className="mono" data-label="ID">{r.id}</td>
+                <td className="mono" data-label="Key">{r.config_key}</td>
+                <td className="mono" data-label="Credits">{r.credits}</td>
+                <td className="mono" data-label="Price">{r.price}</td>
+                <td className="mono" data-label="Discount">{r.discount}</td>
+                <td className="mono" data-label="Badge">{r.badge}</td>
+                <td className="mono" data-label="Description">{r.description?.slice(0, 25) || "-"}</td>
  
-                <td className="mono">{r.stripe_id}</td>
-                <td>
+                <td className="mono"  data-label="Stripe ID">{r.stripe_id}</td>
+                <td className="mono"  data-label="Status">
   <select
     className="ad-select"
     value={r.status}
@@ -318,10 +318,10 @@ const handleStatusChange = async (r, newStatus) => {
     <option value="inactive">Inactive</option>
     <option value="archived">Archived</option>
   </select>
-</td>
+</td >
 
 
-                <td className="actions">
+                <td className="actions" data-label="Actions"> 
                   <button className="ad-icon" onClick={() => openEdit(r)}>
                     <Icon name="edit" />
                   </button>

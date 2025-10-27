@@ -311,8 +311,8 @@ const pageRows = rows; // backend already paginated
         </div>
       </header>
 
-      <div className="adm-table-wrap">
-        <table className="adm-table">
+      <div className="adm-table-wrap system-logs">
+        <table className="adm-table system-logs">
           <thead>
             <tr>
               <th>

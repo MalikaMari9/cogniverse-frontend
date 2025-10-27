@@ -254,11 +254,11 @@ finally {
 
     return (
       <tr key={r.configID}>
-        <td className="mono">{r.configID}</td>
-        <td className="mono">{r.config_key}</td>
+        <td className="mono" data-label="ID" >{r.configID}</td>
+        <td className="mono" data-label="Key">{r.config_key}</td>
 
         {/* 🔒 Mask passwords visually */}
-        <td className="mono">
+        <td className="mono" data-label="Value">
           {isSensitive
             ? <span style={{
                 backgroundColor: "var(--ink-5)",
@@ -273,11 +273,11 @@ finally {
             : r.config_value}
         </td>
 
-        <td>{r.description}</td>
-        <td className="mono">{r.created_at}</td>
-        <td className="mono">{r.updated_at}</td>
+        <td data-label="Description">{r.description}</td>
+        <td className="mono" data-label="Created">{r.created_at}</td>
+        <td className="mono" data-label="Updated">{r.updated_at}</td>
 
-        <td className="actions">
+        <td className="actions" data-label="Actions">
           <button
             className="ad-icon"
             title={canWrite ? "Edit" : "View-only"}

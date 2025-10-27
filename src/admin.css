@@ -968,3 +968,55 @@ body.modal-open {
     text-overflow: ellipsis;
   }
 }
+
+/* ========================================= */
+/* 🧩 Admin Main Horizontal Scroll Correction */
+/* ========================================= */
+
+/* make sure the main content area itself can scroll horizontally */
+.ad-main {
+  overflow-x: auto;           /* allows scroll if card overflows */
+  overflow-y: visible;        /* avoid clipping modals/dropdowns */
+}
+
+/* cards fill full available width and can shrink */
+.ad-card,
+.adm-card,
+.ad-main > section {
+  width: 100%;                /* take the row width */
+  min-width: 0;               /* ✅ allow children to shrink */
+  overflow: visible;          /* don’t clip inner scrollbars */
+}
+
+/* the real scroll happens here */
+.ad-card .ad-table-wrap,
+.adm-card .adm-table-wrap {
+  display: block;
+  width: 100%;
+  overflow-x: auto !important;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* safety: ensure table can exceed card width */
+.ad-card .ad-table,
+.adm-card .adm-table {
+  width: max-content;         /* grows with columns */
+  min-width: 100%;            /* but never smaller than card */
+}
+
+/* optional: subtle scrollbar spacing */
+.ad-card .ad-table-wrap::-webkit-scrollbar,
+.adm-card .adm-table-wrap::-webkit-scrollbar {
+  height: 8px;
+}
+.ad-card .ad-table-wrap::-webkit-scrollbar-thumb,
+.adm-card .adm-table-wrap::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,.2);
+  border-radius: 4px;
+}
+[data-theme="light"] .ad-card .ad-table-wrap::-webkit-scrollbar-thumb,
+[data-theme="light"] .adm-card .adm-table-wrap::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,.15);
+}
+

@@ -7,70 +7,90 @@
 
 import axios from "axios";
 
-/* ------------------------------ Base Instance ------------------------------ */
-const api = axios.create({
-  // ✅ Reads from Vite .env (example: VITE_API_URL=http://localhost:8000)
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000",
-  withCredentials: true,
-});
+/* ------------------------------ Base URLs ------------------------------ */
+const BACKEND_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const SIMULATION_BASE_URL =
+  import.meta.env.VITE_SIM_API_URL || BACKEND_BASE_URL;
 
-/* ---------- Attach Authorization header automatically ---------- */
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("access_token");
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+/* ------------------------------ Instance Helper ------------------------------ */
+const attachInterceptors = (instance) => {
+  instance.interceptors.request.use(
+    (config) => {
+      const token = localStorage.getItem("access_token");
+      if (token) {
+        config.headers = config.headers || {};
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
+    },
+    (error) => Promise.reject(error)
+  );
 
+  instance.interceptors.response.use(
+    (response) => response, // pass through if OK
+    async (error) => {
+      const originalRequest = error.config;
 
-/* ---------- Handle 401 (Token Expiry) ---------- */
-api.interceptors.response.use(
-  (response) => response, // pass through if OK
-  async (error) => {
-    const originalRequest = error.config;
+      // Only handle 401s and avoid infinite loops
+      if (
+        error.response?.status === 401 &&
+        originalRequest &&
+        !originalRequest._retry
+      ) {
+        originalRequest._retry = true;
+        const refresh = localStorage.getItem("refresh_token");
 
-    // Only handle 401s and avoid infinite loops
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      const refresh = localStorage.getItem("refresh_token");
+        if (refresh) {
+          try {
+            // Try to refresh the access token against the core backend
+            const res = await axios.post(
+              `${BACKEND_BASE_URL}/auth/refresh`,
+              {},
+              { headers: { Authorization: `Bearer ${refresh}` } }
+            );
 
-      if (refresh) {
-        try {
-          // Try to refresh the access token
-          const res = await axios.post(
-            `${import.meta.env.VITE_API_URL || "http://localhost:8000"}/auth/refresh`,
-            {},
-            { headers: { Authorization: `Bearer ${refresh}` } }
-          );
+            // Save new access token
+            localStorage.setItem("access_token", res.data.access_token);
 
-          // Save new access token
-          localStorage.setItem("access_token", res.data.access_token);
-
-          // Retry the original request with new token
-          originalRequest.headers.Authorization = `Bearer ${res.data.access_token}`;
-          return api(originalRequest);
-        } catch (err) {
-          console.warn("🔴 Refresh token expired or invalid, logging out...");
+            // Retry the original request with new token
+            originalRequest.headers = originalRequest.headers || {};
+            originalRequest.headers.Authorization = `Bearer ${res.data.access_token}`;
+            return instance(originalRequest);
+          } catch (err) {
+            console.warn("?? Refresh token expired or invalid, logging out...");
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("refresh_token");
+            window.location.href = "/login";
+          }
+        } else {
+          console.warn("?? No refresh token found, redirecting to login.");
           localStorage.removeItem("access_token");
           localStorage.removeItem("refresh_token");
           window.location.href = "/login";
         }
-      } else {
-        console.warn("⚠️ No refresh token found, redirecting to login.");
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-        window.location.href = "/login";
       }
+
+      // If not a 401 or still fails, reject
+      return Promise.reject(error);
     }
+  );
+};
 
-    // If not a 401 or still fails, reject
-    return Promise.reject(error);
-  }
-);
+/* ------------------------------ Axios Instances ------------------------------ */
+const api = axios.create({
+  // ?? Reads from Vite .env (example: VITE_API_URL=http://localhost:8000)
+  baseURL: BACKEND_BASE_URL,
+  withCredentials: true,
+});
 
+const simApi = axios.create({
+  // Forward through backend by default; drop credentials when hitting external host directly
+  baseURL: SIMULATION_BASE_URL,
+  withCredentials: SIMULATION_BASE_URL === BACKEND_BASE_URL,
+});
 
+attachInterceptors(api);
+attachInterceptors(simApi);
 
 
 /* ===============================
@@ -236,6 +256,29 @@ export const updateScenario = async (id, data) =>
 // Delete a scenario
 export const deleteScenario = async (id) =>
   (await api.delete(`/scenarios/${id}`)).data;
+
+/* ===============================
+   dY"1 SIMULATION ROUTES
+=============================== */
+export const createSimulation = async (payload) =>
+  (await simApi.post("/simulations", payload)).data;
+
+export const getSimulationById = async (simulationId) =>
+  (await simApi.get(`/simulations/${simulationId}`)).data;
+
+export const advanceSimulation = async (simulationId, steps = 1) => {
+  const sanitized = Math.min(50, Math.max(1, Number(steps) || 1));
+  return (
+    await simApi.post(`/simulations/${simulationId}/advance`, {
+      steps: sanitized,
+    })
+  ).data;
+};
+
+export const triggerSimulationFate = async (simulationId, prompt) => {
+  const body = prompt ? { prompt } : {};
+  return (await simApi.post(`/simulations/${simulationId}/fate`, body)).data;
+};
 
 /* ===============================
    🧠 RESULT ROUTES
@@ -621,9 +664,8 @@ export const verifyPaymentSession = async (sessionId) => {
 =============================== */
 export default api;
 
-/* ===============================
+ ===============================
    Forgot Password API
-=============================== */
 export async function requestPasswordReset(email) {
   const res = await fetch("http://127.0.0.1:8000/auth/forgot-password", {
     method: "POST",

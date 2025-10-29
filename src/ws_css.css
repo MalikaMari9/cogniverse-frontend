@@ -1181,7 +1181,10 @@ html, body { height: 100%; overflow-x: hidden; }
 [data-theme='dark'] .sc-spinner{ border-color: rgba(255,255,255,.22); }
 
 /* ---------- Nodes ---------- */
-.sc-node{ position:absolute; transform:translate(-50%,-50%); display:flex; align-items:center; gap:8px; user-select:none; }
+.sc-node{ position:absolute; transform:translate(-50%,-50%); display:flex; align-items:center; gap:8px; user-select:none; transition:left .6s ease, top .6s ease; }
+.sc-node.is-active .sc-chip{
+  box-shadow: 0 0 0 2px rgba(88,122,255,.25), 0 10px 24px rgba(70,110,255,.35);
+}
 .sc-node .sc-chip{
   width:28px; height:28px; border-radius:999px; display:grid; place-items:center;
   background: linear-gradient(180deg, rgba(255,255,255,.85), rgba(255,255,255,.65));
@@ -1192,6 +1195,47 @@ html, body { height: 100%; overflow-x: hidden; }
   border-color: rgba(255,255,255,.14);
 }
 .sc-node .sc-name{ font-weight:700; text-shadow: 0 1px 2px rgba(0,0,0,.25); }
+.sc-node-bubble{
+  position:absolute;
+  transform: translate(-50%, -110%);
+  max-width: 280px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.95);
+  color:#101520;
+  border: 1px solid rgba(0,0,0,.08);
+  box-shadow: 0 18px 44px rgba(0,0,0,.22);
+  pointer-events: none;
+  z-index:3;
+  font-size: .85rem;
+  line-height: 1.35;
+  text-align: center;
+  transition: opacity .35s ease, transform .4s ease;
+}
+.sc-node-bubble p{ margin:0; font-weight:600; }
+.sc-node-bubble .turn{
+  display:block;
+  margin-top:6px;
+  font-size:.7rem;
+  letter-spacing:.04em;
+  text-transform: uppercase;
+  opacity:.65;
+  font-weight:600;
+}
+.sc-node-bubble.is-active{
+  border-color: rgba(88,122,255,.65);
+  box-shadow: 0 22px 48px rgba(72,124,255,.36);
+}
+[data-theme='dark'] .sc-node-bubble{
+  background: rgba(16,20,28,.92);
+  color:#F1F6FF;
+  border-color: rgba(255,255,255,.12);
+  box-shadow: 0 22px 52px rgba(0,0,0,.48);
+}
+[data-theme='dark'] .sc-node-bubble.is-active{
+  border-color: rgba(120,160,255,.75);
+  box-shadow: 0 24px 60px rgba(90,135,255,.42);
+}
 
 /* ---------- Bubble (visual only; transform is inline from JS) ---------- */
 .sc-bubble{

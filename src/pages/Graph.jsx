@@ -116,15 +116,22 @@ const saveRelation = React.useCallback((a, b, v) => {
 
   saveTimers.current[relationKey] = setTimeout(async () => {
     try {
-      await createAgentRelation(payload);
-      console.log(`✅ Synced relation ${a} ↔ ${b}: ${v}`);
-      toast.success(`Relation updated: ${a} ↔ ${b}`, { duration: 1800 });
+      const saved = await createAgentRelation(payload);
+      const agentA = agents.find((item) => item.agentid === a);
+      const agentB = agents.find((item) => item.agentid === b);
+      const nameA = agentA?.agentname ?? `Agent ${a}`;
+      const nameB = agentB?.agentname ?? `Agent ${b}`;
+      console.groupCollapsed(`[Relationship] ${nameA} <-> ${nameB}`);
+      console.log(`${nameA} -> ${nameB}:`, saved.relationatob);
+      console.log(`${nameB} -> ${nameA}:`, saved.relationbtoa);
+      console.groupEnd();
+      toast.success(`Relation updated: ${nameA} <-> ${nameB}`, { duration: 1800 });
     } catch (err) {
       console.warn("⚠️ Failed to sync relation:", err);
       toast.error("Failed to sync relation");
     }
   }, 500);
-}, [projectid, weights]);
+}, [projectid, weights, agents]);
 
 
 
@@ -353,6 +360,18 @@ const saveRelation = React.useCallback((a, b, v) => {
     // Flush pending relation saves before moving on
     for (const t of Object.values(saveTimers.current)) clearTimeout(t);
     saveTimers.current = {};
+    if (edges.length) {
+      console.groupCollapsed("[Relationship] Summary");
+      edges.forEach(({ a, b }) => {
+        const agentA = agents.find((ag) => ag.agentid === a);
+        const agentB = agents.find((ag) => ag.agentid === b);
+        const nameA = agentA?.agentname ?? `Agent ${a}`;
+        const nameB = agentB?.agentname ?? `Agent ${b}`;
+        console.log(`${nameA} -> ${nameB}: ${getW(a, b)}`);
+        console.log(`${nameB} -> ${nameA}: ${getW(b, a)}`);
+      });
+      console.groupEnd();
+    }
     toast.success("All relations synced!");
     onNext();
   }}
@@ -368,3 +387,6 @@ const saveRelation = React.useCallback((a, b, v) => {
 }
 
 export default RelationshipGraph;
+
+
+

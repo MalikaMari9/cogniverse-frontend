@@ -140,7 +140,14 @@ export const changePassword = async (payload) => {
 /* ===============================
    📁 PROJECT ROUTES
 =============================== */
-export const getProjects = async () => (await api.get("/projects/")).data;
+export const getProjects = async (page = 1, limit = null) => {
+  const params = {};
+  if (page) params.page = page;
+  if (limit) params.limit = limit;
+  const res = await api.get("/projects/", { params });
+  return res.data;
+};
+
 export const createProject = async (payload) => (await api.post("/projects/", payload)).data;
 export const updateProject = async (project_id, payload) => (await api.put(`/projects/${project_id}`, payload)).data;
 export const deleteProject = async (project_id) => (await api.delete(`/projects/${project_id}`)).data;
@@ -302,6 +309,16 @@ export const deleteResult = async (result_id) =>
 export const getResultsByAgentScenarioType = async (projectAgentId, scenarioId, resultType) =>
   (await api.get(`/results/agent/${projectAgentId}/scenario/${scenarioId}/type/${resultType}`)).data;
 
+// ===============================
+// Results — Get by Scenario
+// ===============================
+export async function getResultsByScenario(scenarioid) {
+  const res = await fetch(`/api/results/by-scenario/${scenarioid}`, {
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error("Failed to fetch results by scenario");
+  return await res.json();
+}
 
 
 /* ===============================
@@ -403,7 +420,9 @@ export const deleteConfig = async (config_id) =>
 /* ===============================
    📢 ANNOUNCEMENT ROUTES
 =============================== */
-export const getAnnouncements = async () => (await api.get("/announcements/")).data;
+export const getAnnouncements = async (params = {}) =>
+  (await api.get("/announcements/", { params })).data;
+
 export const createAnnouncement = async (payload) => (await api.post("/announcements/", payload)).data;
 export const updateAnnouncement = async (announcementId, payload) => (await api.put(`/announcements/${announcementId}`, payload)).data;
 export const deleteAnnouncement = async (announcementId) => (await api.delete(`/announcements/${announcementId}`)).data;
@@ -411,7 +430,10 @@ export const deleteAnnouncement = async (announcementId) => (await api.delete(`/
 /* ===============================
    📋 SYSTEM LOG ROUTES
    */
-export const getSystemLogs = async (params = {}) => (await api.get("/system-logs/", { params })).data;
+// ✅ returns { items, page, total_pages, ... }
+export const getSystemLogs = async (params = {}) =>
+  (await api.get("/system-logs/", { params })).data;
+
 export const createSystemLog = async (payload) => (await api.post("/system-logs/", payload)).data;
 export const deleteSystemLog = async (logId) => (await api.delete(`/system-logs/${logId}`)).data;
 export const deleteSystemLogs = async (logIds) => (await api.delete("/system-logs/bulk", { data: { log_ids: logIds } })).data;
@@ -597,6 +619,10 @@ export const deleteBilling = async (billingId) =>
 export const getAllTransactions = async () =>
   (await api.get("/credit-transactions/")).data;
 
+export const getCreditTransactions = async (params = {}) =>
+  (await api.get("/credit-transactions/", { params })).data;
+
+
 // 🔹 Get transactions by user ID
 export const getTransactionsByUserId = async (userId) =>
   (await api.get(`/credit-transactions/user/${userId}`)).data;
@@ -621,9 +647,41 @@ export const applyTransaction = async (transactionId) =>
 export const reverseTransaction = async (transactionId) =>
   (await api.post(`/credit-transactions/${transactionId}/reverse`)).data;
 
+// ✅ Create Stripe Checkout Session
+export const createPaymentSession = async (packKey) => {
+  const res = await api.post("/payments/create-session", { pack_key: packKey });
+  return res.data;
+};
+
+// ✅ (Optional) Verify success or get details
+export const verifyPaymentSession = async (sessionId) => {
+  const res = await api.get(`/payments/verify-session/${sessionId}`);
+  return res.data;
+};
 
 /* ===============================
    Default Export
 =============================== */
 export default api;
 
+ ===============================
+   Forgot Password API
+export async function requestPasswordReset(email) {
+  const res = await fetch("http://127.0.0.1:8000/auth/forgot-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function resetPassword(token, new_password) {
+  const res = await fetch("http://127.0.0.1:8000/auth/reset-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, new_password }),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}

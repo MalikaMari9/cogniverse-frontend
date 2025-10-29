@@ -5,7 +5,8 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { SvgIcon } from "./Workstation";
 import { AgentCard } from "./Workstation";
 import NavProduct from "../components/NavProduct";
-
+import ScenarioHistory from "../pages/ScenarioHistory";
+import { deleteScenario, getResultsByScenario } from "../api/api";
 import "../ws_css.css";
 
 const TERMINAL_SIMULATION_STATES = new Set([
@@ -51,6 +52,8 @@ export default function ScenarioPage({
   const pollRef = useRef(null);
   // ✅ Prevent crash from undefined agents
   const validAgents = (selectedAgents || []).filter(a => a && a.agentid);
+const [showHistory, setShowHistory] = useState(false);
+const [replaying, setReplaying] = useState(false);
 
   // local theme label that always flips correctly
   const [t, setT] = useState(() =>
@@ -1006,6 +1009,13 @@ export default function ScenarioPage({
           </button>
         </label>
       </section>
+{/* Header toolbar above grid */}
+
+    <button className="ws-btn ghost" onClick={() => setShowHistory(true)}>
+      📜 History
+    </button>
+
+
 
       {/* MAIN grid */}
       <section className={`sc-main ${hasOutput ? "has-output" : ""}`}>
@@ -1110,9 +1120,28 @@ export default function ScenarioPage({
             </div>
           </div>
         )}
+        
 
         {/* Log */}
         <aside className="sc-log ws-card compact">
+            {currentScenario && (
+    <div className="sc-current compact">
+      <div className="sc-cur-title">
+        <b>Current Scenario:</b>{" "}
+        {currentScenario.scenarioname || "Untitled Scenario"}
+      </div>
+      <div className="sc-cur-desc">
+        {currentScenario.scenarioprompt?.slice(0, 100)}
+        {currentScenario.scenarioprompt?.length > 100 ? "…" : ""}
+      </div>
+      <button
+        className="ws-btn ghost mini"
+        onClick={() => setCurrentScenario(null)}
+      >
+        ✖ Create New Scenario
+      </button>
+    </div>
+  )}
           <div className="sc-log-head">Simulation Log</div>
           {loading ? (
             <div className="sc-center">
@@ -1169,6 +1198,52 @@ export default function ScenarioPage({
           </ul>
         </section>
       )}
+     
+      {showHistory && (
+  <ScenarioHistory
+    scenarios={scenarios}
+    onReplay={async (s) => {
+      setShowHistory(false);
+      setReplaying(true);
+      setCurrentScenario(s);
+      setLogs([]);
+      try {
+        const data = await getResultsByScenario(s.scenarioid);
+        for (let i = 0; i < data.length; i++) {
+          const r = data[i];
+          setLogs((prev) => [
+            ...prev,
+            {
+              id: r.resultid,
+              who:
+                validAgents.find(
+                  (a) => a.projectagentid === r.projectagentid
+                )?.agentname || "Unknown",
+              turn: i + 1,
+              text: r.resulttext,
+            },
+          ]);
+          await new Promise((r) => setTimeout(r, 700)); // smooth playback
+        }
+      } catch (err) {
+        toast.error("Failed to replay scenario");
+      } finally {
+        setReplaying(false);
+      }
+    }}
+    onDelete={async (id) => {
+      try {
+        await deleteScenario(id);
+        setScenarios((prev) => prev.filter((x) => x.scenarioid !== id));
+        toast.success("Scenario deleted");
+      } catch {
+        toast.error("Delete failed");
+      }
+    }}
+    onClose={() => setShowHistory(false)}
+  />
+)}
+
     </div>
   );
 }

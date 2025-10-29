@@ -310,9 +310,9 @@ function ProjectActions({ project, canWrite, requireWrite, onEdit, onDelete }) {
 export default function WorkstationHub() {
     const navigate = useNavigate();
       // 🧭 Pagination setup
-  const [currentPage, setCurrentPage] = useState(1);
-  const PROJECTS_PER_PAGE = 6; // TOBECHANGED (config-driven later)
-
+const [currentPage, setCurrentPage] = useState(1);
+const [totalPages, setTotalPages] = useState(1);
+const [limit, setLimit] = useState(6);
 
   const [theme, setTheme] = useState(
     document.documentElement.getAttribute("data-theme") || "dark"
@@ -344,22 +344,23 @@ const [openEdit, setOpenEdit] = useState({ open: false, project: null });
 };
 
     // 🔁 Reload projects list
-  const reloadProjects = async () => {
-    setLoading(true);
-    try {
-      const res = await getProjects();
-      // sort by latest update
-      const sorted = [...res].sort(
-        (a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0)
-      );
-      setProjects(sorted);
-    } catch (err) {
-      console.error("Failed to reload projects:", err);
-      setError("Could not refresh projects.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // 🔁 Reload projects list (with backend pagination)
+const reloadProjects = async (page = 1) => {
+  setLoading(true);
+  try {
+    const res = await getProjects(page);
+    setProjects(res.items || []);
+    setCurrentPage(res.page);
+    setTotalPages(res.total_pages);
+    setLimit(res.limit);
+  } catch (err) {
+    console.error("Failed to reload projects:", err);
+    setError("Could not refresh projects.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
 
   /* ---------- Theme ---------- */
@@ -373,19 +374,10 @@ const [openEdit, setOpenEdit] = useState({ open: false, project: null });
   /* ---------- Fetch projects on load ---------- */
 useEffect(() => {
   if (!permLoading && canRead) {
-    (async () => {
-      try {
-        const res = await getProjects();
-        setProjects(res);
-      } catch (err) {
-        console.error("Failed to fetch projects:", err);
-        setError("Failed to load projects. Please try again later.");
-      } finally {
-        setLoading(false);
-      }
-    })();
+    reloadProjects(currentPage);
   }
-}, [permLoading, canRead]);
+}, [permLoading, canRead, currentPage]);
+
 
 
   /* ---------- Create project ---------- */
@@ -490,9 +482,8 @@ if (permission === "none") {
 
           ) : (
             <div className="hub-list">
-             {projects
-  .slice((currentPage - 1) * PROJECTS_PER_PAGE, currentPage * PROJECTS_PER_PAGE)
-  .map((p) => (
+             {projects.map((p) => (
+
 
                 <div key={p.projectid} className="hub-card ws-card">
                   <div className="hub-card-head">
@@ -556,7 +547,7 @@ if (permission === "none") {
           )}
           
           
-          {projects.length > PROJECTS_PER_PAGE && (
+{totalPages > 1 && (
   <div className="hub-pagination">
     <button
       className="ws-btn ghost"
@@ -567,22 +558,19 @@ if (permission === "none") {
     </button>
 
     <span className="hub-page-info">
-      Page {currentPage} of {Math.ceil(projects.length / PROJECTS_PER_PAGE)}
+      Page {currentPage} of {totalPages}
     </span>
 
     <button
       className="ws-btn ghost"
-      onClick={() =>
-        setCurrentPage((p) =>
-          Math.min(Math.ceil(projects.length / PROJECTS_PER_PAGE), p + 1)
-        )
-      }
-      disabled={currentPage === Math.ceil(projects.length / PROJECTS_PER_PAGE)}
+      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+      disabled={currentPage === totalPages}
     >
       Next →
     </button>
   </div>
 )}
+
 
         </section>
 

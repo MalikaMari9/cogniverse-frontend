@@ -6,7 +6,7 @@ import React from "react";
 import { fmtDate } from "./helpers";
 import { getAllMaintenance, updateMaintenance } from "../../api/api";
 import { usePermission } from "../../hooks/usePermission";
-
+import ModalPortal from "./ModalPortal";
 export default function MaintenanceTable({ Icon }) {
   const [rows, setRows] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
@@ -25,6 +25,12 @@ export default function MaintenanceTable({ Icon }) {
     if (permLoading) return;
     if (canRead) fetchMaintenance();
   }, [permLoading, canRead]);
+
+  React.useEffect(() => {
+  const hasModal =
+    modal?.open || confirmModal?.open || noAccessModal?.open;
+  document.body.classList.toggle("modal-open", !!hasModal);
+}, [modal?.open, confirmModal?.open, noAccessModal?.open]);
 
   const fetchMaintenance = async () => {
     setLoading(true);
@@ -122,14 +128,27 @@ export default function MaintenanceTable({ Icon }) {
   // ✅ Authorized (read/write)
   return (
     <section className="ad-card ws-card">
-      <div className="ad-topbar" style={{ marginBottom: 12 }}>
-        <h3>Maintenance Control</h3>
-        {permission && (
-          <span className="perm-label">
-            Access Level: <b>{permission}</b>
-          </span>
-        )}
+<header className="adm-head">
+  <div className="adm-title" style={{ fontWeight: 600, marginRight: 12 }}>
+    Maintenance Control
+  </div>
+
+  <div className="adm-tools" style={{ display: "flex", alignItems: "center", gap: 12 }}>
+    {permission && (
+      <div
+        className="perm-label"
+        style={{
+          fontSize: "0.9rem",
+          opacity: 0.8,
+          color: "var(--ink-2)",
+        }}
+      >
+        Access Level: <b style={{ color: "var(--ink-1)" }}>{permission}</b>
       </div>
+    )}
+  </div>
+</header>
+
 
       {loading && <div className="ad-loading">Loading maintenance...</div>}
       {error && <div className="ad-error">{error}</div>}
@@ -149,18 +168,18 @@ export default function MaintenanceTable({ Icon }) {
           <tbody>
             {rows.map((r) => (
               <tr key={r.maintenanceid}>
-                <td className="mono">{r.maintenanceid}</td>
-                <td>{r.module_key}</td>
-                <td>
+                <td className="mono" data-label="ID">{r.maintenanceid}</td>
+                <td  className="mono"data-label="Key">{r.module_key}</td>
+                <td  className="mono" data-label="Status"> 
                   <span
                     className={`status-pill ${r.under_maintenance ? "inactive" : "active"}`}
                   >
                     {r.under_maintenance ? "Under Maintenance" : "Active"}
                   </span>
                 </td>
-                <td>{r.message}</td>
-                <td className="mono">{r.updated_at}</td>
-                <td className="actions">
+                <td className="mono" data-label="Message">{r.message}</td>
+                <td className="mono" data-label="Updated">{r.updated_at}</td>
+                <td className="mono" data-label="Actions">
                   <button
                     className={`ws-btn ${r.under_maintenance ? "primary" : "danger"}`}
                     onClick={() => openConfirm(r)}
@@ -200,6 +219,7 @@ export default function MaintenanceTable({ Icon }) {
 
       {/* 🔹 Edit Message Modal */}
       {modal.open && (
+        <ModalPortal>
         <div className="ad-modal">
           <div className="ad-modal-content ws-card">
             <h3>Edit Maintenance Message</h3>
@@ -228,10 +248,12 @@ export default function MaintenanceTable({ Icon }) {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* 🔹 Confirm Maintenance Modal */}
       {confirmModal.open && (
+        <ModalPortal>
         <div className="ad-modal">
           <div className="ad-modal-content ws-card">
             <h3>
@@ -257,10 +279,12 @@ export default function MaintenanceTable({ Icon }) {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* 🔹 No Access Modal */}
       {noAccessModal.open && (
+        <ModalPortal>
         <div className="ad-modal">
           <div className="ad-modal-content ws-card">
             <h3>Access Denied</h3>
@@ -275,6 +299,7 @@ export default function MaintenanceTable({ Icon }) {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
     </section>
   );

@@ -1,14 +1,15 @@
 // ===============================
-// SystemLogTable.jsx — With Permission Popup (CSS Preserved)
+// SystemLogTable.jsx — With Permission Popup + Client modal
 // ===============================
 import React from "react";
-import { fmtDate, StatusPill } from "./helpers";
+import { fmtDate } from "./helpers";
 import {
   getSystemLogs,
   deleteSystemLog,
   deleteSystemLogs,
 } from "../../api/api";
 import { usePermission } from "../../hooks/usePermission";
+import ModalPortal from "./ModalPortal";
 
 export default function SystemLogTable() {
   // ===============================
@@ -22,6 +23,13 @@ export default function SystemLogTable() {
     open: false,
     message: "",
   });
+const [debouncedQ, setDebouncedQ] = React.useState("");
+
+  // NEW: Client modal state
+  const [clientModal, setClientModal] = React.useState({
+    open: false,
+    row: null,
+  }); // NEW
 
   // filters
   const [q, setQ] = React.useState("");
@@ -36,21 +44,32 @@ export default function SystemLogTable() {
 
   // paging
   const [page, setPage] = React.useState(1);
+  const [totalPages, setTotalPages] = React.useState(1);
   const pageSize = 10;
 
   // permissions
   const { level: permission, canRead, canWrite, loading: permLoading } =
     usePermission("SYSTEM_LOGS");
 
-  // ===============================
-  // 🔹 LOAD LOGS
-  // ===============================
-  const loadLogs = async () => {
+  const [limit, setLimit] = React.useState(10);
+  const [total, setTotal] = React.useState(0);
+
+  const loadLogs = async (pageParam = page) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await getSystemLogs();
-      setRows(data);
+
+      const params = { 
+  page: pageParam,
+    ...(debouncedQ && { q: debouncedQ }),
+ };
+      const res = await getSystemLogs(params);
+
+      setRows(res.items || []);
+      setPage(res.page);
+      setTotalPages(res.total_pages);
+      setLimit(res.limit);
+      setTotal(res.total);
     } catch (err) {
       console.error("❌ Failed to load system logs:", err);
       setError("Failed to load system logs");
@@ -60,8 +79,24 @@ export default function SystemLogTable() {
   };
 
   React.useEffect(() => {
-    if (!permLoading && canRead) loadLogs();
-  }, [permLoading, canRead]);
+  const handler = setTimeout(() => setDebouncedQ(q), 500);
+  return () => clearTimeout(handler);
+}, [q]);
+
+  React.useEffect(() => {
+    if (!permLoading && canRead) loadLogs(page);
+  }, [permLoading, canRead, page]);
+React.useEffect(() => {
+  if (!permLoading && canRead) {
+    setPage(1);
+    loadLogs(1);
+  }
+}, [debouncedQ, action, status, from, to]);
+
+
+  React.useEffect(() => {
+    document.body.classList.toggle("modal-open", !!(noAccessModal.open || clientModal.open));
+  }, [noAccessModal.open, clientModal.open]); // NEW: include clientModal
 
   // ===============================
   // 🔹 PERMISSION CHECK
@@ -97,9 +132,7 @@ export default function SystemLogTable() {
     if (!requireWrite("delete")) return;
     if (selectedLogs.size === 0) return;
 
-    if (
-      !window.confirm(`Are you sure you want to delete ${selectedLogs.size} logs?`)
-    )
+    if (!window.confirm(`Are you sure you want to delete ${selectedLogs.size} logs?`))
       return;
 
     try {
@@ -115,29 +148,10 @@ export default function SystemLogTable() {
   // ===============================
   // 🔹 FILTERS / SORT / PAGINATION
   // ===============================
-  const filtered = rows.filter((r) => {
-    if (q) {
-      const hay = `${r.logid} ${r.action_type} ${r.username} ${r.userid} ${r.details} ${r.ip_address} ${r.browser_info}`.toLowerCase();
-      if (!hay.includes(q.toLowerCase())) return false;
-    }
-    if (action !== "all" && r.action_type !== action) return false;
-    if (status !== "all" && r.status !== status) return false;
-    if (from && new Date(r.created_at) < new Date(from)) return false;
-    if (to && new Date(r.created_at) > new Date(to)) return false;
-    return true;
-  });
+ 
 
-  const sorted = [...filtered].sort((a, b) => {
-    const dir = sortDir === "asc" ? 1 : -1;
-    const A = a[sortBy],
-      B = b[sortBy];
-    if (sortBy === "created_at") return (new Date(A) - new Date(B)) * dir;
-    return String(A).localeCompare(String(B)) * dir;
-  });
-
-  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
   const safePage = Math.min(page, totalPages);
-  const pageRows = sorted.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const pageRows = rows; // backend already paginated
 
   const toggleSelectAll = () => {
     if (selectedLogs.size === pageRows.length) setSelectedLogs(new Set());
@@ -159,6 +173,7 @@ export default function SystemLogTable() {
   };
 
   const downloadCSV = () => {
+    // NOTE: Keep ip_address + browser_info in CSV even though table combines them
     const header = [
       "logid",
       "action_type",
@@ -171,7 +186,7 @@ export default function SystemLogTable() {
       "created_at",
     ];
     const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-    const body = sorted.map((r) => header.map((h) => esc(r[h])).join(",")).join("\n");
+    const body = rows.map((r) => header.map((h) => esc(r[h])).join(",")).join("\n");
     const csv = header.join(",") + "\n" + body;
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -183,6 +198,10 @@ export default function SystemLogTable() {
     a.remove();
     URL.revokeObjectURL(url);
   };
+
+  // helpers – open/close client modal
+  const openClientModal = (row) => setClientModal({ open: true, row }); // NEW
+  const closeClientModal = () => setClientModal({ open: false, row: null }); // NEW
 
   // ===============================
   // 🔹 CONDITIONAL RENDERS
@@ -208,7 +227,7 @@ export default function SystemLogTable() {
   // 🔹 RENDER MAIN
   // ===============================
   return (
-    <div className="adm-card">
+    <section className="ad-card ws-card">
       {error && (
         <div className="ad-alert error" style={{ marginBottom: "1rem" }}>
           {error}
@@ -299,28 +318,32 @@ export default function SystemLogTable() {
         </div>
       </header>
 
-      <div className="adm-table-wrap">
-        <table className="adm-table">
+      <div
+        className="ad-table-wrap system-logs"
+        style={{ overflowX: "auto", overflowY: "visible", maxWidth: "100%" }} // ensures L↔R scroll
+      >
+<table
+  className="ad-table system-logs"
+  style={{ width: "max-content", minWidth: "100%", tableLayout: "auto" }}
+>
+
           <thead>
             <tr>
-              <th>
-                <input
-                  type="checkbox"
-                  checked={pageRows.length > 0 && selectedLogs.size === pageRows.length}
-                  onChange={toggleSelectAll}
-                />
-              </th>
               <th onClick={() => setSort("logid")}>logID</th>
               <th onClick={() => setSort("action_type")}>action_type</th>
               <th onClick={() => setSort("username")}>user</th>
               <th>details</th>
-              <th onClick={() => setSort("ip_address")}>ip_address</th>
-              <th>browser_info</th>
-              <th onClick={() => setSort("status")}>status</th>
+
+              {/* CHANGED: combine IP + Browser into "client" */}
+              <th /* sortable by ip_address for consistency */ onClick={() => setSort("ip_address")}>
+                client
+              </th>
+
               <th onClick={() => setSort("created_at")}>created_at</th>
               <th>actions</th>
             </tr>
           </thead>
+
           <tbody>
             {loading ? (
               <tr>
@@ -337,57 +360,84 @@ export default function SystemLogTable() {
                 </td>
               </tr>
             ) : (
-              pageRows.map((r) => (
-                <tr key={r.logid}>
-                  <td>
-                    <input
-                      type="checkbox"
-                      checked={selectedLogs.has(r.logid)}
-                      onChange={() => toggleLogSelection(r.logid)}
-                    />
-                  </td>
-                  <td data-label="logID">#{r.logid}</td>
-                  <td>{r.action_type}</td>
-                  <td>
-                    <div className="adm-user">
-                      <div className="avatar sm" aria-hidden>
-                        🧑
-                      </div>
-                      <div>
-                        <div className="name">{r.username || "System"}</div>
-                        <div className="muted">
-                          {r.userid ? `ID: ${r.userid}` : "System"}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="truncate">{r.details}</td>
-                  <td>{r.ip_address}</td>
-                  <td className="muted">{r.browser_info}</td>
-                  <td>
-                    <StatusPill value={r.status} />
-                  </td>
-                  <td className="muted">{fmtDate(r.created_at)}</td>
-                  <td className="actions">
-                    <button
-                      className="ws-btn danger sm"
-                      title={canWrite ? "Delete" : "Read-only"}
-                      disabled={!canWrite}
-                      onClick={() =>
-                        canWrite
-                          ? deleteLog(r.logid)
-                          : setNoAccessModal({
-                              open: true,
-                              message:
-                                "You don't have permission to delete system logs.",
-                            })
-                      }
+              pageRows.map((r) => {
+                const ip = r.ip_address || "—";
+                const br = r.browser_info || "—";
+                const clientShort =
+                  ip !== "—" && br !== "—"
+                    ? `${ip} · ${String(br).slice(0, 22)}${String(br).length > 22 ? "…" : ""}`
+                    : ip !== "—"
+                    ? ip
+                    : br;
+
+                return (
+                  <tr key={r.logid}>
+                    <td className="mono" data-label="logID">
+                      #{r.logid}
+                    </td>
+
+                    <td className="mono truncate" data-label="Action" title={r.action_type}>
+                      <span className="truncate">{r.action_type}</span>
+                    </td>
+
+                    <td className="mono truncate" data-label="User" title={r.username || "System"}>
+                      <span className="truncate">{r.username || "System"}</span>
+                    </td>
+
+                    <td className="mono truncate" data-label="Details" title={r.details}>
+                      <span className="truncate">{r.details || "—"}</span>
+                    </td>
+
+                    {/* NEW: single Client cell opens modal */}
+                    <td
+                      className="mono truncate"
+                      data-label="Client"
+                      title={`${ip} • ${br}`}
                     >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))
+                      <button
+                        type="button"
+                        onClick={() => openClientModal(r)}
+                        className="ws-btn ghost"
+                        style={{
+                          padding: "6px 8px",
+                          borderRadius: 8,
+                          whiteSpace: "nowrap",
+                        }}
+                        title="View client details"
+                      >
+                        {clientShort}
+                      </button>
+                    </td>
+
+                    <td
+                      className="mono truncate"
+                      data-label="Date"
+                      title={fmtDate(r.created_at)}
+                    >
+                      <span className="truncate">{fmtDate(r.created_at)}</span>
+                    </td>
+
+                    <td className="actions" data-label="Actions">
+                      <button
+                        className="ws-btn danger sm"
+                        title={canWrite ? "Delete" : "Read-only"}
+                        disabled={!canWrite}
+                        onClick={() =>
+                          canWrite
+                            ? deleteLog(r.logid)
+                            : setNoAccessModal({
+                                open: true,
+                                message:
+                                  "You don't have permission to delete system logs.",
+                              })
+                        }
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
@@ -395,7 +445,7 @@ export default function SystemLogTable() {
 
       <footer className="adm-foot">
         <div>
-          Page {safePage}/{totalPages} • {sorted.length} total logs
+          Page {safePage}/{totalPages} • {total} total logs
         </div>
         <div className="adm-pager">
           <button
@@ -417,21 +467,58 @@ export default function SystemLogTable() {
 
       {/* 🔹 No Access Modal */}
       {noAccessModal.open && (
-        <div className="ad-modal">
-          <div className="ad-modal-content ws-card">
-            <h3>Access Denied</h3>
-            <p>{noAccessModal.message}</p>
-            <div className="modal-actions">
-              <button
-                className="ws-btn primary"
-                onClick={() => setNoAccessModal({ open: false, message: "" })}
-              >
-                OK
-              </button>
+        <ModalPortal>
+          <div className="ad-modal">
+            <div className="ad-modal-content ws-card">
+              <h3>Access Denied</h3>
+              <p>{noAccessModal.message}</p>
+              <div className="modal-actions">
+                <button
+                  className="ws-btn primary"
+                  onClick={() => setNoAccessModal({ open: false, message: "" })}
+                >
+                  OK
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
-    </div>
+
+      {/* 🔹 Client Details Modal (IP + Browser) */}
+      {clientModal.open && clientModal.row && (
+        <ModalPortal>
+          <div className="ad-modal">
+            <div className="ad-modal-content ws-card">
+              <h3 style={{ marginBottom: 8 }}>Client details</h3>
+              <div style={{ display: "grid", gap: 8 }}>
+                <label>
+                  <span style={{ fontWeight: 700, opacity: 0.8 }}>IP address</span>
+                  <input
+                    readOnly
+                    value={clientModal.row.ip_address || "—"}
+                    style={{ width: "100%" }}
+                  />
+                </label>
+                <label>
+                  <span style={{ fontWeight: 700, opacity: 0.8 }}>Browser / User agent</span>
+                  <textarea
+                    readOnly
+                    rows={4}
+                    value={clientModal.row.browser_info || "—"}
+                    style={{ width: "100%", resize: "vertical" }}
+                  />
+                </label>
+              </div>
+              <div className="modal-actions">
+                <button className="ws-btn ghost" onClick={closeClientModal}>
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
+    </section>
   );
 }

@@ -18,6 +18,114 @@
   --glass-bdr:rgba(0,0,0,.10);
 }
 
+/* === Fixed 3-Dot Dropdown for User Actions === */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.action-menu {
+  background: transparent;
+  border: none;
+  font-size: 1.3rem;
+  color: var(--ink-2);
+  cursor: pointer;
+  padding: 0 0.4rem;
+  line-height: 1;
+  transition: color 0.15s ease;
+}
+.action-menu:hover {
+  color: var(--ink-1);
+}
+
+.dropdown-content {
+  position: absolute;
+  right: 0;
+  top: 120%;
+  background: var(--glass);
+  border: 1px solid var(--glass-bdr);
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.25);
+  min-width: 180px;
+  z-index: 100;
+  backdrop-filter: blur(8px) saturate(120%);
+}
+
+
+/* Light & dark theme fixes */
+[data-theme="light"] .dropdown-content {
+  background: rgba(255,255,255,0.98);
+  border-color: rgba(0,0,0,0.08);
+}
+[data-theme="dark"] .dropdown-content {
+  background: rgba(18,22,30,0.96);
+  border-color: rgba(255,255,255,0.1);
+}
+
+/* --- stable dropdown (no hover) --- */
+.dropdown-content button.ad-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  color: var(--ink-1);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.dropdown-content button.ad-item:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+[data-theme="light"] .dropdown-content button.ad-item:hover {
+  background: rgba(0,0,0,0.06);
+}
+
+.dropdown-content button.ad-item.danger {
+  color: var(--danger);
+}
+
+
+
+
+/* Buttons inside the menu */
+.dropdown-content button {
+  display: block;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--ink-1);
+  text-align: left;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.dropdown-content button:hover {
+  background: rgba(255,255,255,.08);
+}
+[data-theme="light"] .dropdown-content button:hover {
+  background: rgba(0,0,0,.06);
+}
+
+.dropdown-content button.danger {
+  color: var(--danger);
+}
+
+
+
+/* Ensure table cell doesn’t clip the dropdown */
+.adm-table-wrap,
+.adm-card,
+.adm-table td.actions {
+  overflow: visible !important;
+}
+
+
 .ad-table select.ad-select {
   height: 30px;
   font-size: 13px;
@@ -50,6 +158,36 @@
   border-color: rgba(255,255,255,0.14);
 }
 
+
+
+/* ✅ Dark theme: make all selects readable inside modals or tables */
+[data-theme="dark"] select,
+[data-theme="dark"] .ad-select,
+[data-theme="dark"] .adm-select {
+  background-color: rgba(25, 30, 40, 0.96);   /* solid dark glass */
+  color: #E9EEF7;                             /* bright text */
+  border: 1px solid rgba(255,255,255,0.15);
+  appearance: none;
+  background-image: linear-gradient(
+    180deg,
+    rgba(255,255,255,0.06),
+    rgba(255,255,255,0.02)
+  );
+}
+
+
+[data-theme="dark"] select option {
+  background-color: #161b25;                  /* dropdown list bg */
+  color: #E9EEF7;
+}
+
+/* optional hover polish */
+[data-theme="dark"] select:hover,
+[data-theme="dark"] .ad-select:hover,
+[data-theme="dark"] .adm-select:hover {
+  border-color: rgba(255,255,255,0.25);
+  background-color: rgba(30,35,45,0.98);
+}
 
 /* small square icon buttons (edit / delete) */
 .ad-icon{
@@ -84,6 +222,9 @@
   backdrop-filter: blur(8px) saturate(110%);
 }
 
+
+
+
 /* modal card */
 .ad-modal{
   top:8svh; z-index:1210;
@@ -106,7 +247,7 @@
 .ad-actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:4px; }
 
 /* mobile modal */
-@media (max-width: 640px){
+@media (max-width: 760px){
   .ad-modal{ top:4svh; width:96vw; max-height:86svh; }
   .ad-form{ grid-template-columns: 1fr; }
 }
@@ -132,7 +273,7 @@
 /* table can scroll horizontally on small screens */
 .ad-table-wrap{ overflow:auto; }
 .ad-table{ min-width:860px; }         /* keep columns readable */
-@media (max-width: 640px){
+@media (max-width: 760px){
   .ad-table{ min-width:720px; }
 }
 
@@ -151,6 +292,37 @@
   .ad-select{ flex:0 0 150px; }
 }
 
+
+/* --- Sidebar footer (stacked layout) --- */
+.ad-sb-foot.stacked {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;    /* stack vertically */
+  align-items: stretch;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--glass-bdr);
+}
+
+/* make footer buttons full width */
+.ad-sb-foot.stacked .ad-nav-item,
+.ad-sb-foot.stacked .ad-theme {
+  width: 100%;
+  justify-content: center;
+}
+.sc-spinner.tiny {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 
 
 
@@ -279,6 +451,8 @@
   border-color: rgba(255,255,255,.14); background: rgba(18,22,30,.92); color:#E9EEF7;
 }
 .ad-actions{ grid-column:1 / span 2; display:flex; justify-content:flex-end; gap:8px; }
+
+
 
 /* ---------- Cards & buttons (if you don't have ws-card / ws-btn) ---------- */
 /* (Optional) fallback minimal styles */
@@ -458,28 +632,77 @@
 
 
 /* === Modal background fix (dark + light theme) === */
-.ad-modal .ws-card,
-.ad-modal .ad-modal-content {
-  background: rgba(20, 24, 32, 0.92);        /* dark semi-solid */
-  color: var(--ink-1);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+
+
+
+/* ----------------------------- */
+/* 🧩 Modal Layout Refinement    */
+/* ----------------------------- */
+
+.ad-modal-content.ws-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;                     /* consistent vertical spacing */
+  padding: 20px 22px;
+  border-radius: 14px;
+  background: var(--glass);
+  border: 1px solid var(--glass-bdr);
+  backdrop-filter: blur(12px) saturate(120%);
+  max-height: 80vh;              /* fits inside viewport */
+  overflow-y: auto;
 }
 
-[data-theme="light"] .ad-modal .ws-card,
-[data-theme="light"] .ad-modal .ad-modal-content {
-  background: rgba(255, 255, 255, 0.96);     /* light solid */
-  color: var(--ink-1);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+/* make all labels and fields stacked neatly */
+.ad-modal-content.ws-card label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--ink-2);
 }
 
-/* Optional: dim the backdrop a bit more so text pops */
-.ad-modal::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  z-index: -1;
-  backdrop-filter: blur(6px);
+/* text inputs, textareas, selects unified */
+.ad-modal-content.ws-card input,
+.ad-modal-content.ws-card textarea,
+.ad-modal-content.ws-card select {
+  border-radius: 10px;
+  border: 1px solid var(--glass-bdr);
+  background: var(--glass);
+  color: var(--ink-1);
+  padding: 8px 10px;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+.ad-modal-content.ws-card input:focus,
+.ad-modal-content.ws-card textarea:focus,
+.ad-modal-content.ws-card select:focus {
+  border-color: var(--accent-1, #7A5CF4);
+}
+
+/* buttons row at the bottom */
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+/* responsive improvement */
+@media (max-width: 760px) {
+  .ad-modal-content.ws-card {
+    padding: 16px;
+    gap: 10px;
+    max-height: 88vh;
+    max-width: 300px;
+    margin-left: auto;      /* takes remaining space on the left */
+    margin-right: 15px;   
+    
+  }
+  .modal-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 
@@ -535,3 +758,326 @@
 @media (max-width: 720px){
   .ad-logout{ order: 2; }            /* let tools wrap first on small screens */
 }
+
+/* =============================== */
+/* 🧩 System Log Table Fix (>=760px) */
+/* =============================== */
+@media (min-width: 760px) {
+  /* allow horizontal scrolling if needed */
+  .adm-table-wrap.system-logs {
+    
+    overflow-y: visible;
+    display: block;
+  }
+
+  /* prevent content cutoff on right side */
+  .adm-card.system-logs,
+  .adm-table.system-logs {
+    width: 100%;
+    min-width: 1100px; /* enough for all columns */
+  }
+
+  /* tighten first 2 columns */
+  .adm-table.system-logs th:first-child,
+  .adm-table.system-logs td:first-child {
+    width: 48px;       /* checkbox column */
+    text-align: center;
+  }
+
+  .adm-table.system-logs th:nth-child(2),
+  .adm-table.system-logs td:nth-child(2) {
+    width: 80px;       /* logID */
+  }
+
+  /* allow the details column to flex-grow */
+  .adm-table.system-logs th:nth-child(5),
+  .adm-table.system-logs td:nth-child(5) {
+    min-width: 200px;
+    max-width: 340px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ensure actions column visible and fixed width */
+  .adm-table.system-logs th:last-child,
+  .adm-table.system-logs td:last-child {
+    width: 120px;
+    text-align: right;
+    position: static;
+  }
+
+  /* make sure table doesn’t clip dropdowns or buttons */
+  .adm-card.system-logs,
+  .adm-table-wrap.system-logs {
+    overflow: visible;
+  }
+}
+
+/* =============================== */
+/* 💥 AccessConfig True Mobile Scaling Override */
+/* =============================== */
+@media (max-width: 760px) {
+  /* Remove min-width enforcement */
+  .ad-table {
+    min-width: unset !important;
+    width: 100% !important;
+    table-layout: auto !important;
+  }
+
+  /* Make wrapper flexible */
+  .ad-table-wrap {
+    overflow-x: visible !important;
+    width: 100% !important;
+    display: block;
+  }
+
+  /* Hide table header */
+  .ad-table thead {
+    display: none !important;
+  }
+
+  /* Convert rows to cards */
+  .ad-table tbody tr {
+    display: block !important;
+    background: var(--glass);
+    border: 1px solid var(--glass-bdr);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    padding: 10px 14px;
+  }
+
+  /* Cells become stacked pairs */
+  .ad-table tbody td {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 6px 0 !important;
+    border: 0 !important;
+    width: 100% !important;
+  }
+
+  .ad-table tbody td::before {
+    content: attr(data-label);
+    flex: 1;
+    font-weight: 600;
+    color: var(--ink-3);
+    margin-right: 8px;
+    white-space: nowrap;
+  }
+
+  .ad-table tbody td > * {
+    flex: 1;
+    text-align: right;
+    word-break: break-word;
+  }
+
+  /* Make the actions row span full width */
+  .ad-table td.actions {
+    justify-content: flex-end !important;
+    display: flex !important;
+    gap: 8px;
+    margin-top: 8px;
+    border-top: 1px solid var(--glass-bdr);
+    padding-top: 8px !important;
+  }
+
+  /* Smaller icon buttons for mobile */
+  .ad-icon {
+    width: 34px !important;
+    height: 34px !important;
+  }
+}
+
+/* inside your admin CSS (e.g., admin.css or ws-admin.css) */
+
+.adm-table .truncate {
+  max-width: 160px;        /* you can adjust width */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
+  cursor: pointer;
+}
+
+/* nice hover tooltip */
+.adm-table .truncate:hover::after {
+  content: attr(title);
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: var(--glass);
+  color: var(--ink-1);
+  border: 1px solid var(--glass-bdr);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  z-index: 10;
+  backdrop-filter: blur(6px);
+  transform: translateY(4px);
+}
+
+
+/* 🧩 Fix mobile stacked table alignment for SystemLogTable */
+@media (max-width: 760px) {
+  .ad-table.system-logs tbody td {
+    display: flex !important;
+    justify-content: flex-start !important;
+    align-items: flex-start !important;
+    gap: 8px;
+  }
+
+  .ad-table.system-logs tbody td::before {
+    flex: 0 0 118px;          /* tweak 100–140px to taste */
+    text-align: left !important;
+    margin: 0;
+  }
+
+  .ad-table.system-logs tbody td > * {
+    flex: 1 1 0;              /* can shrink */
+    min-width: 0;             /* 🔑 lets flex items actually shrink */
+    text-align: right !important;
+    white-space: normal;      /* stop single-line forcing */
+    overflow-wrap: anywhere;  /* break long UA strings / tokens */
+  }
+
+  
+}
+
+/* ✅ System logs: make stacked rows align like AccessConfig on mobile */
+@media (max-width: 760px) {
+  /* Give the generated labels a fixed lane on the left */
+  .ad-table.system-logs tbody td::before {
+    flex: 0 0 132px;           /* tweak width to taste (120–150) */
+    text-align: left !important;
+  }
+
+  /* Everything on the value side should hug the right edge */
+  .ad-table.system-logs tbody td > * {
+    margin-left: auto;         /* pushes value to the right */
+    text-align: right !important;
+  }
+
+  /* The 'User' cell uses .adm-user (flex), so force it to behave like a right-aligned block */
+  .ad-table.system-logs tbody td[data-label="User"] .adm-user {
+    display: block !important;
+    width: 100%;
+    text-align: right !important;
+    justify-content: flex-end !important; /* safety if flex sneaks back in */
+  }
+
+  /* Multi-line values (e.g., Browser) should align to the right edge too */
+  .ad-table.system-logs tbody td[data-label="Browser"] {
+    align-items: flex-start !important;   /* label top-left, value top-right */
+  }
+}
+
+
+
+
+body.modal-open {
+  overflow: hidden;
+}
+
+
+/* ✅ SystemLogTable mobile: lock label lane + right-align values */
+@media (max-width: 760px) {
+  /* Make each cell a 2-column grid: [label | value] */
+  .ad-table.system-logs tbody td {
+    display: grid !important;
+    grid-template-columns: 132px 1fr; /* tweak 120–150px to taste */
+    align-items: start !important;
+    gap: 8px;
+    padding: 6px 0 !important;
+  }
+
+  /* Put the generated label in column 1 */
+  .ad-table.system-logs tbody td::before {
+    grid-column: 1;
+    margin: 0;                 /* kill leftover inline gaps */
+    text-align: left !important;
+    white-space: nowrap;
+  }
+
+  /* Put the content in column 2 and let it wrap on the right edge */
+  .ad-table.system-logs tbody td > * {
+    grid-column: 2;
+    min-width: 0;              /* 🔑 allow actual shrinking */
+    margin-left: 0;
+    justify-self: end;         /* hug right */
+    text-align: right !important;
+    white-space: normal;       /* allow wrapping for long UA strings */
+    overflow-wrap: anywhere;   /* break very long tokens */
+  }
+
+  /* Actions row = full-width row at the bottom of the card */
+  .ad-table.system-logs td.actions {
+    grid-template-columns: 1fr;   /* single lane */
+    justify-content: flex-end !important;
+    gap: 8px;
+    border-top: 1px solid var(--glass-bdr);
+    margin-top: 8px;
+    padding-top: 8px !important;
+  }
+
+  /* Make the small “Client” ghost button behave nicely in tight space */
+  .ad-table.system-logs td[data-label="Client"] .ws-btn {
+    padding: 4px 6px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* ========================================= */
+/* 🧩 Admin Main Horizontal Scroll Correction */
+/* ========================================= */
+
+/* make sure the main content area itself can scroll horizontally */
+.ad-main {
+  overflow-x: auto;           /* allows scroll if card overflows */
+  overflow-y: visible;        /* avoid clipping modals/dropdowns */
+}
+
+/* cards fill full available width and can shrink */
+.ad-card,
+.adm-card,
+.ad-main > section {
+  width: 100%;                /* take the row width */
+  min-width: 0;               /* ✅ allow children to shrink */
+  overflow: visible;          /* don’t clip inner scrollbars */
+}
+
+/* the real scroll happens here */
+.ad-card .ad-table-wrap,
+.adm-card .adm-table-wrap {
+  display: block;
+  width: 100%;
+  overflow-x: auto !important;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* safety: ensure table can exceed card width */
+.ad-card .ad-table,
+.adm-card .adm-table {
+  width: max-content;         /* grows with columns */
+  min-width: 100%;            /* but never smaller than card */
+}
+
+/* optional: subtle scrollbar spacing */
+.ad-card .ad-table-wrap::-webkit-scrollbar,
+.adm-card .adm-table-wrap::-webkit-scrollbar {
+  height: 8px;
+}
+.ad-card .ad-table-wrap::-webkit-scrollbar-thumb,
+.adm-card .adm-table-wrap::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,.2);
+  border-radius: 4px;
+}
+[data-theme="light"] .ad-card .ad-table-wrap::-webkit-scrollbar-thumb,
+[data-theme="light"] .adm-card .adm-table-wrap::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,.15);
+}
+

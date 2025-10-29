@@ -1,10 +1,9 @@
 // ===============================
-// AdminNav.jsx — Updated with User Management tab
+// AdminNav.jsx — Final Organized Version
 // ===============================
 import React from "react";
 import "../admin.css";
 
-/* ----------------------- tiny SVG icons (inline) ----------------------- */
 export const Icon = ({ name, size = 18 }) => {
   const props = {
     width: size,
@@ -25,9 +24,22 @@ export const Icon = ({ name, size = 18 }) => {
         </svg>
       );
     case "shield":
+      return <svg {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" /></svg>;
+    case "doc":
       return (
         <svg {...props}>
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
+          <rect x="3" y="4" width="14" height="18" rx="2" />
+          <path d="M7 8h6M7 12h6M7 16h4" />
+          <path d="M17 8h4v12a2 2 0 0 1-2 2h-2" />
+        </svg>
+      );
+    case "users":
+      return (
+        <svg {...props}>
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
         </svg>
       );
     case "megaphone":
@@ -46,43 +58,12 @@ export const Icon = ({ name, size = 18 }) => {
           <path d="M10.3 21a1.7 1.7 0 0 0 3.4 0" />
         </svg>
       );
-    case "doc":
+    case "logout":
       return (
         <svg {...props}>
-          <rect x="3" y="4" width="14" height="18" rx="2" />
-          <path d="M7 8h6M7 12h6M7 16h4" />
-          <path d="M17 8h4v12a2 2 0 0 1-2 2h-2" />
-        </svg>
-      );
-    case "users": // 🆕 ADD USER MANAGEMENT ICON
-      return (
-        <svg {...props}>
-          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
-          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-        </svg>
-      );
-    case "plus":
-      return (
-        <svg {...props}>
-          <path d="M12 5v14M5 12h14" />
-        </svg>
-      );
-    case "edit":
-      return (
-        <svg {...props}>
-          <path d="M12 20h9" />
-          <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" />
-        </svg>
-      );
-    case "trash":
-      return (
-        <svg {...props}>
-          <polyline points="3 6 5 6 21 6" />
-          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-          <path d="M10 11v6M14 11v6" />
-          <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+          <path d="M10 17l5-5-5-5" />
+          <path d="M15 12H3" />
         </svg>
       );
     case "sun":
@@ -93,25 +74,12 @@ export const Icon = ({ name, size = 18 }) => {
         </svg>
       );
     case "moon":
-      return (
-        <svg {...props}>
-          <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.64 9.79Z" />
-        </svg>
-      );
-    case "logout":
-      return (
-        <svg {...props}>
-          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-          <path d="M10 17l5-5-5-5" />
-          <path d="M15 12H3" />
-        </svg>
-      );
+      return <svg {...props}><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.64 9.79Z" /></svg>;
     default:
       return null;
   }
 };
 
-/* ---------------------------- Sidebar + Theme ---------------------------- */
 export function AdminNav({ theme, tab, setTab, setTheme, handleLogout }) {
   return (
     <aside className="ad-sb">
@@ -121,95 +89,66 @@ export function AdminNav({ theme, tab, setTab, setTheme, handleLogout }) {
       </div>
 
       <nav className="ad-nav">
-        <button
-          className={`ad-nav-item ${tab === "config" ? "active" : ""}`}
-          onClick={() => setTab("config")}
-        >
-          <Icon name="gear" />
-          <span>Access Config</span>
-        </button>
+        {/* ⚙️ System Section */}
+        <div className="nav-section">
+          <button className={`ad-nav-item ${tab === "config" ? "active" : ""}`} onClick={() => setTab("config")}>
+            <Icon name="gear" /><span>System Config</span>
+          </button>
+          <button className={`ad-nav-item ${tab === "maintenance" ? "active" : ""}`} onClick={() => setTab("maintenance")}>
+            <Icon name="shield" /><span>Maintenance</span>
+          </button>
+          <button className={`ad-nav-item ${tab === "access" ? "active" : ""}`} onClick={() => setTab("access")}>
+            <Icon name="shield" /><span>Access Control</span>
+          </button>
+          <button className={`ad-nav-item ${tab === "syslog" ? "active" : ""}`} onClick={() => setTab("syslog")}>
+            <Icon name="doc" /><span>System Log</span>
+          </button>
+        </div>
 
-        <button
-          className={`ad-nav-item ${tab === "maintenance" ? "active" : ""}`}
-          onClick={() => setTab("maintenance")}
-        >
-          <Icon name="shield" />
-          <span>Maintenance</span>
-        </button>
+        {/* 👥 Management */}
+        <div className="nav-section">
+          <button className={`ad-nav-item ${tab === "users" ? "active" : ""}`} onClick={() => setTab("users")}>
+            <Icon name="users" /><span>User Management</span>
+          </button>
+        </div>
 
-        <button
-          className={`ad-nav-item ${tab === "syslog" ? "active" : ""}`}
-          onClick={() => setTab("syslog")}
-        >
-          <Icon name="doc" />
-          <span>System Log</span>
-        </button>
+        {/* 💬 Communication */}
+        <div className="nav-section">
+          <button className={`ad-nav-item ${tab === "announcements" ? "active" : ""}`} onClick={() => setTab("announcements")}>
+            <Icon name="megaphone" /><span>Announcements</span>
+          </button>
+          <button className={`ad-nav-item ${tab === "notify" ? "active" : ""}`} onClick={() => setTab("notify")}>
+            <Icon name="bell" /><span>Notifications</span>
+          </button>
+        </div>
 
-        <button
-          className={`ad-nav-item ${tab === "access" ? "active" : ""}`}
-          onClick={() => setTab("access")}
-        >
-          <Icon name="shield" />
-          <span>Access Control</span>
-        </button>
-        <button
-          className={`ad-nav-item ${tab === "creditpacks" ? "active" : ""}`}
-          onClick={() => setTab("creditpacks")}
-        >
-          <Icon name="gear" />
-          <span>Credit Packs</span>
-        </button>
-
-
-        <button
-          className={`ad-nav-item ${tab === "announcements" ? "active" : ""}`}
-          onClick={() => setTab("announcements")}
-        >
-          <Icon name="megaphone" />
-          <span>Announcements</span>
-        </button>
-
-        <button
-          className={`ad-nav-item ${tab === "notify" ? "active" : ""}`}
-          onClick={() => setTab("notify")}
-        >
-          <Icon name="bell" />
-          <span>Notification</span>
-        </button>
-
-        {/* 🆕 USER MANAGEMENT NAV ITEM */}
-        <button
-          className={`ad-nav-item ${tab === "users" ? "active" : ""}`}
-          onClick={() => setTab("users")}
-        >
-          <Icon name="users" />
-          <span>User Management</span>
-        </button>
+        {/* 💰 Billing */}
+        <div className="nav-section">
+          <button className={`ad-nav-item ${tab === "creditpacks" ? "active" : ""}`} onClick={() => setTab("creditpacks")}>
+            <Icon name="gear" /><span>Credit Packs</span>
+          </button>
+          <button className={`ad-nav-item ${tab === "credittransactions" ? "active" : ""}`} onClick={() => setTab("credittransactions")}>
+            <Icon name="doc" /><span>Credit Transactions</span>
+          </button>
+        </div>
       </nav>
 
-      <div className="ad-sb-foot">
-        <button
-          className={`ad-theme ${theme}`}
-          onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
-          aria-label="Toggle theme"
-          title="Toggle theme"
-        >
-          <span className="knob" />
-          <span className="sun">
-            <Icon name="sun" size={14} />
-          </span>
-          <span className="moon">
-            <Icon name="moon" size={14} />
-          </span>
+      {/* 👤 Footer */}
+      <div className="ad-sb-foot" style={{ flexDirection: "column", gap: "10px" }}>
+        <button className="ad-nav-item" onClick={() => (window.location.href = "/profile")} style={{ justifyContent: "center" }}>
+          <Icon name="users" /><span>Profile</span>
         </button>
 
-        <button
-          className="ad-nav-item logout-btn"
-          onClick={handleLogout}
-          title="Logout"
-        >
-          <Icon name="logout" />
-          <span>Logout</span>
+        <div style={{ display: "flex", justifyContent: "center" }}>
+          <button className={`ad-theme ${theme}`} onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}>
+            <span className="knob" />
+            <span className="sun"><Icon name="sun" size={14} /></span>
+            <span className="moon"><Icon name="moon" size={14} /></span>
+          </button>
+        </div>
+
+        <button className="ad-nav-item logout-btn" onClick={handleLogout} style={{ justifyContent: "center" }}>
+          <Icon name="logout" /><span>Logout</span>
         </button>
       </div>
     </aside>

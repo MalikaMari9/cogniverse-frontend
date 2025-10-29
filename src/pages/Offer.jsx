@@ -201,10 +201,10 @@ export default function OfferPage() {
   const scrollTo = (ref) => ref?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
   const links = [
-    { label: 'Home', href: '/' },
-    { label: 'Features', href: '/features' },
-    { label: 'Contact', href: '/contact' },
-    { label: 'About us', href: '/about' },
+    { key: 'home',     label: 'Home',     href: '/' },
+  { key: 'features', label: 'Features', href: '/features' },
+  { key: 'contact',  label: 'Contact',  href: '/contact' },
+  { key: 'about',    label: 'About',    href: '/about' },
   ]
 
   return (
@@ -319,7 +319,15 @@ export default function OfferPage() {
             subline="Includes bonus 50 credits on signup."
             cta="Upgrade to Pro"
             highlight
-            onClick={() => alert('Pro upgrade flow')}
+            onClick={() => {
+            // preserve any coupon message/user input if you want:
+            const params = new URLSearchParams({
+              plan: 'pro',
+              cycle: 'monthly',              // or 'yearly'
+              code: (document.querySelector('.coupon input')?.value || '').trim()
+            });
+            window.location.href = `/pay?${params.toString()}`;
+          }}
             perks={[
               'For professionals who want predictive precision.',
               'Up to 500 credits/month for in-depth simulations',
@@ -339,11 +347,13 @@ export default function OfferPage() {
       </main>
 
       {/* Sticky countdown CTA */}
-      <div className="sticky-cta">
-        <span className="muted">Offer ends in&nbsp;</span>
-        <strong>{countdown}</strong>
+      <div className="offer-cta ">
+        <span className="timer muted">Offer ends in&nbsp; <strong>{countdown}</strong></span>
+        
         <button className="btn primary" type="button" onClick={() => scrollTo(plansRef)}>Claim Offer</button>
       </div>
+
+    
     </div>
   )
 }

@@ -10,7 +10,7 @@ import {
   deleteConfig,
 } from "../../api/api";
 import { usePermission } from "../../hooks/usePermission";
-
+import ModalPortal from "./ModalPortal";
 export default function AccessConfig({ Icon }) {
   // ===============================
   // 🔹 STATES
@@ -23,6 +23,7 @@ export default function AccessConfig({ Icon }) {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState("");
   const [noAccessModal, setNoAccessModal] = React.useState({ open: false, message: "" });
+const [validationError, setValidationError] = React.useState({ open: false, message: "" });
 
   const pageSize = 8;
   const { level: permission, canRead, canWrite, loading: permLoading } =
@@ -34,6 +35,15 @@ export default function AccessConfig({ Icon }) {
   React.useEffect(() => {
     if (!permLoading && canRead) fetchConfigs();
   }, [permLoading, canRead]);
+
+  React.useEffect(() => {
+  const hasModal =
+    modal?.open ||
+    addModal ||
+    noAccessModal?.open ||
+    validationError?.open;
+  document.body.classList.toggle("modal-open", !!hasModal);
+}, [modal?.open, addModal, noAccessModal?.open, validationError?.open]);
 
   const fetchConfigs = async () => {
     setLoading(true);
@@ -50,9 +60,11 @@ export default function AccessConfig({ Icon }) {
       }));
       setRows(data);
     } catch (err) {
-      console.error("❌ Failed to fetch configs:", err);
-      setError("Failed to load configurations. Please try again later.");
-    } finally {
+  console.error("❌ Failed to fetch configs:", err);
+  setError("Failed to load configurations. Please try again later.");
+}
+
+finally {
       setLoading(false);
     }
   };
@@ -81,9 +93,11 @@ export default function AccessConfig({ Icon }) {
       await fetchConfigs();
       setAddModal(false);
     } catch (err) {
-      console.error("❌ Failed to add config:", err);
-      alert("Failed to add configuration.");
-    }
+  console.error("❌ Failed to fetch configs:", err);
+  setError("Failed to load configurations. Please try again later.");
+}
+
+
   };
 
   // ===============================
@@ -98,9 +112,15 @@ export default function AccessConfig({ Icon }) {
       });
       await fetchConfigs();
     } catch (err) {
-      console.error("❌ Failed to update config:", err);
-      alert("Failed to update configuration.");
-    }
+  console.error("❌ Failed to update config:", err);
+  const msg =
+    err.response?.data?.detail ||
+    err.message ||
+    "Failed to update configuration.";
+  setValidationError({ open: true, message: msg });
+}
+
+
   };
 
   // ===============================
@@ -169,55 +189,54 @@ export default function AccessConfig({ Icon }) {
   return (
     <section className="ad-card ws-card">
       {/* Header controls */}
-      <div
-        className="ad-topbar"
-        style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}
-      >
-        <div className="ws-search" style={{ flex: 1, maxWidth: 280 }}>
-          <span className="ico">
-            <Icon name="search" />
-          </span>
-          <input
-            type="text"
-            value={q}
-            onChange={(e) => {
-              setQ(e.target.value);
-              setPage(1);
-            }}
-            placeholder="Search configs..."
-            aria-label="Search configs"
-          />
-          {q && (
-            <button
-              className="ws-search-clear"
-              onClick={() => {
-                setQ("");
-                setPage(1);
-              }}
-              aria-label="Clear search"
-            >
-              ×
-            </button>
-          )}
-        </div>
-
+      
+<header className="adm-head">
+  <div className="adm-title" style={{ fontWeight: 600, marginRight: 12 }}>
+    System Config
+  </div>
+  <div className="adm-tools">
+    <div className="ws-search" style={{ flex: 1, minWidth: 220, maxWidth: 300 }}>
+      <span className="ico"><Icon name="search" /></span>
+      <input
+        type="text"
+        value={q}
+        onChange={(e) => {
+          setQ(e.target.value);
+          setPage(1);
+        }}
+        placeholder="Search configs…"
+      />
+      {q && (
         <button
-          className="ws-btn primary"
-          onClick={() =>
-            canWrite
-              ? setAddModal(true)
-              : setNoAccessModal({
-                  open: true,
-                  message: "You don't have permission to add configurations.",
-                })
-          }
-          style={{ marginLeft: "auto" }}
-          disabled={!canWrite}
-          title={!canWrite ? "Read-only access" : ""}
+          className="ws-search-clear"
+          onClick={() => {
+            setQ("");
+            setPage(1);
+          }}
         >
-          + Add Config
+          ×
         </button>
-      </div>
+      )}
+    </div>
+
+    <button
+      className="ws-btn primary"
+      onClick={() =>
+        canWrite
+          ? setAddModal(true)
+          : setNoAccessModal({
+              open: true,
+              message: "You don't have permission to add configurations.",
+            })
+      }
+      disabled={!canWrite}
+      title={!canWrite ? "Read-only access" : ""}
+    >
+      + Add Config
+    </button>
+  </div>
+</header>
+
 
       {/* Loading/error */}
       {loading && <div className="ad-loading">Loading configurations...</div>}
@@ -237,56 +256,86 @@ export default function AccessConfig({ Icon }) {
               <th></th>
             </tr>
           </thead>
-          <tbody>
-            {pageRows.map((r) => (
-              <tr key={r.configID}>
-                <td className="mono">{r.configID}</td>
-                <td className="mono">{r.config_key}</td>
-                <td className="mono">{r.config_value}</td>
-                <td>{r.description}</td>
-                <td className="mono">{r.created_at}</td>
-                <td className="mono">{r.updated_at}</td>
-                <td className="actions">
-                  <button
-                    className="ad-icon"
-                    title={canWrite ? "Edit" : "View-only"}
-                    onClick={() =>
-                      canWrite
-                        ? openEdit(r)
-                        : setNoAccessModal({
-                            open: true,
-                            message: "You don't have permission to edit configurations.",
-                          })
-                    }
-                  >
-                    <Icon name="edit" />
-                  </button>
-                  <button
-                    className="ad-icon danger"
-                    title={canWrite ? "Delete" : "View-only"}
-                    onClick={() =>
-                      canWrite
-                        ? delRow(r.configID)
-                        : setNoAccessModal({
-                            open: true,
-                            message: "You don't have permission to delete configurations.",
-                          })
-                    }
-                    disabled={!canWrite}
-                  >
-                    <Icon name="trash" />
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {pageRows.length === 0 && !loading && (
-              <tr>
-                <td colSpan={7} className="ad-empty">
-                  No configs match your filters.
-                </td>
-              </tr>
-            )}
-          </tbody>
+<tbody>
+  {pageRows.map((r) => {
+    const isSensitive = /password/i.test(r.config_key);
+
+    return (
+      <tr key={r.configID}>
+        <td className="mono" data-label="ID" >{r.configID}</td>
+        <td className="mono" data-label="Key">{r.config_key}</td>
+
+        {/* 🔒 Mask passwords visually */}
+       {/* 🔒 Mask passwords visually */}
+<td className="mono" data-label="Value" title={isSensitive ? "Hidden value" : r.config_value}>
+  {isSensitive ? (
+    <span
+      style={{
+        backgroundColor: "var(--ink-5)",
+        borderRadius: "4px",
+        display: "inline-block",
+        width: "100px",
+        textAlign: "center",
+      }}
+    >
+      ••••••••
+    </span>
+  ) : (
+    <span className="truncate">{r.config_value || "—"}</span>
+  )}
+</td>
+
+<td data-label="Description" className="mono" title={r.description}>
+  <span className="truncate">{r.description || "—"}</span>
+</td>
+      <td className="mono" data-label="Created">{r.created_at}</td>
+        <td className="mono" data-label="Updated">{r.updated_at}</td>
+
+        <td className="mono" data-label="Actions">
+          <button
+            className="ad-icon"
+            title={canWrite ? "Edit" : "View-only"}
+            onClick={() =>
+              canWrite
+                ? openEdit(r)
+                : setNoAccessModal({
+                    open: true,
+                    message: "You don't have permission to edit configurations.",
+                  })
+            }
+          >
+            <Icon name="edit" />
+          </button>
+
+          <button
+            className="ad-icon danger"
+            title={canWrite ? "Delete" : "View-only"}
+            onClick={() =>
+              canWrite
+                ? delRow(r.configID)
+                : setNoAccessModal({
+                    open: true,
+                    message: "You don't have permission to delete configurations.",
+                  })
+            }
+            disabled={!canWrite}
+          >
+            <Icon name="trash" />
+          </button>
+        </td>
+      </tr>
+    );
+  })}
+
+  {pageRows.length === 0 && !loading && (
+    <tr>
+      <td colSpan={7} className="ad-empty">
+        No configs match your filters.
+      </td>
+    </tr>
+  )}
+</tbody>
+
         </table>
       </div>
 
@@ -313,6 +362,7 @@ export default function AccessConfig({ Icon }) {
 
       {/* 🔹 Edit Modal */}
       {modal.open && (
+        <ModalPortal>
         <div className="ad-modal">
           <div className="ad-modal-content ws-card">
             <h3>Edit Configuration</h3>
@@ -352,10 +402,12 @@ export default function AccessConfig({ Icon }) {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* 🔹 Add Modal */}
       {addModal && (
+        <ModalPortal>
         <div className="ad-modal">
           <div className="ad-modal-content ws-card">
             <h3>Add Configuration</h3>
@@ -365,10 +417,12 @@ export default function AccessConfig({ Icon }) {
             />
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* 🔹 No Access Modal */}
       {noAccessModal.open && (
+        <ModalPortal>
         <div className="ad-modal">
           <div className="ad-modal-content ws-card">
             <h3>Access Denied</h3>
@@ -383,7 +437,32 @@ export default function AccessConfig({ Icon }) {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
+      {/* 🔹 Validation Error Modal */}
+{validationError.open && (
+  <ModalPortal>
+  <div className="ad-modal">
+    <div className="ad-modal-content ws-card">
+      <h3 style={{ color: "var(--danger)", marginBottom: "8px" }}>
+        Validation Error
+      </h3>
+      <p style={{ color: "var(--ink-2)", whiteSpace: "pre-wrap" }}>
+        {validationError.message}
+      </p>
+      <div className="modal-actions" style={{ marginTop: "12px" }}>
+        <button
+          className="ws-btn primary"
+          onClick={() => setValidationError({ open: false, message: "" })}
+        >
+          OK
+        </button>
+      </div>
+    </div>
+  </div>
+  </ModalPortal>
+)}
+
     </section>
   );
 }

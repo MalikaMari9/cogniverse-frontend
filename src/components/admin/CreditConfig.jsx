@@ -11,6 +11,7 @@ import {
   deleteCreditConfig,
 } from "../../api/api";
 import { usePermission } from "../../hooks/usePermission";
+import ModalPortal from "./ModalPortal";
 
 export default function CreditConfig({ Icon }) {
   const [rows, setRows] = React.useState([]);
@@ -35,6 +36,11 @@ export default function CreditConfig({ Icon }) {
   React.useEffect(() => {
     if (!permLoading && canRead) fetchCreditConfigs();
   }, [permLoading, canRead]);
+  
+React.useEffect(() => {
+  const hasModal = modal?.open || addModal || noAccessModal?.open;
+  document.body.classList.toggle("modal-open", !!hasModal);
+}, [modal?.open, addModal, noAccessModal?.open]);
 
   const fetchCreditConfigs = async () => {
     setLoading(true);
@@ -207,63 +213,66 @@ const handleStatusChange = async (r, newStatus) => {
   return (
     <section className="ad-card ws-card">
       {/* 🔹 Topbar */}
-      <div
-        className="ad-topbar"
-        style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}
-      >
-        <div className="ad-toggle" style={{ display: "flex", alignItems: "center", marginLeft: 16 }}>
-  <input
-    type="checkbox"
-    id="showArchived"
-    checked={showArchived}
-    onChange={(e) => setShowArchived(e.target.checked)}
-    style={{ marginRight: 6, cursor: "pointer" }}
-  />
-  <label htmlFor="showArchived" style={{ fontSize: "0.9rem", color: "var(--ink-2)", cursor: "pointer" }}>
-    Show Archived
-  </label>
-</div>
+<header className="adm-head">
+  <div className="adm-title" style={{ fontWeight: 600, marginRight: 12 }}>
+    Credit Packs
+  </div>
+  <div className="adm-tools">
+    <div className="ad-toggle" style={{ display: "flex", alignItems: "center" }}>
+      <input
+        type="checkbox"
+        id="showArchived"
+        checked={showArchived}
+        onChange={(e) => setShowArchived(e.target.checked)}
+        style={{ marginRight: 6, cursor: "pointer" }}
+      />
+      <label htmlFor="showArchived" style={{ fontSize: "0.9rem", color: "var(--ink-2)", cursor: "pointer" }}>
+        Show Archived
+      </label>
+    </div>
 
-        <div className="ws-search" style={{ flex: 1, maxWidth: 280 }}>
-          <span className="ico">
-            <Icon name="search" />
-          </span>
-          <input
-            type="text"
-            value={q}
-            onChange={(e) => {
-              setQ(e.target.value);
-              setPage(1);
-            }}
-            placeholder="Search credit packs..."
-          />
-          {q && (
-            <button
-              className="ws-search-clear"
-              onClick={() => setQ("")}
-              aria-label="Clear search"
-            >
-              ×
-            </button>
-          )}
-        </div>
-
+    <div className="ws-search" style={{ flex: 1, minWidth: 220, maxWidth: 300 }}>
+      <span className="ico"><Icon name="search" /></span>
+      <input
+        type="text"
+        value={q}
+        onChange={(e) => {
+          setQ(e.target.value);
+          setPage(1);
+        }}
+        placeholder="Search credit packs…"
+      />
+      {q && (
         <button
-          className="ws-btn primary"
-          onClick={() =>
-            canWrite
-              ? setAddModal(true)
-              : setNoAccessModal({
-                  open: true,
-                  message: "You don't have permission to add credit packs.",
-                })
-          }
-          style={{ marginLeft: "auto" }}
-          disabled={!canWrite}
+          className="ws-search-clear"
+          onClick={() => {
+            setQ("");
+            setPage(1);
+          }}
         >
-          + Add Pack
+          ×
         </button>
-      </div>
+      )}
+    </div>
+
+    <button
+      className="ws-btn primary"
+      onClick={() =>
+        canWrite
+          ? setAddModal(true)
+          : setNoAccessModal({
+              open: true,
+              message: "You don't have permission to add credit packs.",
+            })
+      }
+      disabled={!canWrite}
+      title={!canWrite ? "Read-only access" : ""}
+    >
+      + Add Pack
+    </button>
+  </div>
+</header>
+
 
       {/* 🔹 Table */}
       {loading && <div className="ad-loading">Loading credit packs...</div>}
@@ -288,16 +297,20 @@ const handleStatusChange = async (r, newStatus) => {
           <tbody>
             {pageRows.map((r) => (
               <tr key={r.id}>
-                <td className="mono">{r.id}</td>
-                <td className="mono">{r.config_key}</td>
-                <td>{r.credits}</td>
-                <td>{r.price}</td>
-                <td>{r.discount}</td>
-                <td>{r.badge}</td>
-                <td>{r.description?.slice(0, 25) || "-"}</td>
- 
-                <td className="mono">{r.stripe_id}</td>
-                <td>
+                <td className="mono" data-label="ID">{r.id}</td>
+                <td className="mono" data-label="Key">{r.config_key}</td>
+                <td className="mono" data-label="Credits">{r.credits}</td>
+                <td className="mono" data-label="Price">{r.price}</td>
+                <td className="mono" data-label="Discount">{r.discount}</td>
+                <td className="mono" data-label="Badge">{r.badge}</td>
+               <td className="mono" data-label="Description" title={r.description || "-"}>
+  <span className="truncate">{r.description || "—"}</span>
+</td>
+
+               <td className="mono" data-label="Stripe ID" title={r.stripe_id}>
+  <span className="truncate">{r.stripe_id || "—"}</span>
+</td>
+                <td className="mono"  data-label="Status">
   <select
     className="ad-select"
     value={r.status}
@@ -318,10 +331,10 @@ const handleStatusChange = async (r, newStatus) => {
     <option value="inactive">Inactive</option>
     <option value="archived">Archived</option>
   </select>
-</td>
+</td >
 
 
-                <td className="actions">
+                <td className="actions" data-label="Actions"> 
                   <button className="ad-icon" onClick={() => openEdit(r)}>
                     <Icon name="edit" />
                   </button>
@@ -361,6 +374,7 @@ const handleStatusChange = async (r, newStatus) => {
 
       {/* 🔹 Edit Modal */}
       {modal.open && (
+        <ModalPortal>
         <div className="ad-modal">
           <div className="ad-modal-content ws-card">
             <h3>Edit Credit Pack</h3>
@@ -434,35 +448,42 @@ const handleStatusChange = async (r, newStatus) => {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* 🔹 Add Modal */}
-      {addModal && (
-        <div className="ad-modal">
-          <div className="ad-modal-content ws-card">
-            <h3>Add Credit Pack</h3>
-            <AddCreditPackForm onCancel={() => setAddModal(false)} onSubmit={handleAdd} />
-          </div>
-        </div>
-      )}
+{addModal && (
+  <ModalPortal>
+    <div className="ad-modal">
+      <div className="ad-modal-content ws-card">
+        <h3>Add Credit Pack</h3>
+        <AddCreditPackForm onCancel={() => setAddModal(false)} onSubmit={handleAdd} />
+      </div>
+    </div>
+  </ModalPortal>
+)}
+
 
       {/* 🔹 Access Modal */}
-      {noAccessModal.open && (
-        <div className="ad-modal">
-          <div className="ad-modal-content ws-card">
-            <h3>Access Denied</h3>
-            <p>{noAccessModal.message}</p>
-            <div className="modal-actions">
-              <button
-                className="ws-btn primary"
-                onClick={() => setNoAccessModal({ open: false, message: "" })}
-              >
-                OK
-              </button>
-            </div>
-          </div>
+{noAccessModal.open && (
+  <ModalPortal>
+    <div className="ad-modal">
+      <div className="ad-modal-content ws-card">
+        <h3>Access Denied</h3>
+        <p>{noAccessModal.message}</p>
+        <div className="modal-actions">
+          <button
+            className="ws-btn primary"
+            onClick={() => setNoAccessModal({ open: false, message: "" })}
+          >
+            OK
+          </button>
         </div>
-      )}
+      </div>
+    </div>
+  </ModalPortal>
+)}
+
     </section>
   );
 }

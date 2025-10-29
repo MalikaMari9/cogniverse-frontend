@@ -34,7 +34,7 @@ function useTheme() {
 
 /* ============== Reveal Animation Wrapper ============== */
 
-function Reveal({ as: Tag = "div", variant = "fade-up", delay = 0, className = "", children, ...rest }) {
+export function Reveal({ as: Tag = "div", variant = "fade-up", delay = 0, className = "", children, ...rest }) {
   const ref = React.useRef(null);
   React.useEffect(() => {
     const el = ref.current; if (!el) return;
@@ -272,7 +272,7 @@ setTimeout(() => {
                       <input type="checkbox" name="remember" disabled={isLoading}/>
                       <span>Remember me</span>
                     </label>
-                    <a className="link" href="#forgot">Forgot password?<span className="arr">→</span></a>
+                    <a className="link" href="/forgot-password">Forgot password?<span className="arr">→</span></a>
                   </div>
 
                   <button 
@@ -284,16 +284,7 @@ setTimeout(() => {
                     {isLoading ? "Please wait..." : (tab === "login" ? "Log in" : "Create account")}  {/* 🆕 UPDATE text */}
                   </button>
 
-                  {message && (
-                    <div 
-                      className={`toast fade-item ${messageType}`} 
-                      style={{ animationDelay: "300ms" }} 
-                      role="status" 
-                      aria-live="polite"
-                    >
-                      {message}
-                    </div>
-                  )}
+                
 
                   <div className="or fade-item" style={{ animationDelay: "320ms" }}>
                     <span>or continue with</span>
@@ -319,9 +310,21 @@ setTimeout(() => {
         </section>
       </main>
 
+
+      {message && (
+        <div
+          className={`toast ${messageType}`}
+          role="status"
+          aria-live="polite"
+        >
+          {message}
+        </div>
+      )}
+
       <footer className="footer">
         <p>© CogniVerse</p>
       </footer>
+
     </div>
   );
 }

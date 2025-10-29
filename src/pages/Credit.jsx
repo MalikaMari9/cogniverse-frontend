@@ -7,7 +7,7 @@ import NavProduct from "../components/NavProduct";
 import "../profile-nav.css";
 
 import "../credit.css";
-import { getActiveCreditPacks } from "../api/api"; // ✅ backend integration
+import { getActiveCreditPacks , createPaymentSession} from "../api/api"; // ✅ backend integration
 
 // ===============================
 // Theme Hook
@@ -197,17 +197,16 @@ setPacks(sorted);
   };
 
   const handleCloseModal = () => setShowModal(false);
-const handleProceedToPayment = () => {
-  if (selectedPack) {
+const handleProceedToPayment = async () => {
+  if (!selectedPack) return;
+  try {
     console.log("🛒 Selected pack for payment:", selectedPack);
-    const stripeLink = selectedPack.stripe_link;
-    console.log("🔗 Stripe link resolved to:", stripeLink);
-
-    if (stripeLink && stripeLink.startsWith("http")) {
-      window.open(stripeLink, "_blank", "noopener,noreferrer");
-    } else {
-      alert("Payment link not available for this pack.");
-    }
+    const res = await createPaymentSession(selectedPack.id);
+    console.log("✅ Stripe session created:", res);
+    window.location.href = res.checkout_url; // ✅ Redirect user to Stripe Checkout
+  } catch (err) {
+    console.error("❌ Failed to create Stripe session:", err);
+    alert("Failed to start checkout. Please try again later.");
   }
 };
 

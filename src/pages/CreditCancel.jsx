@@ -1,11 +1,8 @@
-import React, { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { verifyPaymentSession } from "../api/api";
+import React from "react";
 import NavProduct from "../components/NavProduct";
 import "../profile-nav.css";
 import "../credit.css";
 
-// 🌓 theme hook (same logic as Credit.jsx)
 function useTheme() {
   const [theme, setTheme] = React.useState(
     () => localStorage.getItem("theme") || "light"
@@ -18,23 +15,8 @@ function useTheme() {
   return { theme, toggle };
 }
 
-export default function CreditSuccess() {
+export default function CreditCancel() {
   const { theme, toggle: toggleTheme } = useTheme();
-  const [params] = useSearchParams();
-  const [status, setStatus] = useState("Verifying your payment...");
-  const sessionId = params.get("session_id");
-
-  useEffect(() => {
-    async function verify() {
-      try {
-        const res = await verifyPaymentSession(sessionId);
-        setStatus(`✅ Payment successful! ${res.credits_added || 0} credits added.`);
-      } catch {
-        setStatus("✅ Payment successful! Credits will appear shortly.");
-      }
-    }
-    if (sessionId) verify();
-  }, [sessionId]);
 
   return (
     <div className="credit-page">
@@ -48,12 +30,13 @@ export default function CreditSuccess() {
       />
 
       <main className="credit-wrap center-card">
-        <div className="success-card ">
-          <h2 className="credit-title">{status}</h2>
-          <p className="credit-sub">Thank you for your purchase!</p>
+        <div className="cancel-card reveal reveal-up">
+          <h2 className="credit-title">❌ Payment Canceled</h2>
+          <p className="credit-sub">
+            Your payment was canceled. No charges were made.
+          </p>
           <button
-            type="button"
-            className="btn primary"
+            className="btn secondary"
             onClick={() => (window.location.href = "/credit")}
           >
             Back to Credit Page

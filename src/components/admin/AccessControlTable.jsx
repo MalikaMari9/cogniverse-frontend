@@ -8,7 +8,7 @@ import {
   updateAccessControl,
 } from "../../api/api";
 import { usePermission } from "../../hooks/usePermission";
-
+import ModalPortal from "./ModalPortal";
 export default function AccessControlTable({ Icon }) {
   const [rows, setRows] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
@@ -42,7 +42,7 @@ export default function AccessControlTable({ Icon }) {
           module_desc: r.module_desc,
           user_access: r.user_access || "none",
           admin_access: r.admin_access || "none",
-          superadmin_access: r.superadmin_access || "none",
+          superadmin_access: "write",
           is_critical: r.is_critical,
           created_at: r.created_at
             ? new Date(r.created_at).toISOString().slice(0, 16).replace("T", " ")
@@ -62,6 +62,11 @@ export default function AccessControlTable({ Icon }) {
   React.useEffect(() => {
     if (!permLoading && canRead) fetchAccessControls();
   }, [permLoading, canRead]);
+
+React.useEffect(() => {
+  const hasModal = modal?.open || noAccessModal?.open;
+  document.body.classList.toggle("modal-open", !!hasModal);
+}, [modal?.open, noAccessModal?.open]);
 
   // ===============================
   // 🔹 HELPER FUNCTIONS
@@ -181,7 +186,7 @@ export default function AccessControlTable({ Icon }) {
   // 🔹 RENDER MAIN
   // ===============================
   return (
-    <div className="adm-card">
+    <section className="ad-card ws-card">
       <header className="adm-head">
         <div className="adm-title">Access Control</div>
         <div className="adm-tools">
@@ -221,8 +226,8 @@ export default function AccessControlTable({ Icon }) {
       {loading ? (
         <div className="adm-empty">Loading access controls…</div>
       ) : (
-        <div className="acx-table-wrap">
-          <table className="acx-table">
+        <div className="ad-table-wrap">
+          <table className="ad-table">
             <thead>
               <tr>
                 <th onClick={() => toggleSort("module_key")}>module_key</th>
@@ -245,24 +250,29 @@ export default function AccessControlTable({ Icon }) {
               ) : (
                 pageRows.map((r) => (
                   <tr key={r.accessID}>
-                    <td className="mono">{r.module_key}</td>
-                    <td>{r.module_desc}</td>
-                    <td>
+                   <td className="mono" data-label="Key" title={r.module_key}>
+  <span className="truncate">{r.module_key}</span>
+</td>
+
+                  <td data-label="Description" className="mono" title={r.module_desc}>
+  <span className="truncate">{r.module_desc || "—"}</span>
+</td>
+                    <td data-label="User Access" className="mono">
                       <span className={`ad-chip ${r.user_access}`}>
                         {r.user_access}
                       </span>
                     </td>
-                    <td>
+                    <td data-label="Admin Access" className="mono">
                       <span className={`ad-chip ${r.admin_access}`}>
                         {r.admin_access}
                       </span>
                     </td>
-                    <td>
+                    <td data-label="Superadmin Access" className="mono">
                       <span className={`ad-chip ${r.superadmin_access}`}>
                         {r.superadmin_access}
                       </span>
                     </td>
-                    <td>
+                    <td data-label="Critical">
                       <label className="acx-switch sm">
                         <input
                           type="checkbox"
@@ -284,8 +294,8 @@ export default function AccessControlTable({ Icon }) {
                         </span>
                       </label>
                     </td>
-                    <td className="mono">{r.updated_at}</td>
-                    <td className="actions">
+                    <td className="mono" data-label="Updated">{r.updated_at}</td>
+                    <td className="mono" data-label="Actions">
                       <button
                         className="ad-icon"
                         title={canWrite ? "Edit" : "View-only"}
@@ -333,6 +343,7 @@ export default function AccessControlTable({ Icon }) {
 
       {/* 🔹 No Access Modal */}
       {noAccessModal.open && (
+        <ModalPortal>
         <div className="ad-modal">
           <div className="ad-modal-content ws-card">
             <h3>Access Denied</h3>
@@ -347,8 +358,10 @@ export default function AccessControlTable({ Icon }) {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
-    </div>
+      
+    </section>
   );
 }
 
@@ -379,23 +392,22 @@ function AccessControlModal({ open, initial, onClose, onSave, ACCESS_LEVELS }) {
   if (!open) return null;
 
   return (
-    <>
-      <div className="ad-backdrop" onClick={onClose} />
-      <div className="ad-modal ws-card">
-        <div className="ad-modal-head">
-          <h3>{form.accessID ? "Edit access rule" : "New access rule"}</h3>
-          <button className="ad-icon" onClick={onClose} aria-label="Close">
-            ✕
-          </button>
-        </div>
-        <form
-          className="ad-form"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!form.module_key) return;
-            onSave(form);
-          }}
-        >
+     <ModalPortal>
+  <div className="ad-modal">
+    <div className="ad-modal-content ws-card">
+      <div className="ad-modal-head">
+        <h3>{form.accessID ? "Edit access rule" : "New access rule"}</h3>
+       
+      </div>
+
+      <form
+        className="ad-form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!form.module_key) return;
+          onSave(form);
+        }}
+      >
           <label>
             <span>module_key</span>
             <input
@@ -413,21 +425,24 @@ function AccessControlModal({ open, initial, onClose, onSave, ACCESS_LEVELS }) {
             />
           </label>
 
-          {["user_access", "admin_access", "superadmin_access"].map((key) => (
-            <label key={key}>
-              <span>{key}</span>
-              <select
-                value={form[key]}
-                onChange={(e) => u(key, e.target.value)}
-              >
-                {ACCESS_LEVELS.map((lvl) => (
-                  <option key={lvl} value={lvl}>
-                    {lvl}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ))}
+{["user_access", "admin_access", "superadmin_access"].map((key) => (
+  <label key={key}>
+    <span>{key}</span>
+    <select
+      value={form[key]}
+      onChange={(e) => u(key, e.target.value)}
+      disabled={key === "superadmin_access"} // 🔒 prevent edits
+      title={key === "superadmin_access" ? "SuperAdmin always has write access" : ""}
+    >
+      {ACCESS_LEVELS.map((lvl) => (
+        <option key={lvl} value={lvl}>
+          {lvl}
+        </option>
+      ))}
+    </select>
+  </label>
+))}
+
 
           <label>
             <span>is_critical</span>
@@ -443,16 +458,17 @@ function AccessControlModal({ open, initial, onClose, onSave, ACCESS_LEVELS }) {
             </label>
           </label>
 
-          <div className="ad-actions">
-            <button type="button" className="ws-btn ghost" onClick={onClose}>
-              Cancel
-            </button>
-            <button className="ws-btn primary" type="submit">
-              Save
-            </button>
-          </div>
-        </form>
-      </div>
-    </>
+  <div className="modal-actions">
+          <button type="button" className="ws-btn ghost" onClick={onClose}>
+            Cancel
+          </button>
+          <button className="ws-btn primary" type="submit">
+            Save
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</ModalPortal>
   );
 }

@@ -16,6 +16,7 @@ import PaymentPage from "./pages/payment.jsx";
 import CreditPage from './pages/Credit.jsx'
 import "./styles.css";
 import CreditSuccess from "./pages/CreditSuccess.jsx";
+import CreditCancel from "./pages/CreditCancel.jsx";
 /* ===============================
    🌍 PUBLIC PAGES
    =============================== */
@@ -27,6 +28,8 @@ import AboutPage from "./pages/About.jsx";
 import AuthPage from "./pages/Auth.jsx";
 import MaintenancePage from "./pages/MaintenancePage.jsx";
 import UnauthorizedPage from "./pages/UnauthorizedPage.jsx";
+import ForgotPasswordPage from "./pages/ForgotPassword.jsx";
+import ResetPasswordPage from "./pages/ResetPassword.jsx";
 /* ===============================
    👤 USER PAGES
    =============================== */
@@ -77,6 +80,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route path="/maintenance" element={<MaintenancePage />} />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
             <Route path="/credit/success" element={<CreditSuccess />} />
+            <Route path="/credit/cancel" element={<CreditCancel />} />
 
           {/* ===============================
               🔐  AUTH
@@ -84,6 +88,10 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/login" element={<AuthPage defaultMode="login" />} />
           <Route path="/signup" element={<AuthPage defaultMode="signup" />} />
+
+          {/* 🆕 Forgot / Reset Password */}
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
 
           {/* ===============================
               👤  USER (PROTECTED)

@@ -542,6 +542,26 @@ const handleAdd = async (input) => {
   try {
     // 1️⃣ Create the agent globally
     const newAgent = await createAgent(input);
+    console.groupCollapsed("[Workstation] Agent added");
+    console.log("Agent ID:", newAgent.agentid);
+    console.log("Name:", newAgent.agentname);
+    console.log("Personality:", newAgent.agentpersonality);
+    if (Array.isArray(newAgent.agentskill) && newAgent.agentskill.length) {
+      console.log("Skills:", newAgent.agentskill.join(", "));
+    }
+    if (Array.isArray(newAgent.agentconstraints) && newAgent.agentconstraints.length) {
+      console.log("Constraints:", newAgent.agentconstraints.join(", "));
+    }
+    if (Array.isArray(newAgent.agentquirk) && newAgent.agentquirk.length) {
+      console.log("Quirks:", newAgent.agentquirk.join(", "));
+    }
+    if (newAgent.agentmotivation) {
+      console.log("Motivation:", newAgent.agentmotivation);
+    }
+    if (newAgent.agentbiography) {
+      console.log("Biography:", newAgent.agentbiography);
+    }
+    console.groupEnd();
     setAgents((prev) => [...prev, newAgent]);
 
     // 2️⃣ Immediately link it to this project
@@ -554,7 +574,8 @@ const handleAdd = async (input) => {
           agentsnapshot: newAgent,
           status: "active",
         });
-        console.log(`✅ Auto-linked new agent ${newAgent.agentname} → project ${projectID}`);
+        console.info(`[Workstation] Linked agent ${newAgent.agentname} (ID ${newAgent.agentid}) to project ${projectID}`);
+        console.log(`?o. Auto-linked new agent ${newAgent.agentname} ?+' project ${projectID}`);
       } catch (linkErr) {
         console.warn("⚠️ Failed to auto-link new agent:", linkErr);
       }
@@ -565,6 +586,7 @@ const handleAdd = async (input) => {
 
     // 4️⃣ Close modal
     setOpenModal(false);
+    toast.success(`Agent "${newAgent.agentname}" added`);
   } catch (err) {
    
     toast.error("Error creating agent: " + err.message);
@@ -834,3 +856,6 @@ export { SvgIcon, AgentCard, AgentModal, AgentViewModal };
 // ✅ Default export (guarded version)
 const GuardedWorkstation = withMaintenanceGuard(WorkstationPage, "Workstation");
 export default GuardedWorkstation;
+
+
+

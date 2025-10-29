@@ -23,6 +23,7 @@ export default function SystemLogTable() {
     open: false,
     message: "",
   });
+const [debouncedQ, setDebouncedQ] = React.useState("");
 
   // NEW: Client modal state
   const [clientModal, setClientModal] = React.useState({
@@ -58,7 +59,10 @@ export default function SystemLogTable() {
       setLoading(true);
       setError(null);
 
-      const params = { page: pageParam }; // ✅ no limit — backend picks from config
+      const params = { 
+  page: pageParam,
+    ...(debouncedQ && { q: debouncedQ }),
+ };
       const res = await getSystemLogs(params);
 
       setRows(res.items || []);
@@ -75,11 +79,23 @@ export default function SystemLogTable() {
   };
 
   React.useEffect(() => {
-    if (!permLoading && canRead) loadLogs(page);
-  }, [permLoading, canRead, page]);
+  const handler = setTimeout(() => setDebouncedQ(q), 500);
+  return () => clearTimeout(handler);
+}, [q]);
 
   React.useEffect(() => {
-    document.body.classList.toggle("modal-open", noAccessModal.open || clientModal.open);
+    if (!permLoading && canRead) loadLogs(page);
+  }, [permLoading, canRead, page]);
+React.useEffect(() => {
+  if (!permLoading && canRead) {
+    setPage(1);
+    loadLogs(1);
+  }
+}, [debouncedQ, action, status, from, to]);
+
+
+  React.useEffect(() => {
+    document.body.classList.toggle("modal-open", !!(noAccessModal.open || clientModal.open));
   }, [noAccessModal.open, clientModal.open]); // NEW: include clientModal
 
   // ===============================
@@ -132,25 +148,7 @@ export default function SystemLogTable() {
   // ===============================
   // 🔹 FILTERS / SORT / PAGINATION
   // ===============================
-  const filtered = rows.filter((r) => {
-    if (q) {
-      const hay = `${r.logid} ${r.action_type} ${r.username} ${r.userid} ${r.details} ${r.ip_address} ${r.browser_info}`.toLowerCase();
-      if (!hay.includes(q.toLowerCase())) return false;
-    }
-    if (action !== "all" && r.action_type !== action) return false;
-    if (status !== "all" && r.status !== status) return false;
-    if (from && new Date(r.created_at) < new Date(from)) return false;
-    if (to && new Date(r.created_at) > new Date(to)) return false;
-    return true;
-  });
-
-  const sorted = [...filtered].sort((a, b) => {
-    const dir = sortDir === "asc" ? 1 : -1;
-    const A = a[sortBy],
-      B = b[sortBy];
-    if (sortBy === "created_at") return (new Date(A) - new Date(B)) * dir;
-    return String(A).localeCompare(String(B)) * dir;
-  });
+ 
 
   const safePage = Math.min(page, totalPages);
   const pageRows = rows; // backend already paginated
@@ -188,7 +186,7 @@ export default function SystemLogTable() {
       "created_at",
     ];
     const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-    const body = sorted.map((r) => header.map((h) => esc(r[h])).join(",")).join("\n");
+    const body = rows.map((r) => header.map((h) => esc(r[h])).join(",")).join("\n");
     const csv = header.join(",") + "\n" + body;
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);

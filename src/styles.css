@@ -23,10 +23,28 @@
   --shadow: 0 10px 30px rgba(0,0,0,.6);
 }
 
-/* Stop overscroll bounce at the viewport */
-html, body {
-  overscroll-behavior: none;        /* Chrome/Edge/FF + modern Safari */
+
+
+/* OPTIONAL: background-attachment:fixed on body can fight compositing on Chrome.
+   You already paint the galaxy on fixed pseudo-elements, so this is safe to remove. */
+
+.app::before,
+.app::after{
+  position: fixed;
+  inset: 0;                /* or your current inset with bleed */
+  pointer-events: none;
+  z-index: -1;             /* below content */
 }
+html, body, #root { height: 100%; }
+html, body { margin: 0; overflow-x: clip; }
+/* Final guard: fill the visible viewport on Chrome/Edge/Safari */
+.app{ position: relative; min-height: 100svh !important; overflow-x: clip; }
+
+
+
+
+
+
 
 /* -------------------------------------------------
    GALAXY BACKGROUND (light + dark, no wheel changes)
@@ -38,11 +56,9 @@ body{
   background: var(--bg);
   color: var(--text);
   font-family: 'Poppins', system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
-  background-attachment: fixed;
 }
 
 /* 2) Make the app a stacking context and host the space layers */
-.app{ position: relative; min-height:100%; overflow-x: clip; }
 
 /* 3) Nebula layer (slow drift) */
 .app::before{
@@ -147,10 +163,14 @@ body{
     var(--bg); */
   color: var(--text);
   font-family: 'Poppins', system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
-  background-attachment: fixed;
 }
 
-.app{ min-height:100%; }
+
+
+
+
+
+
 
 /* NAVBAR */
 .nav{
@@ -259,6 +279,255 @@ body{
   font-weight:600;
   filter: drop-shadow(0 6px 14px rgba(122,92,244,.5));
 }
+
+/* ------------------ Bottom Mobile Tab Bar ------------------ */
+/* Hide the bottom bar on desktop; show under 720px */
+.bottom-nav{ display:none; }
+
+@supports (padding: max(0px)) {
+  .safe-bottom{ padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+}
+
+@media (max-width: 720px){
+  /* Hide desktop links/actions so the top bar stays clean */
+  .nav .links, .nav .actions { display:none; }
+  .nav { position: sticky; top: 0; }
+
+  .bottom-nav{
+    display:block;
+    position: fixed;
+    left: 0; right: 0;
+    bottom: 0;
+    z-index: 60;
+    padding-bottom: max(6px, env(safe-area-inset-bottom)); /* iOS safe area */
+  }
+
+  /* Rounded white card that holds the tabs */
+  .bottom-shell{
+    margin: 0 auto;
+    width: min(560px, 92vw);
+    background: rgba(255,255,255,.95);
+    border: 1px solid rgba(0,0,0,.06);
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.18);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    padding: 10px 8px;
+  }
+  [data-theme="dark"] .bottom-shell{
+    background: rgba(22,22,24,.86);
+    border-color: rgba(255,255,255,.08);
+    box-shadow: 0 10px 30px rgba(0,0,0,.55);
+  }
+
+  .bottom-item{
+    position: relative;
+    display: grid;
+    place-items: center;
+    text-decoration: none;
+    padding: 8px 4px 6px;
+    border-radius: 12px;
+    color: var(--text);
+    opacity: 1;
+    gap: 4px;
+    min-width: 0; /* prevent overflow on tiny screens */
+  }
+
+  .bottom-item .icon-wrap{
+    display:grid; place-items:center;
+    width: 28px; height: 28px;
+  }
+
+  .bottom-item .label{
+    font-size: 12px;
+    line-height: 1;
+    white-space: nowrap;
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .bottom-item:hover{ opacity:1; }
+
+  /* Active state: soft pill behind the icon+label */
+  .bottom-item.active{
+    font-weight: 600;
+    opacity: 1;
+  }
+  .bottom-item .ink{
+    position:absolute;
+    inset: 2px;
+    border-radius: 12px;
+    background: linear-gradient(90deg, rgba(138,99,255,.18), rgba(0,194,255,.18));
+    pointer-events:none;
+    z-index:-1;
+  }
+  [data-theme="dark"] .bottom-item .ink{
+    background: linear-gradient(90deg, rgba(138,99,255,.22), rgba(0,194,255,.22));
+  }
+
+  /* iOS-like grabber bar */
+  .grabber{
+    margin: 10px auto 2px;
+    width: min(120px, 40vw);
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(0,0,0,.18);
+  }
+  [data-theme="dark"] .grabber{ background: rgba(255,255,255,.22); }
+
+  /* Make text/icon scale on very small screens (e.g., 320px) */
+  @media (max-width: 380px){
+    .bottom-item .label{ font-size: 11px; }
+    .bottom-item .icon-wrap{ width: 24px; height: 24px; }
+  }
+}
+
+/* Mobile floating theme toggle (top-right) */
+.mobile-toggle { display:none; }
+
+@media (max-width: 720px){
+  .mobile-toggle{
+    position: fixed;
+    top: max(10px, env(safe-area-inset-top));
+    right: max(12px, env(safe-area-inset-right));
+    z-index: 70; /* above the content & bottom bar */
+    display: block;
+  }
+
+  /* Size the pill a bit smaller on phones */
+  .mobile-toggle .toggle{
+    width: 56px;
+    height: 28px;
+    box-shadow: 0 6px 16px rgba(0,0,0,.18);
+  }
+  .mobile-toggle .toggle::after{
+    width: 22px; height: 22px;
+  }
+  .mobile-toggle .toggle.dark::after{ transform: translateX(28px); }
+}
+
+/* Optional: slight hover lift (keeps your existing gradient) */
+@media (hover:hover){
+  .mobile-toggle .toggle:hover{ transform: translateY(-1px); }
+}
+
+
+/* Mobile floating OFFER pill (top-right, under the theme toggle) */
+.mobile-offer { display:none; }
+
+@media (max-width: 720px){
+  .mobile-offer{
+    position: fixed;
+    /* place it just below the toggle; respect safe area */
+    top: calc(max(10px, env(safe-area-inset-top)) + 44px);
+    right: max(12px, env(safe-area-inset-right));
+    z-index: 70;
+    display: block;
+  }
+
+  /* reuse .offer styles but scale them for phones */
+  .offer.offer-mobile{
+    padding: 8px 14px;
+    font-size: 13px;
+    border-radius: 999px;
+    box-shadow: 0 6px 16px rgba(0,0,0,.18);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Mobile utilities row (top-right) */
+.mobile-utilities { display:none; }
+
+@media (max-width: 720px){
+  .mobile-utilities{
+    position: fixed;
+    top: max(10px, env(safe-area-inset-top));
+    right: max(12px, env(safe-area-inset-right));
+    z-index: 70;
+    display: inline-flex;        /* same row */
+    align-items: center;
+    gap: 10px;                   /* space between toggle and Offer */
+  }
+
+  /* compact sizes for phones */
+  .mobile-utilities .toggle{
+    width: 56px;
+    height: 28px;
+    box-shadow: 0 6px 16px rgba(0,0,0,.18);
+  }
+  .mobile-utilities .toggle::after{
+    width: 22px; height: 22px;
+  }
+  .mobile-utilities .toggle.dark::after{ transform: translateX(28px); }
+
+  .mobile-utilities .offer.offer-mobile{
+    padding: 8px 14px;
+    font-size: 13px;
+    border-radius: 999px;
+    box-shadow: 0 6px 16px rgba(0,0,0,.18);
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 720px){
+  .nav .links, .nav .actions { display:none; }  /* hides Login */
+}
+
+/* Desktop/Login pill (sits next to Offer) */
+.login{
+  padding: 9px 16px;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 600;
+  color: var(--text);
+  background: rgba(255,255,255,.6);
+  border: 1px solid rgba(0,0,0,.08);
+  box-shadow: var(--shadow);
+}
+[data-theme='dark'] .login{
+  background: rgba(0,0,0,.35);
+  border-color: rgba(255,255,255,.12);
+  color: #fff;
+}
+
+/* Mobile utilities row (already exists) – add room for Login */
+@media (max-width: 720px){
+  .mobile-utilities{
+    gap: 10px; /* keep it tidy with 3 items */
+  }
+
+  /* Mobile Offer + Login pills */
+  .offer.offer-mobile,
+  .login.login-mobile{
+    padding: 8px 14px;
+    font-size: 13px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 16px rgba(0,0,0,.18);
+    white-space: nowrap;
+  }
+
+  /* Differentiate Login from Offer (subtle glass) */
+  .login.login-mobile{
+    background: rgba(255,255,255,.75);
+    border: 1px solid rgba(0,0,0,.08);
+    color: var(--text);
+  }
+  [data-theme='dark'] .login.login-mobile{
+    background: rgba(16,16,18,.6);
+    border-color: rgba(255,255,255,.12);
+    color: #fff;
+  }
+}
+
+
+
 
 /* HERO */
 .hero{
@@ -796,28 +1065,7 @@ body{
 */
 
 
-/* ===============================
-   Rescue for mid-wide windows only
-   (>980px but not full desktop)
-   — leave your default & mobile rules alone
-   =============================== */
-  @media (max-width: 980px) and (min-width: 821px){
 
-  /* clamp edge pills to the container so they don't go off-screen */
-  .info-pill.left        { left: 0 !important;  top: 26% !important; right:auto !important; }
-  .info-pill.right       { right: 0 !important; top: 26% !important; left:auto !important; }
-  .info-pill.lower.left  { left: 0 !important;  bottom: 16% !important; top:auto !important; right:auto !important; }
-  .info-pill.lower.right { right: 0 !important; bottom: 16% !important; top:auto !important; left:auto !important; }
-
-  /* make buttons & glass a touch narrower so they don’t clip on small screens */
-  .info-pill .pill{
-    min-width: clamp(200px, 34vw, 260px);
-    padding: 12px 18px;
-  }
-  .info-pill .glass{
-    width: clamp(240px, 40vw, 360px);
-  }
-}
 
 
 
@@ -862,83 +1110,388 @@ body{
 
 
 
-/* =========================
-   Responsive (≤ 820px)
-========================= */
-@media (max-width: 820px) {
 
-  /* Keep graph area compact */
-  .features-wrap .center{ aspect-ratio:auto; padding: 28px 0 16px; }
 
-  /* 1) Put all pills into one horizontal scroll row */
-  .pill-row{
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    justify-content: flex-start;
-    overflow-x: auto;
-    overflow-y: visible;
-    padding: 6px 12px 2px;
-    margin: 8px auto 0;
-    width: 100%;
-    -webkit-overflow-scrolling: touch;
-    scroll-snap-type: x proximity;
+
+/* =========================================================
+   CORE — keep arena square & rings circular at all widths
+========================================================= */
+.features-wrap .center{
+  position: relative;
+  width: min(760px, 92vw);
+  aspect-ratio: 1 / 1;
+}
+.tech-ring .ring{ width: 84%; height: 84%; }
+.tech-ring .r2 { width: 68%; height: 68%; }
+.tech-ring .r3 { width: 52%; height: 52%; }
+.tech-ring .r4 { width: 36%; height: 36%; }
+
+/* popover must never exceed viewport */
+.info-pill .glass{
+  max-width: min(var(--glass-w, 520px), calc(100vw - 28px));
+}
+/* cancel big desktop nudges on smaller screens */
+@media (max-width: 1200px){
+  .info-pill{ --glass-nudge-x: 0px; --glass-nudge-y: 0px; }
+}
+/* no accidental horizontal scrolling */
+.app{ overflow-x: clip; }
+
+
+/* =========================================================
+   LAPTOP (981–1199) — slightly tighter edges
+========================================================= */
+@media (min-width: 981px) and (max-width: 1199px){
+  .features-wrap .center{ width: min(680px, 94vw); aspect-ratio: 1 / 1; }
+
+  .pill-row{ position: absolute; inset: 0; }
+  .pill-row .info-pill{ position: absolute; }
+  .info-pill .pill{  min-width: clamp(120px, 16vw, 200px);   /* ↓ 54vw → 40vw makes pills narrower */
+  padding: 8px 12px;                      /* tighter padding */
+    border-radius: 14px; }
+
+  .info-pill.mid{         left: 33.3%; top: 2%;  transform: translateX(-50%); }
+  .info-pill.left{        left: 0;   top: 28%; }
+  .info-pill.right{       right: 0;  top: 28%; }
+  .info-pill.lower.left{  left: 0;   bottom: 16%; top:auto; }
+  .info-pill.lower.right{ right: 0;  bottom: 16%; top:auto; }
+
+  .info-pill .pill{  min-width: clamp(190px, 34vw, 260px); }
+  .info-pill .glass{ width: clamp(240px, 40vw, 380px); max-width: calc(100vw - 32px); }
+
+  .tech-ring .ring{ width:86%; height:86%; }
+  .tech-ring .r2 { width:70%; height:70%; }
+  .tech-ring .r3 { width:54%; height:54%; }
+  .tech-ring .r4 { width:38%; height:38%; }
+}
+
+/* =========================================================
+   SMALL LAPTOP / LARGE TABLET LANDSCAPE (841–980)
+========================================================= */
+
+
+
+/* =========================================================
+   TABLET PORTRAIT (840 → 721)
+   keep pills around ring; keep ring circular
+========================================================= */
+@media (max-width: 980px) and (min-width: 721px){
+  .features-wrap .center{
+    width: min(640px, 94vw);
+    aspect-ratio: 1 / 1 !important;
   }
-  .pill-row::-webkit-scrollbar{ height: 8px; }
-  .pill-row::-webkit-scrollbar-thumb{ background: rgba(255,255,255,.18); border-radius: 999px; }
+
+  /* NO strip layout; position pills around the ring */
+  .pill-row{ position: static !important; display: block; overflow: visible; padding: 0; margin: 0; }
+  .pill-row .info-pill{ position: absolute !important; margin: 0; }
+
+  .info-pill .pill{  min-width: clamp(120px, 16vw, 200px);   /* ↓ 54vw → 40vw makes pills narrower */
+  padding: 8px 12px;                      /* tighter padding */
+    border-radius: 14px; }
+  .info-pill .glass{ width: min(48vw, 420px); max-width: calc(100vw - 28px); }
+
+  .info-pill.mid{         left: 37%; top: 10%;  transform: translateX(-50%); }
+  .info-pill.left{        left: 4%;  top: 30%; }
+  .info-pill.right{       right:4%;  top: 30%; }
+  .info-pill.lower.left{  left: 8%;  bottom: 24%; top:auto; }
+  .info-pill.lower.right{ right:8%;  bottom: 24%; top:auto; }
+
+  /* circles not ovals */
+  .tech-ring .ring{ width: 67% !important; height: 67% !important; border-width: 2px; }
+  .tech-ring .r2 { width: 55% !important; height: 55% !important; }
+  .tech-ring .r3 { width: 39% !important; height: 39% !important; }
+  .tech-ring .r4 { width: 23% !important; height: 23% !important; }
+}
+/* DEBUG: show/locate the MID pill in 840→721 */
+@media (max-width: 840px) and (min-width: 721px){
+
+
+
+  /* let pills position inside the arena */
+  .pill-row{
+    position: absolute !important;
+    inset: 0 !important;
+    display: block !important;
+    overflow: visible !important;
+    z-index: 5;
+  }
 
   .pill-row .info-pill{
-    position: static !important;  /* no absolute on phones */
-    flex: 0 0 auto;
-    display: inline-flex;
-    scroll-snap-align: center;
-    margin: 0;
-  }
-  .pill-row .pill{
-    min-width: clamp(200px, 64vw, 260px);
-    padding: 12px 18px;
-    border-radius: 14px;
-  }
-  .pill-row .pill strong{
-    font-size: clamp(16px, 4.6vw, 18px);
-    line-height: 1.2;
+    position: absolute !important;
+    z-index: 6;
   }
 
-  /* 2) Show text in a bottom popover (doesn't cover waifu/graph) */
-  .pill-row .glass{
-    position: fixed;             /* detach from graph */
-    left: 50%;
-    bottom: clamp(12px, 6vh, 28px);
-    transform: translate(-50%, 12px) scale(.98);
-    width: min(92vw, 520px);
-    max-height: 68vh;            /* scroll if long */
-    overflow: auto;
-    padding: 14px 16px;
-    border-radius: 16px;
-    opacity: 0;
-    pointer-events: none;
-    z-index: 60;
-    transition: opacity .25s ease, transform .25s ease;
-    backdrop-filter: blur(14px) brightness(.90) contrast(.94);
-    background: radial-gradient(120% 120% at 20% 10%, rgba(255,255,255,.85), rgba(255,255,255,.50));
-    border: 1px solid rgba(255,255,255,.20);
-    box-shadow: 0 18px 36px rgba(0,0,0,.28);
-    padding-bottom: calc(16px + env(safe-area-inset-bottom)); /* iOS home bar spacing */
-  }
-  .pill-row .glass::before{
-    content:"";
-    position:absolute; inset:0; border-radius:inherit;
-    background: linear-gradient(180deg, rgba(12,16,24,.50), rgba(12,16,24,.40));
-  }
-  .pill-row .glass > *{ position: relative; z-index: 1; }
+ 
 
-  .pill-row .info-pill:focus-within .glass,
-  .pill-row .info-pill:hover .glass{
-    opacity: 1;
-    pointer-events: auto;
-    transform: translate(-50%, 0) scale(1);
+  /* if reveal animation keeps it invisible, un-hide just this family */
+  .pill-row .info-pill.mid.reveal{
+    opacity: 1 !important; transform: none !important;
   }
 }
+
+/* =========================================================
+   PHONES (≤ 720)
+   pills stay around ring; popover clamped to viewport
+========================================================= */
+@media (max-width: 720px){
+  .features-wrap .center{
+    width: min(520px, 96vw);
+    aspect-ratio: 1 / 1 !important;
+  }
+
+  /* ensure row layout is OFF on phones */
+  .pill-row{
+    position: static !important;
+    display: block !important;
+    overflow: visible;
+    padding: 0; margin: 0;
+  }
+  .pill-row .info-pill{ position: absolute !important; margin: 0; }
+
+  .info-pill .pill{
+    min-width: clamp(120px, 16vw, 200px);   /* ↓ 54vw → 40vw makes pills narrower */
+  padding: 8px 12px;                      /* tighter padding */
+    border-radius: 14px;
+  }
+  .info-pill .glass{
+    width: min(90vw, 340px);
+    max-width: min(var(--glass-w, 340px), calc(100vw - 28px));
+  }
+
+  /* positions — phone */
+  .info-pill.mid{         left: 37%; top: 10%;  transform: translateX(-50%); }
+  .info-pill.left{        left: 5%;  top: 30%; }
+  .info-pill.right{       right:5%;  top: 30%; }
+  .info-pill.lower.left{  left: 9%;  bottom: 25%; top:auto; }
+  .info-pill.lower.right{ right:9%;  bottom: 25%; top:auto; }
+
+  /* circles not ovals */
+  .tech-ring .ring{ width: 62% !important; height: 62% !important; border-width: 2px; }
+  .tech-ring .r2 { width: 50% !important; height: 50% !important; }
+  .tech-ring .r3 { width: 34% !important; height: 34% !important; }
+  .tech-ring .r4 { width: 18% !important; height: 18% !important; }
+}
+
+
+
+
+
+
+
+
+/* ---------------------------------------------------------
+   Laptops (981–1439px)
+--------------------------------------------------------- */
+@media (min-width: 981px) and (max-width: 1439px){
+  /* glass sits ABOVE the pill, centered by default */
+  .info-pill .glass{
+    position: absolute;
+    top: auto;
+    bottom: calc(100% + 12px);
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    max-width: min(44vw, 480px);
+    font-size: clamp(14px, 0.95vw, 15.5px);
+    line-height: 1.58;
+  }
+  /* keep left/right edges inside the viewport */
+  .info-pill.left .glass{ left: 0; right: auto; transform: none; }
+  .info-pill.right .glass{ right: 0; left: auto; transform: none; }
+  /* keep “lower” pills showing upward as well */
+  .info-pill.lower.left .glass,
+  .info-pill.lower.right .glass{ bottom: calc(100% + 12px); }
+
+  /* override base reveal so it doesn’t force top/-50% translate */
+  .info-pill:hover .glass,
+  .info-pill:focus-within .glass{
+    opacity: 1;
+    top: auto;
+    bottom: calc(100% + 12px);
+    transform: translateX(-50%);
+  }
+  .info-pill.left:hover .glass,
+  .info-pill.left:focus-within .glass{ left: 0; transform: none; }
+  .info-pill.right:hover .glass,
+  .info-pill.right:focus-within .glass{ right: 0; transform: none; }
+
+  /* (optional) pill title size in this band */
+  .info-pill .pill strong{ font-size: clamp(14px, 0.95vw, 18px); }
+
+
+  .info-pill.mid .glass{
+  position: absolute;
+  top: calc(100% + 12px);
+  bottom: auto;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  max-width: min(46vw, 520px);
+  z-index: 10;
+}
+.info-pill.mid:hover .glass,
+.info-pill.mid:focus-within .glass{
+  opacity: 1;
+  top: calc(100% + 12px);
+  bottom: auto;
+  transform: translateX(-50%);
+}
+
+}
+
+/* ---------------------------------------------------------
+   Tablet portrait band (980–721px)
+--------------------------------------------------------- */
+@media (max-width: 980px) and (min-width: 721px){
+  /* glass above pill; clamp inside viewport */
+  .info-pill .glass{
+    position: absolute;
+    top: auto;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    max-width: calc(100vw - 28px);
+    font-size: 14px;
+    line-height: 1.55;
+    max-height: 56vh;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .info-pill.left .glass{ left: 0; right: auto; transform: none; }
+  .info-pill.right .glass{ right: 0; left: auto; transform: none; }
+  .info-pill.lower.left .glass,
+  .info-pill.lower.right .glass{ bottom: calc(100% + 10px); }
+
+  .info-pill:hover .glass,
+  .info-pill:focus-within .glass{
+    opacity: 1;
+    top: auto;
+    bottom: calc(100% + 10px);
+    transform: translateX(-50%);
+  }
+  .info-pill.left:hover .glass,
+  .info-pill.left:focus-within .glass{ left: 0; transform: none; }
+  .info-pill.right:hover .glass,
+  .info-pill.right:focus-within .glass{ right: 0; transform: none; }
+
+  .info-pill .pill strong{ font-size: 14px; }
+
+  .info-pill.mid .glass{
+  position: absolute;
+  top: calc(100% + 12px);
+  bottom: auto;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  max-width: min(46vw, 520px);
+  z-index: 10;
+}
+.info-pill.mid:hover .glass,
+.info-pill.mid:focus-within .glass{
+  opacity: 1;
+  top: calc(100% + 12px);
+  bottom: auto;
+  transform: translateX(-50%);
+}
+
+}
+
+/* ---------------------------------------------------------
+   Phones (≤ 720px)
+   — put panel BELOW the pill (touch-friendly, no overflow)
+--------------------------------------------------------- */
+@media (max-width: 720px){
+  .info-pill .glass{
+    margin-top: 10px;
+    transform: none;
+    width: min(84vw, 320px);
+    font-size: 13.25px;
+    line-height: 1.50;
+    max-height: 52vh;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 12px 14px;
+  }
+  /* reveal: only fade in; do NOT move */
+  .info-pill:hover .glass,
+  .info-pill:focus-within .glass{
+    opacity: 1;
+    transform: none;
+  }
+
+  .info-pill .pill strong{ font-size: 13.5px; }
+
+
+
+   .info-pill.left .glass{ left: 0; right: auto; transform: none; }
+  .info-pill.right .glass{ right: 0; left: auto; transform: none; }
+  
+  
+  .info-pill:hover .glass,
+  .info-pill:focus-within .glass{
+    opacity: 1;
+    top: auto;
+    bottom: calc(100% + 10px);
+    transform: translateX(-50%);
+  }
+  .info-pill.left:hover .glass,
+  .info-pill.left:focus-within .glass{ left: 0; transform: none; }
+  .info-pill.right:hover .glass,
+  .info-pill.right:focus-within .glass{ right: 0; transform: none; }
+
+  .info-pill .pill strong{ font-size: 14px; }
+
+  .info-pill.mid .glass{
+  position: absolute;
+  top: calc(100% + 12px);
+  bottom: auto;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  max-width: min(46vw, 520px);
+  z-index: 10;
+}
+.info-pill.mid:hover .glass,
+.info-pill.mid:focus-within .glass{
+  opacity: 1;
+  top: calc(100% + 12px);
+  bottom: auto;
+  transform: translateX(-50%);
+}
+
+}
+
+/* ---------------------------------------------------------
+   Small phones (≤ 480px)
+--------------------------------------------------------- */
+@media (max-width: 480px){
+  .info-pill .glass{
+    font-size: 12.5px;
+    line-height: 1.45;
+    width: min(90vw, 300px);
+  }
+  .info-pill .pill strong{ font-size: 13px; }
+}
+
+
+
+
+/* z-fix: keep info-pill glass in front of the waifu at all sizes */
+.pill-row{ z-index: 20 !important; }          /* the whole pill layer */
+.info-pill{ z-index: 30 !important; }          /* each pill container */
+.info-pill .glass{ z-index: 40 !important; }   /* the tooltip/panel itself */
+
+
+
+
+
+
+
+
+
+
+
 
 /* Waifu (transparent PNG) — gentle float + tilt + glow */
 .waifu-wrap{
@@ -973,10 +1526,38 @@ body{
   .waifu{ animation: none }
 }
 
-/* Responsive touch-up */
-@media (max-width: 820px){
-  .waifu-wrap{ width: clamp(180px, 40vw, 260px); }
+/* XL desktops */
+@media (min-width: 1440px){
+  .waifu-wrap{ width: clamp(320px, 22vw, 440px); }
 }
+
+/* Laptops / large tablets in landscape (981–1439px) */
+@media (max-width: 1439px) and (min-width: 981px){
+  .waifu-wrap{ width: clamp(220px, 24vw, 340px); margin-top: 5%; }
+}
+
+/* Tablet portrait band (840–721px) – matches your pill/ring band */
+@media (max-width: 721px) and (min-width: 980px){
+  .waifu-wrap{ width: clamp(200px, 36vw, 320px); margin-top: 20%; }
+}
+
+/* Phones (≤720px) */
+@media (max-width: 720px){
+  .waifu-wrap{ width: clamp(  80px, 44vw, 200px); margin-top: 20%; }
+}
+
+/* Small phones (≤480px) */
+@media (max-width: 480px){
+  .waifu-wrap{ width: clamp(148px, 56vw, 180px); }
+}
+
+/* Tiny devices (≤360px) */
+@media (max-width: 360px){
+  .waifu-wrap{ width: clamp(150px, 62vw, 250px); }
+}
+
+
+
 
 /* ========= Relationship Graph section ========= */
 .rel-graph{
@@ -1112,7 +1693,14 @@ body{
 }
 
 /* Optional: prevent page width jump when the main page scrollbar toggles */
-html{ scrollbar-gutter: stable both-edges; }
+
+.app{
+  position: relative;
+  overflow-x: clip;
+  min-height: 100vh;      /* fallback */
+  min-height: 100dvh;     /* dynamic viewport */
+  min-height: 100svh;     /* small viewport (mobile UI) */
+}
 
 
 
@@ -1128,33 +1716,307 @@ html{ scrollbar-gutter: stable both-edges; }
   .rel-title{ margin-bottom: 10px; }
 }
 
-/* Constellation image */
+
+/* ===== Relationship table — phones (≤720px) ===== */
+@media (max-width: 720px){
+  .rel-graph{ margin-top: 22px; padding: 0 12px; }
+
+  .table-wrap{
+    border-radius: 12px;
+    padding-bottom: 6px;                 /* space for iOS overlay scrollbar */
+    overflow-x: auto;
+    overflow-y: visible;                 /* never show Y bar */
+    -webkit-overflow-scrolling: touch;
+    scrollbar-gutter: stable both-edges; /* prevents width jump */
+    touch-action: pan-x;                 /* smooth horizontal scroll */
+  }
+
+  /* tighten the table and reduce the min width so the header/cols fit better */
+  .rg-table{ min-width: 560px; }         /* was 680px */
+  
+  /* compact sticky header for readability */
+  .rg-table thead th{
+    position: sticky; top: 0; z-index: 1;
+    padding: 10px 12px;
+    font-size: 13px; line-height: 1.25;
+    backdrop-filter: blur(6px);
+  }
+  
+
+  /* row cells: smaller type + padding */
+  .rg-table tbody td{
+    padding: 10px 12px;
+    font-size: 13px; line-height: 1.45;
+    word-break: break-word;
+  }
+
+  /* disable hover tint on touch */
+  .rg-table tbody tr:hover{ background: transparent; }
+
+  /* chips scale down a touch */
+  .chip{
+    min-width: 26px; height: 22px;
+    padding: 0 8px; font-size: 11px;
+  }
+}
+
+
+
+/* =========================
+   Constellation (node.png)
+   — responsive at all sizes
+========================= */
 .constellation-wrap{
-  width: min(920px, 92vw);
-  margin: 10px auto 8px;
-  margin-left: 10%;
-  margin-bottom: -20%;
+  /* centers the image and gives breathing room from the table above */
+  display: grid;
+  place-items: center;
+  margin: 28px auto 8px;
+  width: 100%;
 }
 
 .constellation-img{
-  width: 80%;
-  height: auto;
   display: block;
-  border-radius: 12px;              /* optional if your image has no rounded corners */
-  filter:
-    drop-shadow(0 10px 24px rgba(0,0,0,.22))
-    drop-shadow(0 2px 8px rgba(0,0,0,.12));
+  max-width: 100%;
+  height: auto;               /* keep natural aspect ratio */
+  width: clamp(680px, 72vw, 1120px);  /* sensible default for desktop */
+  user-select: none;
+  pointer-events: none;       /* never block hover on nearby UI */
 }
 
-/* Slightly brighten on dark mode so it pops */
-[data-theme='dark'] .constellation-img{
-  opacity: .98;
+/* ===== large desktops (≥1440) */
+@media (min-width: 1440px){
+  .constellation-img{
+    width: min(1200px, 68vw);
+  }
 }
+
+/* ===== laptops / big tablets (981–1439) */
+@media (max-width: 1439px) and (min-width: 981px){
+  .constellation-img{
+    width: min(980px, 78vw);
+  }
+}
+
+/* ===== tablet portrait / small laptops (721–980) */
+@media (max-width: 980px) and (min-width: 721px){
+  .constellation-wrap{ margin: 24px auto 6px; }
+  .constellation-img{
+    width: min(820px, 88vw);
+  }
+}
+
+/* ===== phones (≤720) */
+@media (max-width: 720px){
+  .constellation-wrap{ margin: 20px auto 6px; }
+  .constellation-img{
+    width: min(560px, 94vw);
+  }
+}
+
+/* ===== small phones (≤480) */
+@media (max-width: 480px){
+  .constellation-img{
+    width: min(420px, 96vw);
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+/* Safety: never let hover panel exceed viewport width */
+.info-pill .glass{
+  max-width: min(var(--glass-w, 520px), calc(100vw - 28px));
+}
+
+/* Remove big desktop nudges on small screens so popovers can’t clip */
+@media (max-width: 1200px){
+  .info-pill{ --glass-nudge-x: 0px; --glass-nudge-y: 0px; }
+}
+
+
+
+
+/* =========================
+   FIX PACK — rings stay circular; mobile popover visible
+   ========================= */
+
+/* A. Graph container is always a square */
+.features-wrap .center{
+  width: min(760px, 92vw);
+  aspect-ratio: 1 / 1;
+}
+
+/* B. Rings always use equal width/height (no px heights) */
+.tech-ring .ring{ width: 84%; height: 84%; }
+.tech-ring .r2 { width: 68%; height: 68%; }
+.tech-ring .r3 { width: 52%; height: 52%; }
+.tech-ring .r4 { width: 36%; height: 36%; }
+
+/* C. Popover may never be wider than the viewport */
+.info-pill .glass{
+  max-width: min(var(--glass-w, 520px), calc(100vw - 28px));
+}
+
 
 
 
 
 /* ===== Offer Page (clean, unified) ===== */
+
+
+/* =========================
+   Offer page – Sticky CTA
+   ========================= */
+:root{
+  /* tweak if your bottom mobile tabbar height is different */
+  --tabbar-h: 0px;
+}
+
+/* center it on all larger screens */
+.offer-cta{
+  position: fixed !important;      /* take it out of normal flow */
+  left: 50%;                       /* center horizontally */
+  transform: translateX(-50%);
+  bottom: calc(20px + var(--tabbar-h));
+  z-index: 1200;                   /* above bottom nav */
+  
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 10px 14px;
+  border-radius: 999px;
+  width: max-content;              /* hug content */
+  max-width: 92vw;                 /* clamp on small widths */
+
+  backdrop-filter: blur(10px);
+  background: rgba(0,0,0,.35);     /* keeps your existing look */
+  box-shadow: var(--shadow);
+}
+
+/* keep the button clickable even if container overlaps something transparent */
+.offer-cta *{ pointer-events: auto; }
+
+/* Phones (≤720px): raise above tabbar and tighten spacing */
+@media (max-width: 720px){
+  :root{ --tabbar-h: 84px; }       /* set this to your tab bar height */
+  .offer-cta{
+    bottom: calc(16px + var(--tabbar-h) + env(safe-area-inset-bottom));
+    max-width: 94vw;
+    gap: 10px;
+  }
+  .offer-cta .btn{
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+  /* Optional: hide helper text to save room */
+  /* .sticky-cta .muted{ display:none; } */
+}
+
+/* iOS safe area padding if needed */
+@supports (padding: max(0px)){
+  .offer-cta{
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+  }
+}
+
+/* ===== Phones (≤ 720px): float right & expand on tap/hover ===== */
+@media (max-width: 720px){
+  /* wrapper for the countdown + button */
+  .offer-cta, .sticky-cta{
+    position: fixed !important;
+    right: 15px !important;
+    left: auto !important;
+    /* sit above your bottom nav (72px fallback) + safe area */
+    bottom: calc(200px + env(safe-area-inset-bottom) + var(--bottom-nav-h, 72px)) !important;
+
+    z-index: 1200;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    max-width: 88vw;             /* prevents overspill */
+    border-radius: 999px;
+    background: rgba(18,20,32,.78);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    overflow: hidden;             /* lets us “collapse” the text */
+    transform: translateZ(0);     /* mobile Safari flicker fix */
+  }
+
+  /* your button inside (rename if needed) */
+  .offer-cta .btn, .offer-cta .btn{
+    flex: 0 0 auto;
+  }
+
+  /* countdown / label text (collapsed by default) */
+  .offer-cta .timer, .offer-cta .timer{
+    max-width: 0;
+    opacity: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: max-width .28s ease, opacity .22s ease, margin .28s ease;
+  }
+
+  /* expand when hovered or tapped (focus held) */
+  .offer-cta:hover .timer,
+  .offer-cta:focus-within .timer,
+  .offer-cta:hover .timer,
+  .offer-cta:focus-within .timer{
+    max-width: 520px;   /* container still caps it at max-width */
+    opacity: 1;
+    margin-left: 6px;
+  }
+
+  /* tiny pad tweak when open */
+  .offer-cta:hover,
+  .offer-cta:focus-within,
+  .offer-cta:hover,
+  .offer-cta:focus-within{
+    padding-right: 12px;
+  }
+}
+
+/* ===== Light mode for the mobile sticky offer (≤ 720px) ===== */
+@media (max-width: 720px){
+  [data-theme="light"] .offer-cta,
+  [data-theme="light"] .sticky-cta{
+    /* bright, glassy chip */
+    background: rgba(255,255,255,.86);
+    color: var(--text);
+    border: 1px solid rgba(0,0,0,.08);
+    box-shadow: 0 8px 24px rgba(0,0,0,.14);
+    backdrop-filter: saturate(120%) blur(10px);
+  }
+
+  /* countdown text in light theme */
+  [data-theme="light"] .offer-cta .timer,
+  [data-theme="light"] .sticky-cta .timer{
+    color: var(--text);
+    opacity: .95;
+  }
+
+  /* keep the button crisp; no dim filter in light mode */
+  [data-theme="light"] .offer-cta .btn,
+  [data-theme="light"] .sticky-cta .btn{
+    filter: none;
+  }
+
+  /* visible keyboard focus */
+  .offer-cta:focus-visible,
+  .sticky-cta:focus-visible{
+    outline: 2px solid var(--violet);
+    outline-offset: 3px;
+  }
+}
+
 
 /* ---- Layout ---- */
 .offer-page .offer-wrap{
@@ -1672,6 +2534,12 @@ html{ scrollbar-gutter: stable both-edges; }
 
 
 
+
+
+
+
+
+
 /* =========================
    ABOUT PAGE — scoped styles
    ========================= */
@@ -2082,7 +2950,109 @@ html{ scrollbar-gutter: stable both-edges; }
 /* extremely defensive: nothing transparent over the CTA should catch clicks */
 .about-page .cta *{ pointer-events: auto; }
 
+/* =========================
+   Tablet (980–721px) — 3 even columns on one line
+   ========================= */
+@media (max-width: 980px) and (min-width: 721px){
+  /* lay milestones out in three equal columns */
+  .timeline .timeline-track{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    align-items: start;
+    gap: 18px;
+    position: relative;
+  }
 
+  /* keep the horizontal rail at a fixed height near the top */
+  .timeline .timeline-track::before{
+    top: 12px;                 /* place the line where the dots are */
+    height: 4px;
+    left: 0; right: 0;
+  }
+
+  /* center dot + text inside each column */
+  .timeline .timeline-track li{
+    min-width: 0;              /* prevent wrapping to a second row */
+    padding-top: 28px;         /* room for the dot above text */
+    text-align: center;
+  }
+  .timeline .timeline-track li::before{
+    left: 50%;
+    transform: translateX(-50%);
+    top: 12px;
+  }
+}
+
+/* =========================
+   Phones (≤720px) — vertical left rail
+   ========================= */
+/* HISTORY — phone (≤720): vertical rail */
+
+
+/* ===== HISTORY — phones (≤720px): keep 3 items on ONE row ===== */
+@media (max-width: 720px){
+
+  /* 3 equal columns in a single row */
+  .timeline .timeline-track{
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0,1fr));
+    align-items: start;
+    justify-items: center;
+    gap: 10px;                     /* tighter spacing */
+    position: relative;
+    margin-top: 6px;
+  }
+
+  /* horizontal rail near the top (thinner/closer) */
+  .timeline .timeline-track::before{
+    content:"";
+    position:absolute;
+    left: 0; right: 0;
+    top: 10px;                     /* aligns with the dots */
+    height: 3px;                   /* thinner line for phones */
+    background: linear-gradient(90deg, var(--cyan), var(--violet), var(--pink));
+    border-radius: 4px;
+  }
+
+  /* each milestone sits under the rail with a dot centered above */
+  .timeline .timeline-track li{
+    padding-top: 24px;             /* room for the dot */
+    text-align: center;
+    min-width: 0;                  /* prevents odd clipping */
+    overflow: visible;             /* make sure year isn't cropped */
+  }
+  .timeline .timeline-track li::before{
+    content:"";
+    position:absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 6px;                      /* sits on the rail */
+    width: 10px; height: 10px;     /* smaller dot */
+    border-radius: 50%;
+    background: #fff;
+    border: 3px solid var(--violet);
+    box-shadow: 0 0 0 3px rgba(122,92,244,.15);
+  }
+
+  /* smaller, non-wrapping year; keep it on one line */
+  .timeline .t-year{
+    display: block;
+    font-weight: 700;
+    font-size: clamp(13px, 3.8vw, 14px);
+    line-height: 1.05;
+    white-space: nowrap;           /* avoid 20 / 17 split */
+    margin-bottom: 2px;
+  }
+
+  /* note text below, slightly condensed */
+  .timeline .t-note{
+    font-size: clamp(12px, 3.6vw, 13.5px);
+    line-height: 1.35;
+    max-width: 92%;
+    margin: 2px auto 0;
+    word-break: break-word;        /* allow wrap inside each column */
+  }
+}
 
 
 /* ===================== Auth Page (v2 animated) ===================== */

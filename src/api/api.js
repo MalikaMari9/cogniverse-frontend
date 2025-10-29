@@ -266,6 +266,16 @@ export const deleteResult = async (result_id) =>
 export const getResultsByAgentScenarioType = async (projectAgentId, scenarioId, resultType) =>
   (await api.get(`/results/agent/${projectAgentId}/scenario/${scenarioId}/type/${resultType}`)).data;
 
+// ===============================
+// Results — Get by Scenario
+// ===============================
+export async function getResultsByScenario(scenarioid) {
+  const res = await fetch(`/api/results/by-scenario/${scenarioid}`, {
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error("Failed to fetch results by scenario");
+  return await res.json();
+}
 
 
 /* ===============================
@@ -367,7 +377,9 @@ export const deleteConfig = async (config_id) =>
 /* ===============================
    📢 ANNOUNCEMENT ROUTES
 =============================== */
-export const getAnnouncements = async () => (await api.get("/announcements/")).data;
+export const getAnnouncements = async (params = {}) =>
+  (await api.get("/announcements/", { params })).data;
+
 export const createAnnouncement = async (payload) => (await api.post("/announcements/", payload)).data;
 export const updateAnnouncement = async (announcementId, payload) => (await api.put(`/announcements/${announcementId}`, payload)).data;
 export const deleteAnnouncement = async (announcementId) => (await api.delete(`/announcements/${announcementId}`)).data;

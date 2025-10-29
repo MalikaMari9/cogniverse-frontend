@@ -19,34 +19,42 @@ export default function CreditTransactionTable({ Icon }) {
   const [totalPages, setTotalPages] = React.useState(1);
   const [q, setQ] = React.useState("");
   const [status, setStatus] = React.useState("all");
-
+const [debouncedQ, setDebouncedQ] = React.useState("");
   const { canRead, loading: permLoading } = usePermission("CREDIT_TRANSACTIONS");
 
-  // ────────────────────────────────────────────────
-  // 🔹 LOAD TRANSACTIONS
-  // ────────────────────────────────────────────────
-  const loadTransactions = async () => {
-    try {
-      setLoading(true);
-      setError("");
-      const params = { page };
-      const data = await getCreditTransactions(params);
+// ────────────────────────────────────────────────
+// 🔹 LOAD TRANSACTIONS
+// ────────────────────────────────────────────────
+const loadTransactions = async () => {
+  try {
+    setLoading(true);
+    setError("");
+    const params = { page, ...(debouncedQ && { q: debouncedQ }), status };
+    const data = await getCreditTransactions(params);
 
-      setRows(data.items || []);
-      setTotal(data.total || 0);
-      setLimit(data.limit || null);
-      setTotalPages(data.total_pages || 1);
-    } catch (err) {
-      console.error("❌ Failed to load transactions:", err);
-      setError("Failed to load transactions");
-    } finally {
-      setLoading(false);
-    }
-  };
+    setRows(data.items || []);
+    setTotal(data.total || 0);
+    setLimit(data.limit || null);
+    setTotalPages(data.total_pages || 1);
+  } catch (err) {
+    console.error("❌ Failed to load transactions:", err);
+    setError("Failed to load transactions");
+  } finally {
+    setLoading(false);
+  }
+};
 
-  React.useEffect(() => {
-    if (!permLoading && canRead) loadTransactions();
-  }, [permLoading, canRead, page]);
+
+// reload when q or status changes
+React.useEffect(() => {
+  if (!permLoading && canRead) loadTransactions();
+}, [permLoading, canRead, page, debouncedQ, status]);
+
+React.useEffect(() => {
+  const handler = setTimeout(() => setDebouncedQ(q), 500);
+  return () => clearTimeout(handler);
+}, [q]);
+
 
   // ────────────────────────────────────────────────
   // 🔹 FILTERS

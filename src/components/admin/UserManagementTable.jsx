@@ -43,6 +43,7 @@ const [creating, setCreating] = React.useState(false);
   const [q, setQ] = React.useState("");
   const [role, setRole] = React.useState("all");
   const [status, setStatus] = React.useState("all");
+const [debouncedQ, setDebouncedQ] = React.useState("");
 
   // sorting
   const [sortBy, setSortBy] = React.useState("created_at");
@@ -69,10 +70,14 @@ const [openId, setOpenId] = React.useState(null);
       setError(null);
 const params = {
   page,
+  ...(debouncedQ && { q: debouncedQ }),
   ...(role !== "all" && { role }),
   ...(status !== "all" && { status }),
-  // ⚠️ intentionally not sending page_size — backend will use config value
+  // backend will use config limit if not specified
 };
+
+
+
 
 const data = await getAllUsers(params);
 
@@ -101,6 +106,11 @@ finally {
 }, []);
 
 React.useEffect(() => {
+  const handler = setTimeout(() => setDebouncedQ(q), 500);
+  return () => clearTimeout(handler);
+}, [q]);
+
+React.useEffect(() => {
   const hasModal =
     createModal ||
     editModal?.open ||
@@ -110,9 +120,9 @@ React.useEffect(() => {
 }, [createModal, editModal?.open, noAccessModal?.open, alertModal?.open]);
 
 
-  React.useEffect(() => {
-    if (!permLoading && canRead) loadUsers();
-  }, [permLoading, canRead, page, role, status]);
+ React.useEffect(() => {
+  if (!permLoading && canRead) loadUsers();
+}, [permLoading, canRead, page, role, status, debouncedQ]);
 
   // ===============================
   // 🔹 PERMISSION CHECK
@@ -256,21 +266,6 @@ const handleCreateUser = async (e) => {
   // ===============================
   // 🔹 FILTERS / SORT / PAGINATION
   // ===============================
-  const filtered = users.filter((user) => {
-    if (q) {
-      const hay = `${user.username} ${user.email} ${user.role}`.toLowerCase();
-      if (!hay.includes(q.toLowerCase())) return false;
-    }
-    return true;
-  });
-
-  const sorted = [...filtered].sort((a, b) => {
-    const dir = sortDir === "asc" ? 1 : -1;
-    const A = a[sortBy],
-      B = b[sortBy];
-    if (sortBy === "created_at") return (new Date(A) - new Date(B)) * dir;
-    return String(A).localeCompare(String(B)) * dir;
-  });
 
   
   const safePage = Math.min(page, totalPages);
@@ -293,6 +288,8 @@ const handleCreateUser = async (e) => {
       setSortDir("asc");
     }
   };
+  const sorted = users; // backend already returns sorted results
+
 
   // ===============================
   // 🔹 CONDITIONAL RENDERS

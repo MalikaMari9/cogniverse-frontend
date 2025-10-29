@@ -1,4 +1,14 @@
 
+/* Hide scrollbars globally */
+::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+body {
+  overflow-y: scroll; /* keeps layout stable (no shift when toggling) */
+  scrollbar-width: none; /* Firefox */
+}
 
 /* Force sidebar-aware centering for the Add/Edit modal only */
 .ws-card.ws-modal.ws-center-over-content{
@@ -256,6 +266,40 @@
 }
 [data-theme="dark"] .ws-btn.danger:hover {
   background: rgba(255, 75, 75, 0.15);
+}
+
+/* ---------- Top Toolbar ---------- */
+.sc-top-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.sc-current.compact {
+  background: var(--glass);
+  border: 1px solid var(--glass-bdr);
+  padding: 0.6rem 0.9rem;
+  border-radius: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 280px;
+  max-width: 460px;
+}
+
+.sc-cur-title {
+  font-weight: 600;
+  font-size: 0.95em;
+}
+
+.sc-cur-desc {
+  font-size: 0.9em;
+  opacity: 0.8;
+  line-height: 1.3em;
 }
 
 
@@ -1751,4 +1795,63 @@ html, body { height: 100%; overflow-x: hidden; }
 .hub-pagination .ws-btn[disabled] {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+/* ---------- ScenarioHistory modal ---------- */
+.sc-history-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(640px, 90%);
+  max-height: 80vh;
+  overflow-y: auto;
+  border-radius: 1rem;
+  padding: 1.2rem 1.4rem;
+  animation: fadeIn 0.2s ease;
+}
+
+.sc-history-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.8rem;
+}
+
+.sc-history-list li {
+  border-bottom: 1px solid var(--glass-bdr);
+  padding: 0.6rem 0;
+}
+.sc-history-list li:last-child {
+  border-bottom: none;
+}
+.sc-h-title {
+  font-weight: 600;
+  font-size: 1.05em;
+}
+.sc-h-sub {
+  opacity: 0.8;
+  font-size: 0.9em;
+  margin-top: 0.2rem;
+}
+.sc-h-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.4rem;
+  font-size: 0.85em;
+  opacity: 0.7;
+}
+.sc-h-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+.sc-empty {
+  text-align: center;
+  opacity: 0.7;
+  padding: 1rem 0;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translate(-50%, -46%); }
+  to   { opacity: 1; transform: translate(-50%, -50%); }
 }

@@ -190,10 +190,10 @@ function ConstellationImage() {
 export default function FeaturesPage() {
   const { theme, toggle } = useTheme()
   const links = [
-    { label: 'Home', href: '/' },
-    { label: 'Features', href: '/features' },
-    { label: 'Contact', href: '/contact' },
-    { label: 'About us', href: '/about' },
+    { key: 'home',     label: 'Home',     href: '/' },
+  { key: 'features', label: 'Features', href: '/features' },
+  { key: 'contact',  label: 'Contact',  href: '/contact' },
+  { key: 'about',    label: 'About',    href: '/about' }, // label can be "About us", key must be 'about'
   ]
 
   return (

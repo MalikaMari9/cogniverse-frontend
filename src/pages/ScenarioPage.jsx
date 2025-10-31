@@ -47,6 +47,8 @@ const [replaying, setReplaying] = useState(false);
 const [simulation, setSimulation] = useState(null);
 const seenEventIdsRef = useRef(new Set());
 const pollTimerRef = useRef(null);
+const [isPolling, setIsPolling] = useState(false);
+const pollingRef = useRef(false);
 
   // local theme label that always flips correctly
   const [t, setT] = useState(() =>
@@ -95,48 +97,121 @@ const handleRunSimulation = async () => {
     }
 
     // 3) polling
-    const tick = async () => {
-      const { sim: updated, delta } = await pollSimulation(
-        sim.id,
-        seenEventIdsRef.current
-      );
+// 3) polling
+const tick = async () => {
+  // 🧩 skip if a previous tick is still running
+  if (pollingRef.current) return;
+  pollingRef.current = true;
 
-      setSimulation(updated);
+  try {
+    const { sim: updated, delta } = await pollSimulation(
+      sim.id,
+      seenEventIdsRef.current
+    );
 
-      if (delta.length) {
-        // remember
-        for (const d of delta) seenEventIdsRef.current.add(d.id);
-        // append to UI log
-        setLogs((prev) => [
-          ...prev,
-          ...delta.map((e, idx) => ({
-            id: e.id,
-            who: e.actor,
-            turn: (prev.length + 1) + idx,
-            text: e.text,
-          })),
-        ]);
-      }
+    setSimulation(updated);
 
-      const status = String(updated.status || "").toLowerCase();
-      if (["completed", "failed", "stopped"].includes(status)) {
-        clearInterval(pollTimerRef.current);
-        pollTimerRef.current = null;
-        toast.success(`Simulation ${status}`);
-      }
-    };
+    if (delta.length) {
+      // remember
+      for (const d of delta) seenEventIdsRef.current.add(d.id);
+      // append to UI log
+      setLogs((prev) => [
+        ...prev,
+        ...delta.map((e, idx) => ({
+          id: e.id,
+          who: e.actor,
+          turn: prev.length + 1 + idx,
+          text: e.text,
+        })),
+      ]);
+    }
+
+    const status = String(updated.status || "").toLowerCase();
+    if (["completed", "failed", "stopped"].includes(status)) {
+      clearInterval(pollTimerRef.current);
+      pollTimerRef.current = null;
+      setIsPolling(false);
+      toast.success(`Simulation ${status}`);
+    }
+  } catch (err) {
+    console.error("⚠️ Polling failed:", err);
+    toast.error("Polling error");
+  } finally {
+    // 🧩 release guard
+    pollingRef.current = false;
+  }
+};
+
 
     // start / store interval
     if (pollTimerRef.current) clearInterval(pollTimerRef.current);
     pollTimerRef.current = setInterval(tick, 2500);
+    setIsPolling(true);
+
   } catch (err) {
     console.error("❌ Simulation trigger failed:", err);
     toast.error("Failed to trigger simulation");
   }
 };
 
+const handleStopSimulation = useCallback(() => {
+  if (pollTimerRef.current) {
+    clearInterval(pollTimerRef.current);
+    pollTimerRef.current = null;
+    pollingRef.current = false;
+
+  }
+  setIsPolling(false);
+  toast("🛑 Simulation stopped (frontend only)");
+}, []);
+
+// ===============================
+// 🔹 Advance Simulation by One Step
+// ===============================
+const handleAdvance = async () => {
+  if (!simulation?.id) {
+    toast.error("No active simulation to advance.");
+    return;
+  }
+
+  try {
+    toast.loading("Advancing simulation...", { id: "adv" });
+
+    // 1) Call backend
+    const res = await advanceSimulation(simulation.id, { steps: 1 });
+    const updated = res?.simulation ?? res;
+
+    // 2) Update simulation object
+    setSimulation(updated);
+
+    // 3) Merge new events (similar to polling)
+    const allEvents = updated.events || [];
+    const delta = allEvents.filter((e) => !seenEventIdsRef.current.has(e.id));
+
+    if (delta.length) {
+      for (const d of delta) seenEventIdsRef.current.add(d.id);
+      setLogs((prev) => [
+        ...prev,
+        ...delta.map((e, idx) => ({
+          id: e.id,
+          who: e.actor || "System",
+          turn: prev.length + 1 + idx,
+          text: e.summary || e.text || "(no text)",
+        })),
+      ]);
+      toast.success(`Advanced by 1 step (${delta.length} new event${delta.length > 1 ? "s" : ""})`, { id: "adv" });
+    } else {
+      toast.success("Advanced by 1 step (no new events)", { id: "adv" });
+    }
+  } catch (err) {
+    console.error("❌ Advance simulation failed:", err);
+    toast.error("Advance failed", { id: "adv" });
+  }
+};
 
 
+//HERE IS THE STOP SIMULATION, As of now I only stopped fetching APIs calls, I am afraid, it might continue
+//working in the AI server so please check it
 
 
   // ---------------- Bubble Thought Fetcher ----------------
@@ -271,6 +346,15 @@ useEffect(() => {
     fetchScenarios();
   }, []);
 
+  useEffect(() => {
+  return () => {
+    if (pollTimerRef.current) {
+      clearInterval(pollTimerRef.current);
+    }
+  };
+}, []);
+
+
   // ---------------- fake generation + backend save ----------------
   const genLine = (ag, i) => {
     const acts = [
@@ -386,18 +470,37 @@ useEffect(() => {
           >
             {loading ? "Generating..." : "Generate"}
           </button>
-          <button
-  className="ws-btn primary"
-  onClick={handleRunSimulation}
-  disabled={loading}
->
-  Run Simulation
-</button>
+        {!isPolling && (
+  <button
+    className="ws-btn primary"
+    onClick={handleRunSimulation}
+    disabled={loading}
+  >
+    ▶ Run Simulation
+  </button>
+)}
+
+{isPolling && (
+  <button
+    className="ws-btn danger"
+    onClick={handleStopSimulation}
+  >
+    ⏹ Stop Simulation
+  </button>
+)}
+
 {simulation && !["completed", "failed", "stopped"].includes(String(simulation.status).toLowerCase()) && (
   <span className="sc-running">
     ⏳ Running... ({simulation.events?.length || 0} events)
   </span>
 )}
+{simulation && !isPolling && (
+  <button className="ws-btn ghost" onClick={handleAdvance}>
+    ⏩ Advance Step
+  </button>
+)}
+
+
 
 
         </label>

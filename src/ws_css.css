@@ -595,6 +595,9 @@ body[data-theme="dark"]  .ws-backdrop-content,
 .rel-node:hover { stroke: var(--accent, #66aaff); stroke-width: 3; }
 .rel-edge-hit { cursor: pointer; opacity: 0; stroke-width: 15; }
 
+.sc-bubble {
+  white-space: pre-line;
+}
 
 /* Tooltip (same as before) */
 /* .rel-tip { … } remains as you had */
@@ -1345,6 +1348,7 @@ html, body { height: 100%; overflow-x: hidden; }
   display:none !important;
 }
 
+
 /* ---------- Nav right: theme + user ---------- */
 .sc-right{ display:flex; align-items:center; gap:14px; }
 .sc-user{
@@ -1966,4 +1970,136 @@ html, body { height: 100%; overflow-x: hidden; }
   50% {
     border-right: 2px solid var(--accent-color, #4af);
   }
+}
+
+/* ===============================
+   🧠 AgentLogModal — Final Theme Match
+   =============================== */
+
+.agent-log-modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6,10,20,0.55);
+  backdrop-filter: blur(6px) saturate(120%);
+  -webkit-backdrop-filter: blur(6px) saturate(120%);
+  z-index: 2000;
+  animation: fadeIn 0.25s ease;
+}
+
+[data-theme="light"] .agent-log-modal {
+  background: rgba(6,10,20,0.35);
+  backdrop-filter: blur(4px) saturate(115%);
+}
+
+/* modal card */
+.agent-log-content {
+  background: var(--panel-bg, rgba(24,26,34,.96));
+  color: var(--text-color, #e9eef7);
+  border: 1px solid var(--border-color, rgba(255,255,255,.14));
+  border-radius: 16px;
+  box-shadow: 0 22px 46px rgba(0,0,0,.35);
+  width: min(900px, 86vw);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+[data-theme="light"] .agent-log-content {
+  background: rgba(255,255,255,.96);
+  color: #0f1220;
+  border-color: rgba(0,0,0,.12);
+  box-shadow: 0 22px 46px rgba(0,0,0,.16);
+}
+
+/* header + footer */
+.agent-log-header,
+.agent-log-footer {
+  padding: 0.75rem 1rem;
+  background: var(--panel-bg-alt, rgba(0,0,0,.15));
+  border-bottom: 1px solid var(--border-color, rgba(255,255,255,.14));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.agent-log-footer {
+  border-top: 1px solid var(--border-color, rgba(255,255,255,.14));
+  border-bottom: none;
+  font-size: 0.85rem;
+  color: var(--text-secondary, #aaa);
+}
+
+/* table */
+.agent-log-table-wrap {
+  flex: 1;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+.agent-log-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.agent-log-table th,
+.agent-log-table td {
+  border-bottom: 1px solid var(--border-color, rgba(255,255,255,.12));
+  padding: 0.5rem 0.75rem;
+  vertical-align: top;
+}
+
+.agent-log-table th {
+  background: var(--panel-bg-alt, rgba(255,255,255,.05));
+  font-weight: 700;
+  color: var(--text-secondary, #bbb);
+  position: sticky;
+  top: 0;
+  backdrop-filter: blur(3px);
+}
+
+[data-theme="light"] .agent-log-table th {
+  background: rgba(0,0,0,.05);
+  color: #333;
+}
+
+.agent-log-table tr:nth-child(even) {
+  background: rgba(255,255,255,0.03);
+}
+[data-theme="light"] .agent-log-table tr:nth-child(even) {
+  background: rgba(0,0,0,0.03);
+}
+
+.agent-log-table td.corroded {
+  color: #ff6b6b;
+}
+
+/* new-entry glow animation */
+@keyframes rowPulse {
+  from { background-color: rgba(122,92,244,.15); }
+  to { background-color: transparent; }
+}
+.agent-log-table tr.new-entry {
+  animation: rowPulse 1.2s ease-out;
+}
+
+/* smooth scrollbar */
+.agent-log-table-wrap::-webkit-scrollbar {
+  width: 8px;
+}
+.agent-log-table-wrap::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(140,150,170,.65), rgba(120,110,220,.55));
+  border-radius: 10px;
+}
+[data-theme="light"] .agent-log-table-wrap::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(0,0,0,.2), rgba(0,0,0,.12));
+}
+
+/* close button hover */
+.agent-log-header .ws-btn.danger:hover {
+  background: rgba(255,75,75,.12);
 }

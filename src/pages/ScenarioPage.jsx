@@ -19,9 +19,10 @@ import {
   advanceSimulation,
   triggerSimulationFate,
 } from "../api/api";
-import { buildSimPayload, startSimulation, pollSimulation, getAgentMemory, getAgentPosition } from "../hooks/simulationHelper";
+import { buildSimPayload, startSimulation, pollSimulation, getAgentMemory, getAgentPosition , normalizeEvents} from "../hooks/simulationHelper";
 import { useParams } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
+import AgentLogModal from "../components/AgentLogModal";
 
 export default function ScenarioPage({
   theme,
@@ -51,6 +52,7 @@ const [isPolling, setIsPolling] = useState(false);
 const pollingRef = useRef(false);
 const [forwarding, setForwarding] = useState(false);
 const [running, setRunning] = useState(false);
+const [showAgentModal, setShowAgentModal] = useState(null);
 
 //Place holder pause and stop
 const [isPaused, setIsPaused] = useState(false);
@@ -261,8 +263,10 @@ const handleAdvance = async () => {
 
     setSimulation(updated);
 
-    const allEvents = updated.events || [];
-    const delta = allEvents.filter((e) => !seenEventIdsRef.current.has(e.id));
+// 🧩 Normalize events to filter out system/meta noise
+const allEvents = normalizeEvents(updated.events || []);
+const delta = allEvents.filter((e) => !seenEventIdsRef.current.has(e.id));
+
 
     if (delta.length) {
       for (const d of delta) seenEventIdsRef.current.add(d.id);
@@ -677,20 +681,34 @@ useEffect(() => {
         
 onMouseEnter={async () => {
   const p = bubbleFor(pos.x, pos.y);
-  const mem = getAgentMemory(simulation, n.id || n.agentid) || [];
-  const emotion = n.emotional_state || n.agentemotion || "neutral";
+  const emotion = n.emotional_state || n.agentemotion || "";
+  const thoughts = Array.isArray(n.thought_process) ? n.thought_process : [];
+  console.log("🧠 Agent Thoughts", n.name, n.thought_process);
 
-  const text =
-    (mem.length > 0 ? mem.slice(-3).join("\n") : `${displayName} is thinking...`) +
-    `\n\n💭 Emotion: ${emotion}`;
+  // Build readable recent thoughts (limit to last 2)
+  const recentThoughts = thoughts.filter(Boolean).slice(-2);
+  const thoughtSection = recentThoughts.length
+    ? `🧠 Thoughts:\n${recentThoughts.map(t => `- ${t}`).join("\n")}`
+    : "";
+
+  // If both emotion and thoughtSection are empty → fallback
+  let text = "";
+  if (!emotion && !thoughtSection) {
+    text = `${displayName} is thinking...`;
+  } else {
+    text = `${thoughtSection ? thoughtSection + "\n\n" : ""}${
+      emotion ? `💭 Emotion: ${emotion}` : ""
+    }`;
+  }
 
   setHover({
     x: p.x,
     y: p.y,
-    text,
+    text: text.trim(),
     transform: p.transform,
   });
 }}
+
 
         onMouseLeave={() => setHover(null)}
       >
@@ -790,14 +808,30 @@ onMouseEnter={async () => {
 
 
         {/* Roster */}
-        <div className="sc-roster">
-          {validAgents.map((ag) => (
-            <div className="agent-card-wrap" key={`${ag.agentid || ag.id}`}
->
-              <AgentCard agent={ag} onRemove={() => {}} onEdit={() => {}} />
-            </div>
-          ))}
-        </div>
+{/* Roster */}
+<div className="sc-roster">
+  {validAgents.map((ag) => (
+    <div
+      className="agent-card-wrap"
+      key={`${ag.agentid || ag.id}`}
+      onClick={() => setShowAgentModal(ag)}
+      style={{ cursor: "pointer" }}
+    >
+      <AgentCard agent={ag} onRemove={() => {}} onEdit={() => {}} />
+    </div>
+  ))}
+</div>
+
+
+{/* Agent Log Modal */}
+{showAgentModal && (
+  <AgentLogModal
+    agent={showAgentModal}
+    simulation={simulation}
+    onClose={() => setShowAgentModal(null)}
+  />
+)}
+
       </section>
 
      

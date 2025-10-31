@@ -15,6 +15,9 @@ export function buildSimPayload(scenarioText, validAgents) {
       persona: a.agentpersonality ?? a.persona ?? undefined,
       cognitive_bias: a.agentbias ?? a.cognitive_bias ?? undefined,
       emotional_state: a.agentemotion ?? a.emotional_state ?? undefined,
+       thought_process: a.thought_process ?? a.thought_process ?? undefined,
+      
+
       mbti: a.agentmbti ?? a.mbti ?? undefined,
       motivation: a.agentmotivation ?? a.motivation ?? undefined,
       skills: a.agentskill ?? a.skills ?? [],
@@ -69,6 +72,12 @@ export function normalizeSimulation(sim) {
         ? a.memory.split("\n").filter(Boolean)
         : [],
 
+        thought_process: Array.isArray(a.thought_process)
+    ? a.thought_process.filter(Boolean)
+    : typeof a.thought_process === "string"
+    ? a.thought_process.split("\n").filter(Boolean)
+    : [],
+
       // 🔹 corroded memory (optional)
       corroded_memory: Array.isArray(a.corroded_memory)
         ? a.corroded_memory
@@ -94,13 +103,15 @@ export function normalizeSimulation(sim) {
 /** Drop noisy meta-events & flatten shape for the UI log */
 export function normalizeEvents(events) {
   return events
-    .filter((e) => {
-      const t = (e.summary || e.text || "").toLowerCase();
-      return (
-        t &&
-        !t.includes("memory corrosion applied") // noisy meta
-      );
-    })
+.filter((e) => {
+  const t = (e.summary || e.text || "").toLowerCase();
+  return (
+    t &&
+    !t.includes("memory corrosion applied") && // noisy meta
+    !t.includes("internal reasoning") // 🧠 skip system filler
+  );
+})
+
     .map((e, i) => ({
       id: e.id ?? `evt-${i}`,
       type: e.type ?? "agent",

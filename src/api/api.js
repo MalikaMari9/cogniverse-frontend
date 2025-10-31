@@ -13,7 +13,22 @@ const SIMULATION_BASE_URL =
   import.meta.env.VITE_SIM_API_URL || BACKEND_BASE_URL;
 
 /* ------------------------------ Instance Helper ------------------------------ */
-const attachInterceptors = (instance) => {
+// --- Debug bus -------------------------------------------------
+const DEBUG_MAX = 300;
+const DebugBus = {
+  events: [],
+  push(evt) {
+    this.events.push({ ts: Date.now(), ...evt });
+    if (this.events.length > DEBUG_MAX) this.events.shift();
+    // also expose globally for quick inspection
+    window.__apiDebug = this.events;
+    // fire a DOM event so React can listen
+    document.dispatchEvent(new CustomEvent("api-debug", { detail: evt }));
+  },
+};
+// ---------------------------------------------------------------
+
+const attachInterceptors = (instance, label = "api") => {
   instance.interceptors.request.use(
     (config) => {
       const token = localStorage.getItem("access_token");
@@ -21,60 +36,89 @@ const attachInterceptors = (instance) => {
         config.headers = config.headers || {};
         config.headers.Authorization = `Bearer ${token}`;
       }
+
+      const reqInfo = {
+        kind: "request",
+        label,
+        method: (config.method || "GET").toUpperCase(),
+        url: (config.baseURL || "") + (config.url || ""),
+        params: config.params || null,
+        data: config.data || null,
+      };
+
+      // Console
+      console.groupCollapsed(
+        `%c[${label}] → ${reqInfo.method} ${reqInfo.url}`,
+        "color:#888"
+      );
+      if (reqInfo.params) console.log("params:", reqInfo.params);
+      if (reqInfo.data) console.log("data:", reqInfo.data);
+      console.groupEnd();
+
+      // Bus
+      DebugBus.push(reqInfo);
+
+      // stamp a request id to correlate
+      config.headers["X-Client-Req-Id"] = `${label}-${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2, 8)}`;
+
       return config;
     },
-    (error) => Promise.reject(error)
+    (error) => {
+      DebugBus.push({ kind: "request_error", label, error: error?.message || String(error) });
+      return Promise.reject(error);
+    }
   );
 
   instance.interceptors.response.use(
-    (response) => response, // pass through if OK
-    async (error) => {
-      const originalRequest = error.config;
+    (response) => {
+      const resInfo = {
+        kind: "response",
+        label,
+        status: response.status,
+        url: response.config?.baseURL + response.config?.url,
+        data: response.data,
+        headers: response.headers,
+      };
 
-      // Only handle 401s and avoid infinite loops
-      if (
-        error.response?.status === 401 &&
-        originalRequest &&
-        !originalRequest._retry
-      ) {
-        originalRequest._retry = true;
-        const refresh = localStorage.getItem("refresh_token");
+      console.groupCollapsed(
+        `%c[${label}] ← ${resInfo.status} ${resInfo.url}`,
+        resInfo.status >= 400 ? "color:#e00" : "color:#0a0"
+      );
+      console.log("headers:", response.headers);
+      console.log("data:", response.data);
+      console.groupEnd();
 
-        if (refresh) {
-          try {
-            // Try to refresh the access token against the core backend
-            const res = await axios.post(
-              `${BACKEND_BASE_URL}/auth/refresh`,
-              {},
-              { headers: { Authorization: `Bearer ${refresh}` } }
-            );
+      DebugBus.push(resInfo);
+      return response;
+    },
+    (error) => {
+      const res = error.response;
+      const errInfo = {
+        kind: "response_error",
+        label,
+        status: res?.status || 0,
+        url: res?.config ? res.config.baseURL + res.config.url : undefined,
+        data: res?.data,
+        message: error.message,
+      };
 
-            // Save new access token
-            localStorage.setItem("access_token", res.data.access_token);
+      console.groupCollapsed(
+        `%c[${label}] ← ERROR ${errInfo.status} ${errInfo.url || ""}`,
+        "color:#e00"
+      );
+      console.log("message:", error.message);
+      if (res?.headers) console.log("headers:", res.headers);
+      if (res?.data) console.log("data:", res.data);
+      console.groupEnd();
 
-            // Retry the original request with new token
-            originalRequest.headers = originalRequest.headers || {};
-            originalRequest.headers.Authorization = `Bearer ${res.data.access_token}`;
-            return instance(originalRequest);
-          } catch (err) {
-            console.warn("?? Refresh token expired or invalid, logging out...");
-            localStorage.removeItem("access_token");
-            localStorage.removeItem("refresh_token");
-            window.location.href = "/login";
-          }
-        } else {
-          console.warn("?? No refresh token found, redirecting to login.");
-          localStorage.removeItem("access_token");
-          localStorage.removeItem("refresh_token");
-          window.location.href = "/login";
-        }
-      }
-
-      // If not a 401 or still fails, reject
+      DebugBus.push(errInfo);
       return Promise.reject(error);
     }
   );
 };
+
 
 /* ------------------------------ Axios Instances ------------------------------ */
 const api = axios.create({
@@ -664,8 +708,7 @@ export const verifyPaymentSession = async (sessionId) => {
 =============================== */
 export default api;
 
- ===============================
-   Forgot Password API
+
 export async function requestPasswordReset(email) {
   const res = await fetch("http://127.0.0.1:8000/auth/forgot-password", {
     method: "POST",
@@ -685,3 +728,4 @@ export async function resetPassword(token, new_password) {
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
+

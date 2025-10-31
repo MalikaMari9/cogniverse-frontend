@@ -1899,3 +1899,43 @@ html, body { height: 100%; overflow-x: hidden; }
   from { opacity: 0; transform: translate(-50%, -46%); }
   to   { opacity: 1; transform: translate(-50%, -50%); }
 }
+
+.sc-running {
+  margin-left: 10px;
+  color: var(--ink-3);
+  font-size: 13px;
+}
+
+.sc-sim-debug {
+  margin-top: 12px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.sc-sim-debug b {
+  color: var(--ink-2);
+}
+.sc-sim-header {
+  border-bottom: 1px solid var(--glass-bdr);
+  margin-bottom: 4px;
+  font-weight: 600;
+  padding-bottom: 2px;
+}
+.sc-sim-body p {
+  margin: 2px 0;
+}
+
+/* ===========================
+   ✨ Typewriter Animation
+   =========================== */
+.typewriter {
+  white-space: pre-wrap;
+  overflow: hidden;
+  display: inline-block;
+  animation: caretBlink 1s step-start infinite;
+}
+
+@keyframes caretBlink {
+  50% {
+    border-right: 2px solid var(--accent-color, #4af);
+  }
+}

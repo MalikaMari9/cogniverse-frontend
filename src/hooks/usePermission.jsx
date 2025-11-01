@@ -25,9 +25,13 @@ export function usePermission(moduleKey) {
       .then((res) => {
         if (mounted) setLevel(res.access_level);
       })
-      .catch(() => {
-        if (mounted) setLevel("none");
-      })
+.catch((err) => {
+  if (err?.response?.status === 401) {
+    import("../utils/auth").then(({ logoutAndRedirect }) => logoutAndRedirect());
+  }
+  if (mounted) setLevel("none");
+})
+
       .finally(() => {
         if (mounted) setLoading(false);
       });

@@ -6,8 +6,52 @@ import { createSimulation, getSimulationById } from "../api/api";
 
 /** Build provider-friendly payload from your selected agents */
 export function buildSimPayload(scenarioText, validAgents) {
+  // 🧩 Build summarized traits for each agent
+  const agentProfiles = (validAgents || []).slice(0, 5).map((a, i) => {
+    const name = a.agentname ?? a.name ?? `Agent ${i + 1}`;
+    const role = a.agentrole ?? a.role ?? "";
+    const persona = a.agentpersonality ?? a.persona ?? "";
+    const mbti = a.agentmbti ?? a.mbti ?? "";
+    const motivation = a.agentmotivation ?? a.motivation ?? "";
+    const skills = a.agentskill ?? a.skills ?? [];
+    const quirks = a.agentquirk ?? a.quirks ?? [];
+    const biography = a.agentbiography ?? a.biography ?? "";
+    const constraints = a.agentconstraints ?? a.constraints ?? [];
+    const emotional_state = a.agentemotion ?? a.emotional_state ?? "";
+    const cognitive_bias = a.agentbias ?? a.cognitive_bias ?? "";
+    const thought_process = a.thought_process ?? a.thought_process ?? undefined;
+
+    // 🧩 Compose readable trait text
+    const profileBlock = [
+      `Agent ${i + 1}: ${name}`,
+      role ? `Role: ${role}` : "",
+      persona ? `Persona: ${persona}` : "",
+      mbti ? `MBTI: ${mbti}` : "",
+      motivation ? `Motivation: ${motivation}` : "",
+      skills.length ? `Skills: ${skills.join(", ")}` : "",
+      quirks.length ? `Quirks: ${quirks.join(", ")}` : "",
+      biography ? `Biography: ${biography}` : "",
+      constraints.length ? `Constraints: ${constraints.join(", ")}` : "",
+      emotional_state ? `Current Emotion: ${emotional_state}` : "",
+      cognitive_bias ? `Cognitive Bias: ${cognitive_bias}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    return profileBlock;
+  });
+
+  // 🧠 Merge everything into one unified prompt
+  const mergedScenario = [
+    "=== Agent Profiles ===",
+    agentProfiles.join("\n\n"),
+    "======================",
+    scenarioText?.trim() || "Untitled Simulation",
+  ].join("\n\n");
+
+  // 🧩 Return final payload (same structure, but scenario enriched)
   return {
-    scenario: scenarioText?.trim() || "Untitled Simulation",
+    scenario: mergedScenario,
     custom_agents: (validAgents || []).slice(0, 5).map((a, i) => ({
       slot: i,
       name: a.agentname ?? a.name ?? `Agent ${i + 1}`,
@@ -15,9 +59,7 @@ export function buildSimPayload(scenarioText, validAgents) {
       persona: a.agentpersonality ?? a.persona ?? undefined,
       cognitive_bias: a.agentbias ?? a.cognitive_bias ?? undefined,
       emotional_state: a.agentemotion ?? a.emotional_state ?? undefined,
-       thought_process: a.thought_process ?? a.thought_process ?? undefined,
-      
-
+      thought_process: a.thought_process ?? a.thought_process ?? undefined,
       mbti: a.agentmbti ?? a.mbti ?? undefined,
       motivation: a.agentmotivation ?? a.motivation ?? undefined,
       skills: a.agentskill ?? a.skills ?? [],
@@ -27,6 +69,7 @@ export function buildSimPayload(scenarioText, validAgents) {
     })),
   };
 }
+
 
 /** Create the simulation. Returns the simulation object (must have id). */
 export async function startSimulation(payload) {
@@ -47,6 +90,34 @@ export async function pollSimulation(simId, seenEventIds = new Set()) {
   const delta = all.filter((e) => !seenEventIds.has(e.id));
   return { sim, delta };
 }
+
+import { triggerSimulationFate } from "../api/api";
+
+/**
+ * Trigger a Fate event for a simulation (usable during pause or active runs).
+ * Returns normalized simulation + new events for the caller to merge.
+ *
+ * @param {string} simId
+ * @param {string|object} fatePayload - Usually a string prompt, but may be an object (prompt, scope, etc.)
+ */
+export async function triggerFate(simId, fatePayload) {
+  if (!simId) throw new Error("Simulation ID required for fate trigger");
+
+  // If only a string is provided, convert to { prompt }
+  const body =
+    typeof fatePayload === "string" ? { prompt: fatePayload } : fatePayload || {};
+
+  // 🔮 API call
+  const res = await triggerSimulationFate(simId, body?.prompt || "");
+
+  // 🧩 Normalize simulation (to match start/poll behavior)
+  const sim = normalizeSimulation(res?.simulation ?? res);
+  const all = sim.events || [];
+  const delta = normalizeEvents(all);
+
+  return { sim, delta };
+}
+
 
 export function normalizeSimulation(sim) {
   return {
@@ -164,6 +235,9 @@ function normalizePosition(pos) {
   // fallback (already good)
   return { x, y, facing };
 }
+
+
+
 
 // ===============================
 // 🪄 useTypewriter Hook

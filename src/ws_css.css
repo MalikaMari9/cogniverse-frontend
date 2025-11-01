@@ -1296,6 +1296,7 @@ html, body { height: 100%; overflow-x: hidden; }
   padding-right: 6px;
   scrollbar-width: thin;
   scrollbar-color: rgba(140,150,170,.6) transparent;
+  overflow-y: auto;
 }
 .sc-log-item .who{ display:flex; align-items:center; gap:8px; opacity:.9; }
 .sc-log-item .who .dot{ width:8px; height:8px; border-radius:999px; background:#ff5d5d; display:inline-block; }
@@ -1306,6 +1307,35 @@ html, body { height: 100%; overflow-x: hidden; }
 .sc-log-list::-webkit-scrollbar-thumb{
   background: linear-gradient(180deg, rgba(140,150,170,.65), rgba(120,110,220,.55));
   border-radius: 10px; border: 2px solid transparent; background-clip: padding-box;
+}
+
+
+.sc-typing {
+  display: flex;
+  gap: 4px;
+  
+  padding: 8px 0 4px 8px;
+  align-items: center;
+}
+
+.sc-typing span {
+  width: 6px;
+  height: 6px;
+  background: var(--text-color, #999);
+  border-radius: 50%;
+  animation: blink 1.2s infinite ease-in-out;
+}
+
+.sc-typing span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.sc-typing span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes blink {
+  0%, 80%, 100% { opacity: 0.2; transform: translateY(0); }
+  40% { opacity: 1; transform: translateY(-2px); }
 }
 
 /* ---------- Roster: 5 per row on wide screens, then 4/3/2/1 ---------- */
@@ -1971,9 +2001,8 @@ html, body { height: 100%; overflow-x: hidden; }
     border-right: 2px solid var(--accent-color, #4af);
   }
 }
-
 /* ===============================
-   🧠 AgentLogModal — Final Theme Match
+   🧠 AgentLogModal — Final Theme Match (Refined)
    =============================== */
 
 .agent-log-modal {
@@ -1982,7 +2011,7 @@ html, body { height: 100%; overflow-x: hidden; }
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(6,10,20,0.55);
+  background: rgba(8, 10, 20, 0.55);
   backdrop-filter: blur(6px) saturate(120%);
   -webkit-backdrop-filter: blur(6px) saturate(120%);
   z-index: 2000;
@@ -1990,7 +2019,7 @@ html, body { height: 100%; overflow-x: hidden; }
 }
 
 [data-theme="light"] .agent-log-modal {
-  background: rgba(6,10,20,0.35);
+  background: rgba(12, 14, 22, 0.35);
   backdrop-filter: blur(4px) saturate(115%);
 }
 
@@ -2000,19 +2029,33 @@ html, body { height: 100%; overflow-x: hidden; }
   color: var(--text-color, #e9eef7);
   border: 1px solid var(--border-color, rgba(255,255,255,.14));
   border-radius: 16px;
-  box-shadow: 0 22px 46px rgba(0,0,0,.35);
-  width: min(900px, 86vw);
-  max-height: 80vh;
+  box-shadow: 0 20px 48px rgba(0,0,0,.35);
+  width: min(940px, 88vw);
+  max-height: 82vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
+/* body area must flex for scroll to activate */
+.agent-log-body {
+  flex: 1;
+  min-height: 0; /* critical: allows inner scroll */
+  display: flex;
+  flex-direction: column;
+}
+
+.agent-log-table-wrap {
+  flex: 1;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
 
 [data-theme="light"] .agent-log-content {
   background: rgba(255,255,255,.96);
   color: #0f1220;
   border-color: rgba(0,0,0,.12);
-  box-shadow: 0 22px 46px rgba(0,0,0,.16);
+  box-shadow: 0 20px 46px rgba(0,0,0,.15);
 }
 
 /* header + footer */
@@ -2033,23 +2076,25 @@ html, body { height: 100%; overflow-x: hidden; }
   color: var(--text-secondary, #aaa);
 }
 
-/* table */
+/* scrollable body area */
 .agent-log-table-wrap {
   flex: 1;
   overflow-y: auto;
   scroll-behavior: smooth;
 }
 
+/* table core */
 .agent-log-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9rem;
+  line-height: 1.45;
 }
 
 .agent-log-table th,
 .agent-log-table td {
   border-bottom: 1px solid var(--border-color, rgba(255,255,255,.12));
-  padding: 0.5rem 0.75rem;
+  padding: 0.6rem 0.9rem;
   vertical-align: top;
 }
 
@@ -2060,6 +2105,9 @@ html, body { height: 100%; overflow-x: hidden; }
   position: sticky;
   top: 0;
   backdrop-filter: blur(3px);
+  text-transform: uppercase;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
 }
 
 [data-theme="light"] .agent-log-table th {
@@ -2067,18 +2115,25 @@ html, body { height: 100%; overflow-x: hidden; }
   color: #333;
 }
 
+/* rows + hover + even striping */
 .agent-log-table tr:nth-child(even) {
-  background: rgba(255,255,255,0.03);
+  background: rgba(255,255,255,0.025);
 }
 [data-theme="light"] .agent-log-table tr:nth-child(even) {
-  background: rgba(0,0,0,0.03);
+  background: rgba(0,0,0,0.025);
 }
 
+.agent-log-table tbody tr:hover {
+  background: rgba(122,92,244,0.08);
+  transition: background 0.25s ease;
+}
+
+/* corrosion highlight */
 .agent-log-table td.corroded {
   color: #ff6b6b;
 }
 
-/* new-entry glow animation */
+/* entry glow animation */
 @keyframes rowPulse {
   from { background-color: rgba(122,92,244,.15); }
   to { background-color: transparent; }
@@ -2087,19 +2142,184 @@ html, body { height: 100%; overflow-x: hidden; }
   animation: rowPulse 1.2s ease-out;
 }
 
-/* smooth scrollbar */
+/* refined scrollbar */
 .agent-log-table-wrap::-webkit-scrollbar {
-  width: 8px;
+  width: 9px;
 }
 .agent-log-table-wrap::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(140,150,170,.65), rgba(120,110,220,.55));
+  background: linear-gradient(
+    180deg,
+    rgba(140,150,170,.65),
+    rgba(120,110,220,.55)
+  );
   border-radius: 10px;
 }
 [data-theme="light"] .agent-log-table-wrap::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(0,0,0,.2), rgba(0,0,0,.12));
+  background: linear-gradient(
+    180deg,
+    rgba(0,0,0,.22),
+    rgba(0,0,0,.12)
+  );
 }
 
 /* close button hover */
 .agent-log-header .ws-btn.danger:hover {
   background: rgba(255,75,75,.12);
+}
+
+/* ===============================
+   🧠 Simulation Log — fullscreen expand (theme-aware)
+   =============================== */
+.sc-log-expand {
+  position: fixed;
+  inset: 0;
+  z-index: 99999; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6, 10, 20, 0.55);
+  backdrop-filter: blur(8px) saturate(120%);
+  -webkit-backdrop-filter: blur(8px) saturate(120%);
+  animation: fadeIn 0.25s ease;
+}
+
+[data-theme="light"] .sc-log-expand {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(6px) saturate(115%);
+  -webkit-backdrop-filter: blur(6px) saturate(115%);
+}
+
+.sc-log-expand-content {
+  width: 90vw;
+  height: 85vh;
+  background: var(--panel-bg, rgba(24, 26, 34, 0.96));
+  color: var(--text-color, #e9eef7);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.14));
+  border-radius: 1rem;
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.4),
+    0 0 0 1px var(--glass-bdr, rgba(255, 255, 255, 0.06)) inset;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  backdrop-filter: blur(4px) saturate(120%);
+}
+
+[data-theme="light"] .sc-log-expand-content {
+  background: rgba(255, 255, 255, 0.96);
+  color: #0f1220;
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(0, 0, 0, 0.06) inset;
+}
+
+.sc-log-expand-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid var(--glass-bdr, rgba(255, 255, 255, 0.12));
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.06),
+    rgba(255, 255, 255, 0.03)
+  );
+}
+
+[data-theme="light"] .sc-log-expand-header {
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.05),
+    rgba(0, 0, 0, 0.02)
+  );
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.sc-log-expand-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.2rem 1.6rem;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(140,150,170,0.6) transparent;
+}
+
+.sc-log-expand-body::-webkit-scrollbar {
+  width: 10px;
+}
+.sc-log-expand-body::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    rgba(140,150,170,0.65),
+    rgba(120,110,220,0.55)
+  );
+  border-radius: 10px;
+}
+[data-theme="light"] .sc-log-expand-body::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    rgba(0,0,0,0.18),
+    rgba(0,0,0,0.26)
+  );
+}
+
+/* Entry items — reuse your log style */
+.sc-log-expand-body .sc-log-item {
+  border-left: 2px solid var(--border-color, rgba(255,255,255,0.12));
+  padding-left: 0.8rem;
+  margin-bottom: 0.8rem;
+}
+
+.sc-log-expand-body .who {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.sc-log-expand-body .turn {
+  margin-left: auto;
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+/* ===========================
+   🎛️ Simulation Control Bar
+   =========================== */
+.sc-sim-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.sc-sim-controls .ws-btn {
+  flex: 0 1 auto;
+  min-width: 130px;
+  justify-content: center;
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .sc-sim-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .sc-sim-controls .ws-btn {
+    width: 100%;
+  }
+}
+
+/* brief pulse when agent gets repositioned */
+.sc-node.moved {
+  animation: pulseEdge 0.5s ease;
+}
+@keyframes pulseEdge {
+  0% { box-shadow: 0 0 0 0 rgba(255, 200, 0, 0.6); }
+  100% { box-shadow: 0 0 0 14px rgba(255, 200, 0, 0); }
 }

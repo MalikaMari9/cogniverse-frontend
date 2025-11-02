@@ -116,22 +116,15 @@ const saveRelation = React.useCallback((a, b, v) => {
 
   saveTimers.current[relationKey] = setTimeout(async () => {
     try {
-      const saved = await createAgentRelation(payload);
-      const agentA = agents.find((item) => item.agentid === a);
-      const agentB = agents.find((item) => item.agentid === b);
-      const nameA = agentA?.agentname ?? `Agent ${a}`;
-      const nameB = agentB?.agentname ?? `Agent ${b}`;
-      console.groupCollapsed(`[Relationship] ${nameA} <-> ${nameB}`);
-      console.log(`${nameA} -> ${nameB}:`, saved.relationatob);
-      console.log(`${nameB} -> ${nameA}:`, saved.relationbtoa);
-      console.groupEnd();
-      toast.success(`Relation updated: ${nameA} <-> ${nameB}`, { duration: 1800 });
+      await createAgentRelation(payload);
+      console.log(`✅ Synced relation ${a} ↔ ${b}: ${v}`);
+      toast.success(`Relation updated: ${a} ↔ ${b}`, { duration: 1800 });
     } catch (err) {
       console.warn("⚠️ Failed to sync relation:", err);
       toast.error("Failed to sync relation");
     }
   }, 500);
-}, [projectid, weights, agents]);
+}, [projectid, weights]);
 
 
 
@@ -168,8 +161,8 @@ const saveRelation = React.useCallback((a, b, v) => {
   // 🖼️ Render
   // =============================
   return (
+  <>
     <div className="rel-wrap">
-     
       <svg
         ref={svgRef}
         className="rel-svg"
@@ -228,41 +221,6 @@ const saveRelation = React.useCallback((a, b, v) => {
           );
         })}
       </svg>
-      {/* Relation chart below graph */}
-<div className="rel-chart">
-  <h3 className="rel-chart-title">Relation Overview</h3>
-  <div className="rel-chart-table">
-    <table>
-      <thead>
-        <tr>
-          <th>From</th>
-          <th>To</th>
-          <th>Strength</th>
-        </tr>
-      </thead>
-<tbody>
-  {edges.map(({ a, b }) => {
-    const agentA = agents.find(x => x.agentid === a);
-    const agentB = agents.find(x => x.agentid === b);
-    const valAB = getW(a, b);
-    const valBA = getW(b, a);
-    const color = v => v > 0 ? "pos" : v < 0 ? "neg" : "neu";
-
-    return (
-      <tr key={`${a}-${b}`}>
-        <td>{agentA?.agentname}</td>
-        <td>{agentB?.agentname}</td>
-        <td className={color(valAB)}>{valAB}</td>
-        <td className={color(valBA)}>{valBA}</td>
-      </tr>
-    );
-  })}
-</tbody>
-
-    </table>
-  </div>
-</div>
-
 
       {/* Node dialog */}
       {nodeDialog && (
@@ -278,7 +236,7 @@ const saveRelation = React.useCallback((a, b, v) => {
               </div>
             </header>
             <div className="rel-node-body">
-               {nodeDialog.agentskill&& <p><b>Skill:</b> {nodeDialog.agentskill}</p>}
+              {nodeDialog.agentskill && <p><b>Skill:</b> {nodeDialog.agentskill}</p>}
               {nodeDialog.agentbiography && <p><b>Bio:</b> {nodeDialog.agentbiography}</p>}
               {nodeDialog.agentconstraints && <p><b>Constraints:</b> {nodeDialog.agentconstraints.join(", ")}</p>}
               {nodeDialog.agentquirk && <p><b>Quirks:</b> {nodeDialog.agentquirk.join(", ")}</p>}
@@ -296,24 +254,23 @@ const saveRelation = React.useCallback((a, b, v) => {
             <button className="rel-close" onClick={() => setOpenEdge(null)}>✕</button>
             <div className="rel-panel-title">RELATION STRENGTH</div>
 
-           {/* A → B */}
-<div className="rel-weight">
-  <span className="rel-chip">A → B</span>
-  <input
-    className="rel-num"
-    type="number"
-    min="-100"
-    max="100"
-    value={getW(openEdge.a, openEdge.b)}
-    onChange={(e) => {
-      let val = Number(e.target.value || 0);
-      if (val > 100) val = 100;
-      if (val < -100) val = -100;
-      setW(openEdge.a, openEdge.b, val);
-    }}
-  />
-</div>
-
+            {/* A → B */}
+            <div className="rel-weight">
+              <span className="rel-chip">A → B</span>
+              <input
+                className="rel-num"
+                type="number"
+                min="-100"
+                max="100"
+                value={getW(openEdge.a, openEdge.b)}
+                onChange={(e) => {
+                  let val = Number(e.target.value || 0);
+                  if (val > 100) val = 100;
+                  if (val < -100) val = -100;
+                  setW(openEdge.a, openEdge.b, val);
+                }}
+              />
+            </div>
 
             <div className="rel-arrows">
               <div className="rel-dir">
@@ -328,24 +285,23 @@ const saveRelation = React.useCallback((a, b, v) => {
               </div>
             </div>
 
-   {/* B → A */}
-<div className="rel-weight">
-  <span className="rel-chip">B → A</span>
-  <input
-    className="rel-num"
-    type="number"
-    min="-100"
-    max="100"
-    value={getW(openEdge.b, openEdge.a)}
-    onChange={(e) => {
-      let val = Number(e.target.value || 0);
-      if (val > 100) val = 100;
-      if (val < -100) val = -100;
-      setW(openEdge.b, openEdge.a, val);
-    }}
-  />
-</div>
-
+            {/* B → A */}
+            <div className="rel-weight">
+              <span className="rel-chip">B → A</span>
+              <input
+                className="rel-num"
+                type="number"
+                min="-100"
+                max="100"
+                value={getW(openEdge.b, openEdge.a)}
+                onChange={(e) => {
+                  let val = Number(e.target.value || 0);
+                  if (val > 100) val = 100;
+                  if (val < -100) val = -100;
+                  setW(openEdge.b, openEdge.a, val);
+                }}
+              />
+            </div>
           </div>
         </>
       )}
@@ -355,38 +311,55 @@ const saveRelation = React.useCallback((a, b, v) => {
         <div className="rel-affix-inner">
           <button className="ws-btn ghost" onClick={onBack}>Back</button>
           <button
-  className="ws-btn primary"
-  onClick={async () => {
-    // Flush pending relation saves before moving on
-    for (const t of Object.values(saveTimers.current)) clearTimeout(t);
-    saveTimers.current = {};
-    if (edges.length) {
-      console.groupCollapsed("[Relationship] Summary");
-      edges.forEach(({ a, b }) => {
-        const agentA = agents.find((ag) => ag.agentid === a);
-        const agentB = agents.find((ag) => ag.agentid === b);
-        const nameA = agentA?.agentname ?? `Agent ${a}`;
-        const nameB = agentB?.agentname ?? `Agent ${b}`;
-        console.log(`${nameA} -> ${nameB}: ${getW(a, b)}`);
-        console.log(`${nameB} -> ${nameA}: ${getW(b, a)}`);
-      });
-      console.groupEnd();
-    }
-    toast.success("All relations synced!");
-    onNext();
-  }}
->
-  Next
-</button>
-
+            className="ws-btn primary"
+            onClick={async () => {
+              for (const t of Object.values(saveTimers.current)) clearTimeout(t);
+              saveTimers.current = {};
+              toast.success("All relations synced!");
+              onNext();
+            }}
+          >
+            Next
+          </button>
         </div>
       </div>
     </div>
-    
-  );
+
+    {/* Relation chart moved OUTSIDE of .rel-wrap */}
+    <div className="rel-chart">
+      <h3 className="rel-chart-title">Relation Overview</h3>
+      <div className="rel-chart-table">
+        <table>
+          <thead>
+            <tr>
+              <th>From</th>
+              <th>To</th>
+              <th>Strength</th>
+            </tr>
+          </thead>
+          <tbody>
+            {edges.map(({ a, b }) => {
+              const agentA = agents.find(x => x.agentid === a);
+              const agentB = agents.find(x => x.agentid === b);
+              const valAB = getW(a, b);
+              const valBA = getW(b, a);
+              const color = v => v > 0 ? "pos" : v < 0 ? "neg" : "neu";
+              return (
+                <tr key={`${a}-${b}`}>
+                  <td>{agentA?.agentname}</td>
+                  <td>{agentB?.agentname}</td>
+                  <td className={color(valAB)}>{valAB}</td>
+                  <td className={color(valBA)}>{valBA}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </>
+);
+
 }
 
 export default RelationshipGraph;
-
-
-

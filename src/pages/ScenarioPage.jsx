@@ -201,6 +201,31 @@ const [weaving, setWeaving] = useState(false);
     toast("⏸ Simulation paused");
   }, []);
 
+
+
+
+const HistoryIcon = ({ size = 18, className = "ws-ico" }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    className={className}
+  >
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v5l3 3" />
+  </svg>
+);
+
+
+
+
   // 🔹 Resume Simulation (soft)
   const handleResumeSimulation = useCallback(async () => {
     if (!simulation?.id) {
@@ -700,8 +725,10 @@ useEffect(() => {
         </label>
       </section>
 
-      <button className="ws-btn ghost" onClick={() => setShowHistory(true)}>📜 History</button>
-
+  <button className="ws-btn ghost" onClick={() => setShowHistory(true)}>
+      <HistoryIcon size={18} />
+      <span>History</span>
+    </button>
       {/* MAIN grid */}
       <section className={`sc-main ${hasOutput ? "has-output" : ""}`}>
         {/* Canvas */}

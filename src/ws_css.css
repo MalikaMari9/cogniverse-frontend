@@ -1,3 +1,4 @@
+html, body{ overflow-x: hidden; }
 
 /* Hide scrollbars globally */
 ::-webkit-scrollbar {
@@ -1063,6 +1064,117 @@ body[data-theme="dark"]  .ws-backdrop-content,
 
 
 
+/* ==== Relation table — COLORS ONLY (light & dark) ==== */
+.rel-chart{
+  /* container colors */
+  --rel-bg: rgba(18,22,30,.96);
+  --rel-ink: #E9EEF7;
+  --rel-sub: #C9D0DE;
+  --rel-border: rgba(255,255,255,.12);
+
+  /* header */
+  --rel-head-bg: linear-gradient(180deg, rgba(30,36,52,.92), rgba(22,26,38,.88));
+  --rel-head-ink: #E9EEF7;
+
+  /* rows */
+  --rel-row-alt: rgba(255,255,255,.04);
+  --rel-row-hover: rgba(122,92,244,.16);
+
+  /* badges (Strength classes you already use) */
+  --rel-pos-bg: rgba(46,201,122,.22);
+  --rel-pos-ink:#7df6b7;
+  --rel-neg-bg: rgba(244,67,54,.22);
+  --rel-neg-ink:#ff8a80;
+  --rel-neu-bg: rgba(140,150,170,.22);
+  --rel-neu-ink:#c9d0de;
+
+  background: var(--rel-bg);
+  border-color: var(--rel-border);
+  color: var(--rel-ink);
+}
+
+/* Light theme tokens */
+[data-theme="light"] .rel-chart{
+  --rel-bg: rgba(255,255,255,.98);
+  --rel-ink: #0f1220;
+  --rel-sub: #4d5566;
+  --rel-border: rgba(0,0,0,.12);
+
+  --rel-head-bg: linear-gradient(180deg, #fafafa, #f3f3f3);
+  --rel-head-ink: #0f1220;
+
+  --rel-row-alt: rgba(0,0,0,.035);
+  --rel-row-hover: rgba(120,110,220,.10);
+
+  --rel-pos-bg: rgba(46,201,122,.16);
+  --rel-pos-ink:#1b8a56;
+  --rel-neg-bg: rgba(244,67,54,.14);
+  --rel-neg-ink:#b7221b;
+  --rel-neu-bg: rgba(120,130,150,.12);
+  --rel-neu-ink:#4d5566;
+}
+
+/* title + container border color only */
+.rel-chart-title{
+  color: var(--rel-ink);
+  border-bottom: 1px solid var(--rel-border);
+}
+
+/* table text/borders — colors only */
+.rel-chart-table table{ color: var(--rel-ink); }
+.rel-chart-table th{
+  background: var(--rel-head-bg);
+  color: var(--rel-head-ink);
+  border-bottom: 1px solid var(--rel-border);
+}
+.rel-chart-table td{
+  border-bottom: 1px solid var(--rel-border);
+  color: var(--rel-ink);
+}
+
+/* zebra + hover (colors only) */
+.rel-chart-table tbody tr:nth-child(odd){ background: var(--rel-row-alt); }
+.rel-chart-table tbody tr:hover{ background: var(--rel-row-hover); }
+
+/* Keep row background continuous in Strength column */
+.rel-chart-table td.pos,
+.rel-chart-table td.neg,
+.rel-chart-table td.neu{
+  background: transparent !important; /* don't fill the whole cell */
+  border-radius: 0 !important;        /* remove pill rounding on the cell */
+  /* keep whatever text colors you already set */
+}
+
+/* --- Make zebra/hover span ALL columns uniformly --- */
+.rel-chart-table tbody tr:nth-child(odd) > th,
+.rel-chart-table tbody tr:nth-child(odd) > td {
+  background: var(--rel-row-alt) !important;
+}
+.rel-chart-table tbody tr:hover > th,
+.rel-chart-table tbody tr:hover > td {
+  background: var(--rel-row-hover) !important;
+}
+
+/* --- Reset any per-cell backgrounds that block the row color --- */
+.rel-chart-table th,
+.rel-chart-table td {
+  background: transparent !important;   /* let the row color show through */
+}
+
+/* Strength cells must NEVER paint their own bg (no pills) */
+.rel-chart-table td.pos,
+.rel-chart-table td.neg,
+.rel-chart-table td.neu {
+  background: transparent !important;
+  border-radius: 0 !important;
+}
+
+
+
+
+
+
+
 
 /* Make the sidebar "View" modal use centered math (no lateral nudge) */
 .ws-agent-view.rel-center-over-content{
@@ -1296,7 +1408,6 @@ html, body { height: 100%; overflow-x: hidden; }
   padding-right: 6px;
   scrollbar-width: thin;
   scrollbar-color: rgba(140,150,170,.6) transparent;
-  overflow-y: auto;
 }
 .sc-log-item .who{ display:flex; align-items:center; gap:8px; opacity:.9; }
 .sc-log-item .who .dot{ width:8px; height:8px; border-radius:999px; background:#ff5d5d; display:inline-block; }
@@ -1307,35 +1418,6 @@ html, body { height: 100%; overflow-x: hidden; }
 .sc-log-list::-webkit-scrollbar-thumb{
   background: linear-gradient(180deg, rgba(140,150,170,.65), rgba(120,110,220,.55));
   border-radius: 10px; border: 2px solid transparent; background-clip: padding-box;
-}
-
-
-.sc-typing {
-  display: flex;
-  gap: 4px;
-  
-  padding: 8px 0 4px 8px;
-  align-items: center;
-}
-
-.sc-typing span {
-  width: 6px;
-  height: 6px;
-  background: var(--text-color, #999);
-  border-radius: 50%;
-  animation: blink 1.2s infinite ease-in-out;
-}
-
-.sc-typing span:nth-child(2) {
-  animation-delay: 0.2s;
-}
-.sc-typing span:nth-child(3) {
-  animation-delay: 0.4s;
-}
-
-@keyframes blink {
-  0%, 80%, 100% { opacity: 0.2; transform: translateY(0); }
-  40% { opacity: 1; transform: translateY(-2px); }
 }
 
 /* ---------- Roster: 5 per row on wide screens, then 4/3/2/1 ---------- */
@@ -1485,7 +1567,7 @@ html, body { height: 100%; overflow-x: hidden; }
 
 .ws-card.agent .ws-v {
   font-size: 0.9rem;
-  color: var(--text-secondary, #ccc);
+  color: var(--text-secondary, #000000);
   overflow: hidden;              /* just in case very long words sneak in */
   text-overflow: ellipsis;
 }
@@ -1495,6 +1577,39 @@ html, body { height: 100%; overflow-x: hidden; }
   overflow: visible;
   white-space: normal;
 }
+
+
+
+/* === Tooltip alignment fix for smaller screens === */
+@media (max-width: 720px) {
+  .ws-card.agent .tooltip-text {
+    left: 50% !important;             /* center horizontally */
+    transform: translateX(-50%) !important;
+    min-width: max(160px, 60%);       /* prevent too-narrow boxes */
+    white-space: normal;              /* allow wrapping */
+    text-align: center;
+  }
+
+  /* optional: slightly smaller tooltip padding and font for compact view */
+  .ws-card.agent .tooltip-text {
+    font-size: 0.85rem;
+    padding: 6px 8px;
+  }
+
+  /* prevent tooltip from overflowing vertically */
+  .ws-card.agent {
+    overflow: visible;
+  }
+}
+
+/* === Dark mode fix for agent data text === */
+
+[data-theme="dark"] .ws-card.agent .ws-v {
+  color: #EAEAF1;                     /* white-ish data text */
+}
+
+
+
 
 /* ===================================== */
 /* Tooltip popups for ws-v fields        */
@@ -1582,7 +1697,6 @@ html, body { height: 100%; overflow-x: hidden; }
     repeating-linear-gradient(to bottom,
       var(--sc-grid-stroke) 0 2px, transparent 2px 40px);
   transform-origin: 50% 15%;
-  transform: perspective(900px) rotateX(62deg) translateZ(0);
   filter: drop-shadow(0 0 6px var(--sc-grid-glow));
   mix-blend-mode: screen;      /* makes the neon pop in dark; gentle in light */
   opacity: var(--sc-grid-opacity, .68);
@@ -2001,8 +2115,9 @@ html, body { height: 100%; overflow-x: hidden; }
     border-right: 2px solid var(--accent-color, #4af);
   }
 }
+
 /* ===============================
-   🧠 AgentLogModal — Final Theme Match (Refined)
+   🧠 AgentLogModal — Final Theme Match
    =============================== */
 
 .agent-log-modal {
@@ -2011,7 +2126,7 @@ html, body { height: 100%; overflow-x: hidden; }
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(8, 10, 20, 0.55);
+  background: rgba(6,10,20,0.55);
   backdrop-filter: blur(6px) saturate(120%);
   -webkit-backdrop-filter: blur(6px) saturate(120%);
   z-index: 2000;
@@ -2019,7 +2134,7 @@ html, body { height: 100%; overflow-x: hidden; }
 }
 
 [data-theme="light"] .agent-log-modal {
-  background: rgba(12, 14, 22, 0.35);
+  background: rgba(6,10,20,0.35);
   backdrop-filter: blur(4px) saturate(115%);
 }
 
@@ -2029,33 +2144,19 @@ html, body { height: 100%; overflow-x: hidden; }
   color: var(--text-color, #e9eef7);
   border: 1px solid var(--border-color, rgba(255,255,255,.14));
   border-radius: 16px;
-  box-shadow: 0 20px 48px rgba(0,0,0,.35);
-  width: min(940px, 88vw);
-  max-height: 82vh;
+  box-shadow: 0 22px 46px rgba(0,0,0,.35);
+  width: min(900px, 86vw);
+  max-height: 80vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
-/* body area must flex for scroll to activate */
-.agent-log-body {
-  flex: 1;
-  min-height: 0; /* critical: allows inner scroll */
-  display: flex;
-  flex-direction: column;
-}
-
-.agent-log-table-wrap {
-  flex: 1;
-  overflow-y: auto;
-  scroll-behavior: smooth;
-}
-
 
 [data-theme="light"] .agent-log-content {
   background: rgba(255,255,255,.96);
   color: #0f1220;
   border-color: rgba(0,0,0,.12);
-  box-shadow: 0 20px 46px rgba(0,0,0,.15);
+  box-shadow: 0 22px 46px rgba(0,0,0,.16);
 }
 
 /* header + footer */
@@ -2076,25 +2177,23 @@ html, body { height: 100%; overflow-x: hidden; }
   color: var(--text-secondary, #aaa);
 }
 
-/* scrollable body area */
+/* table */
 .agent-log-table-wrap {
   flex: 1;
   overflow-y: auto;
   scroll-behavior: smooth;
 }
 
-/* table core */
 .agent-log-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9rem;
-  line-height: 1.45;
 }
 
 .agent-log-table th,
 .agent-log-table td {
   border-bottom: 1px solid var(--border-color, rgba(255,255,255,.12));
-  padding: 0.6rem 0.9rem;
+  padding: 0.5rem 0.75rem;
   vertical-align: top;
 }
 
@@ -2105,9 +2204,6 @@ html, body { height: 100%; overflow-x: hidden; }
   position: sticky;
   top: 0;
   backdrop-filter: blur(3px);
-  text-transform: uppercase;
-  font-size: 0.82rem;
-  letter-spacing: 0.04em;
 }
 
 [data-theme="light"] .agent-log-table th {
@@ -2115,25 +2211,18 @@ html, body { height: 100%; overflow-x: hidden; }
   color: #333;
 }
 
-/* rows + hover + even striping */
 .agent-log-table tr:nth-child(even) {
-  background: rgba(255,255,255,0.025);
+  background: rgba(255,255,255,0.03);
 }
 [data-theme="light"] .agent-log-table tr:nth-child(even) {
-  background: rgba(0,0,0,0.025);
+  background: rgba(0,0,0,0.03);
 }
 
-.agent-log-table tbody tr:hover {
-  background: rgba(122,92,244,0.08);
-  transition: background 0.25s ease;
-}
-
-/* corrosion highlight */
 .agent-log-table td.corroded {
   color: #ff6b6b;
 }
 
-/* entry glow animation */
+/* new-entry glow animation */
 @keyframes rowPulse {
   from { background-color: rgba(122,92,244,.15); }
   to { background-color: transparent; }
@@ -2142,24 +2231,16 @@ html, body { height: 100%; overflow-x: hidden; }
   animation: rowPulse 1.2s ease-out;
 }
 
-/* refined scrollbar */
+/* smooth scrollbar */
 .agent-log-table-wrap::-webkit-scrollbar {
-  width: 9px;
+  width: 8px;
 }
 .agent-log-table-wrap::-webkit-scrollbar-thumb {
-  background: linear-gradient(
-    180deg,
-    rgba(140,150,170,.65),
-    rgba(120,110,220,.55)
-  );
+  background: linear-gradient(180deg, rgba(140,150,170,.65), rgba(120,110,220,.55));
   border-radius: 10px;
 }
 [data-theme="light"] .agent-log-table-wrap::-webkit-scrollbar-thumb {
-  background: linear-gradient(
-    180deg,
-    rgba(0,0,0,.22),
-    rgba(0,0,0,.12)
-  );
+  background: linear-gradient(180deg, rgba(0,0,0,.2), rgba(0,0,0,.12));
 }
 
 /* close button hover */
@@ -2167,159 +2248,458 @@ html, body { height: 100%; overflow-x: hidden; }
   background: rgba(255,75,75,.12);
 }
 
-/* ===============================
-   🧠 Simulation Log — fullscreen expand (theme-aware)
-   =============================== */
-.sc-log-expand {
-  position: fixed;
-  inset: 0;
-  z-index: 99999; 
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(6, 10, 20, 0.55);
-  backdrop-filter: blur(8px) saturate(120%);
-  -webkit-backdrop-filter: blur(8px) saturate(120%);
-  animation: fadeIn 0.25s ease;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* --- Workstation: top bar wrapper that respects the sidebar --- */
+.ws-topbar{
+  position: sticky;
+  top: 12px;
+  z-index: 50;
+  /* The main area already sits to the right of the sidebar, so we
+     just cap width to the content area and center it. */
+  width: min(100%, var(--content-w));
+  margin: 8px auto 16px;
 }
 
-[data-theme="light"] .sc-log-expand {
-  background: rgba(255, 255, 255, 0.45);
-  backdrop-filter: blur(6px) saturate(115%);
-  -webkit-backdrop-filter: blur(6px) saturate(115%);
+/* Make the embedded nav fill the available main width */
+.ws-topbar .pf-nav,
+.ws-topbar .sc-nav-pretty{
+  width: 100%;
 }
 
-.sc-log-expand-content {
-  width: 90vw;
-  height: 85vh;
-  background: var(--panel-bg, rgba(24, 26, 34, 0.96));
-  color: var(--text-color, #e9eef7);
-  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.14));
-  border-radius: 1rem;
-  box-shadow:
-    0 10px 28px rgba(0, 0, 0, 0.4),
-    0 0 0 1px var(--glass-bdr, rgba(255, 255, 255, 0.06)) inset;
+
+
+
+/* ===== MBTI custom select ===== */
+.ws-select{ display:flex; flex-direction:column; gap:6px; position:relative; }
+.ws-select > span{ font-weight:600; font-size:.95rem; opacity:.9; }
+
+.ws-dd-trigger{
+  width:100%; text-align:left; padding:10px 36px 10px 12px;
+  border:1px solid var(--glass-bdr, rgba(255,255,255,.14));
+  background: rgba(18,22,30,.75); color:#E9EEF7;
+  border-radius:12px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
+}
+[data-theme="light"] .ws-dd-trigger{
+  background: rgba(255,255,255,.92); color:#0f1320; border-color: rgba(0,0,0,.12);
+}
+.ws-dd-trigger .chev{ position:relative; right:10px; top:50%; transform:translateY(-50%); opacity:.8; }
+
+.ws-dd{
+  position:absolute; left:0; right:0; margin-top:6px;
+  max-height:220px; overflow:auto; z-index: 700;
+  border:1px solid var(--glass-bdr, rgba(255,255,255,.14));
+  border-radius:12px; backdrop-filter:saturate(120%) blur(6px);
+  background: rgba(15,18,24,.96); color:#E9EEF7;
+  box-shadow: 0 22px 46px rgba(0,0,0,.35);
+}
+[data-theme="light"] .ws-dd{
+  background: rgba(255,255,255,.98); color:#0f1220; border-color: rgba(0,0,0,.12);
+}
+
+.ws-dd-opt{
+  padding:10px 12px; cursor:pointer; transition: background .15s ease, color .15s ease;
+}
+.ws-dd-opt:hover{ background: rgba(122,92,244,.15); }
+.ws-dd-opt.is-active{ background: rgba(122,92,244,.22); font-weight:700; }
+
+/* Pretty, visible scrollbar JUST for this dropdown (overrides global hide) */
+.ws-dd{ scrollbar-width: thin; scrollbar-color: rgba(122,92,244,.6) transparent; }
+.ws-dd::-webkit-scrollbar{ width: 10px; }
+.ws-dd::-webkit-scrollbar-track{ background: transparent; }
+.ws-dd::-webkit-scrollbar-thumb{
+  background: rgba(122,92,244,.55);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.ws-dd:hover::-webkit-scrollbar-thumb{ background: rgba(108, 100, 141, 0.75); }
+
+
+
+/* ===== Sidebar → Horizontal toolbar (≤720px) ===== */
+@media (max-width: 720px) {
+  /* Remove any left offset reserved for the permanent sidebar */
+  .ws-page { padding-left: 0; }
+
+  /* Hide the fixed-left version and show the mobile one */
+  .ws-left-only { display: none; }
+  .ws-mobile-after-nav { display: block; }
+
+  /* Turn the sidebar inside the mobile container into a full-width toolbar */
+  .ws-mobile-after-nav .ws-sidebar {
+    position: static;
+    inset: auto;
+    width: 100%;
+    height: auto;
+    margin: 8px 0 12px;
+    border-radius: 14px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-bdr);
+    box-shadow: var(--shadow, 0 6px 24px rgba(0,0,0,.25));
+    z-index: 3;
+  }
+
+  /* Compact header area inside the mobile bar */
+  .ws-mobile-after-nav .ws-side-head { display: none; }
+
+  /* Make the scroll container natural height */
+  .ws-mobile-after-nav .side-scroll {
+    max-height: none;
+    overflow: visible;
+  }
+
+  /* Search row as a toolbar */
+  .ws-mobile-after-nav .ws-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--glass-bdr);
+  }
+  .ws-mobile-after-nav .ws-search input {
+    flex: 1 1 auto;
+    height: 38px;
+  }
+
+  /* Agents list under the toolbar — neat grid */
+  .ws-mobile-after-nav .ws-agent-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+    padding: 10px 12px 12px;
+  }
+}
+
+/* Desktop / tablet: keep the original sidebar, hide the mobile copy */
+@media (min-width: 721px) {
+  .ws-left-only { display: block; }
+  .ws-mobile-after-nav { display: none; }
+}
+/* === FINAL mobile override for the sidebar (≤720px) — keep at the very end === */
+@media (max-width: 720px) {
+  /* 0) Never reserve space for a fixed sidebar on mobile */
+  .ws-page { --sidebar-w: 0px !important; padding-left: 0 !important; } /* :contentReference[oaicite:1]{index=1} */
+
+  /* 1) Hide the fixed-left copy; show the mobile one if you render both */
+  .ws-left-only { display: none !important; }                               /* :contentReference[oaicite:2]{index=2} */
+  .ws-mobile-after-nav { display: block !important; }                       /* :contentReference[oaicite:3]{index=3} */
+
+  /* 2) Make ANY sidebar full-width, even if not inside .ws-mobile-after-nav */
+  .ws-sidebar {
+    position: static !important;
+    inset: auto !important;
+    width: 100% !important;
+    max-width: none !important;     /* cancel card caps */
+    transform: none !important;
+    height: auto !important;
+    margin: 10px 0 14px !important;
+    border-radius: 14px !important;
+  }
+
+  /* If you render the mobile wrapper, this also styles it nicely */
+  .ws-mobile-after-nav .ws-sidebar {                                       /* :contentReference[oaicite:4]{index=4} */
+    box-shadow: var(--shadow, 0 6px 24px rgba(0,0,0,.25));
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-bdr);
+  }
+
+  /* 3) Remove the «» toggle on mobile */
+  .ws-toggle-exp { display: none !important; }                             /* :contentReference[oaicite:5]{index=5} */
+
+  /* 4) Compact spacing so items aren’t far apart */
+  .ws-side-top { padding: 10px 12px 6px !important; }
+  .ws-searchbar { padding: 8px 12px !important; border-top: 1px solid var(--glass-bdr); border-bottom: 1px solid var(--glass-bdr); } /* :contentReference[oaicite:6]{index=6} */
+  .ws-side-section.agents { padding: 8px 12px 10px !important; }           /* :contentReference[oaicite:7]{index=7} */
+
+  /* 5) Limit agent list height + pretty scrollbar */
+  .ws-agent-list{
+    max-height: min(320px, 45vh) !important;
+    overflow: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    padding-right: 2px !important;                                         /* :contentReference[oaicite:8]{index=8} */
+  }
+  .ws-agent-pill { padding: 8px 10px !important; min-height: 44px !important; gap: 10px !important; }
+}
+/* Scrollbar cosmetics for that list */
+.ws-agent-list{ scrollbar-width: thin; scrollbar-color: rgba(122,92,244,.6) transparent; }  /* :contentReference[oaicite:9]{index=9} */
+.ws-agent-list::-webkit-scrollbar{ width: 10px; }
+.ws-agent-list::-webkit-scrollbar-track{ background: transparent; }
+.ws-agent-list::-webkit-scrollbar-thumb{
+  background: rgba(122,92,244,.55); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box;
+}
+.ws-agent-list:hover::-webkit-scrollbar-thumb{ background: rgba(108,100,141,.75); }         /* :contentReference[oaicite:10]{index=10} */
+
+
+/* ----- 720px: compact spacing + 3-row agent list ----- */
+@media (max-width: 720px){
+  /* tighter overall card spacing */
+  .ws-mobile-after-nav .ws-sidebar{ margin: 6px 0 10px; }
+
+  /* search row: smaller padding + input height */
+  .ws-mobile-after-nav .ws-search{
+    padding: 6px 10px;
+    gap: 6px;
+  }
+  .ws-mobile-after-nav .ws-search input{ height: 32px; }
+
+  /* section paddings */
+  .ws-mobile-after-nav .ws-side-section.agents{ padding: 6px 10px 8px; }
+
+  /* agent list: ~3 rows visible, then scroll */
+  .ws-mobile-after-nav .ws-agent-list{
+    padding: 6px 10px 8px;
+    gap: 6px;                    /* was 10px */
+    max-height: 176px;           /* ≈ 3 rows; change to 120–140px for ~2 rows */
+    overflow: auto;
+  }
+
+  /* each row more compact but still tappable */
+  .ws-mobile-after-nav .ws-agent-pill{
+    padding: 6px 8px;            /* was 8–10px */
+    min-height: 40px;            /* was 44px */
+    gap: 8px;
+    line-height: 1.25;
+  }
+  .ws-mobile-after-nav .ws-agent-pill .name{ line-height: 1.2; }
+
+  /* smaller action buttons */
+  .ws-mobile-after-nav .ws-mini-btn{
+    height: 28px;
+    padding: 3px 9px;
+  }
+}
+
+
+
+/* ===== 720px: compact agent rows ===== */
+@media (max-width: 720px){
+
+  /* 1) Overall list density (how many rows fit) */
+  .ws-mobile-after-nav .ws-agent-list{
+    gap: 6px;                 /* space between rows (was 10px) */
+    max-height: 160px;        /* ≈ 3 rows; use ~132px for ≈2 rows */
+    padding: 6px 10px 8px;
+    overflow: auto;
+  }
+
+  /* 2) Row height (main knob) */
+  .ws-mobile-after-nav .ws-agent-pill{
+    min-height: 36px;         /* was 40–44px */
+    padding: 6px 8px;         /* reduce vertical padding */
+    gap: 8px;                 /* space between icon, name, buttons */
+    line-height: 1.25;
+  }
+
+  /* 3) Icon size */
+  .ws-mobile-after-nav .ws-agent-pill .avatar{ 
+    width: 18px; height: 18px; 
+    display: grid; place-items: center;
+  }
+  .ws-mobile-after-nav .ws-agent-pill .avatar svg{
+    width: 16px; height: 16px;
+  }
+
+  /* 4) Name text size */
+  .ws-mobile-after-nav .ws-agent-pill .name,
+  .ws-mobile-after-nav .ws-agent-pill .lbl{   /* fallback if your class is .lbl */
+    font-size: 13px;          /* was ~14–16px */
+    line-height: 1.25;
+  }
+
+  /* 5) Action buttons size */
+  .ws-mobile-after-nav .ws-mini-btn{
+    height: 26px;             /* was ~30px */
+    padding: 2px 8px;
+    font-size: 12px;
+    border-radius: 10px;
+  }
+}
+
+
+
+
+
+
+/* pretty scrollbar just for the list (keeps global scrollbars hidden) */
+.ws-mobile-after-nav .ws-agent-list{ scrollbar-width: thin; scrollbar-color: rgba(122,92,244,.6) transparent; }
+.ws-mobile-after-nav .ws-agent-list::-webkit-scrollbar{ width: 10px; }
+.ws-mobile-after-nav .ws-agent-list::-webkit-scrollbar-track{ background: transparent; }
+.ws-mobile-after-nav .ws-agent-list::-webkit-scrollbar-thumb{
+  background: rgba(122,92,244,.55);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.ws-mobile-after-nav .ws-agent-list:hover::-webkit-scrollbar-thumb{ background: rgba(108,100,141,.75); }
+
+
+
+/* MBTI select: center the caret and keep it pretty in dark/light */
+.ws-form select[name="agentpersonality"]{
+  -webkit-appearance: none; -moz-appearance: none; appearance: none; /* hide native arrow */
+  padding-right: 44px;                 /* room for our chevron */
+  min-height: 42px;                    /* consistent height */
+  line-height: normal;                 /* avoid top-hugging arrows on Windows */
+  background-repeat: no-repeat;
+  background-position: right 12px center;  /* ✅ vertical center */
+  background-size: 16px 16px;
+}
+
+/* ===== Scenario stage: hide the Workstation sidebar completely ===== */
+.ws-page.no-sidebar .ws-left-only,
+.ws-page.no-sidebar .ws-mobile-after-nav,
+.ws-page.no-sidebar .ws-sidebar {
+  display: none !important;
+}
+
+/* Remove any reserved left space on mobile while in Scenario */
+@media (max-width: 720px) {
+  .ws-page.no-sidebar {
+    padding-left: 0 !important;
+    --sidebar-w: 0px !important;
+  }
+}
+
+/* ===== Gate the mobile toolbar so it only applies when NOT in Scenario ===== */
+@media (max-width: 720px) {
+  .ws-page:not(.no-sidebar) .ws-left-only { display: none !important; }
+  .ws-page:not(.no-sidebar) .ws-mobile-after-nav { display: block !important; }
+
+  /* (Optional) if you need the styling too, keep it scoped: */
+  .ws-page:not(.no-sidebar) .ws-sidebar {
+    position: static !important;
+    inset: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 8px 0 12px;
+    border-radius: 14px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-bdr);
+    box-shadow: var(--shadow, 0 6px 24px rgba(0,0,0,.25));
+  }
+}
+
+
+
+
+
+
+/* Ensure the modal can have a sticky footer */
+.ws-modal {
   display: flex;
   flex-direction: column;
+  max-height: 88vh;
   overflow: hidden;
-  backdrop-filter: blur(4px) saturate(120%);
 }
 
-[data-theme="light"] .sc-log-expand-content {
-  background: rgba(255, 255, 255, 0.96);
-  color: #0f1220;
-  border-color: rgba(0, 0, 0, 0.12);
-  box-shadow:
-    0 10px 28px rgba(0, 0, 0, 0.15),
-    0 0 0 1px rgba(0, 0, 0, 0.06) inset;
+/* Form scrolls; footer stays put */
+.ws-modal .ws-form {
+  flex: 1 1 auto;
+  overflow: auto;
+  padding-bottom: 8px; /* room above the bar */
 }
 
-.sc-log-expand-header {
+/* Shared footer-bar look (dark glass that works in both themes) */
+.ws-modal .ws-modal-actions,
+.ws-card .modal-actions {
+  position: sticky;
+  bottom: 0;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 1.5rem;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  border-bottom: 1px solid var(--glass-bdr, rgba(255, 255, 255, 0.12));
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.06),
-    rgba(255, 255, 255, 0.03)
-  );
-}
-
-[data-theme="light"] .sc-log-expand-header {
-  background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0.05),
-    rgba(0, 0, 0, 0.02)
-  );
-  border-color: rgba(0, 0, 0, 0.1);
-}
-
-.sc-log-expand-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 1.2rem 1.6rem;
-  font-size: 0.92rem;
-  line-height: 1.5;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(140,150,170,0.6) transparent;
-}
-
-.sc-log-expand-body::-webkit-scrollbar {
-  width: 10px;
-}
-.sc-log-expand-body::-webkit-scrollbar-thumb {
-  background: linear-gradient(
-    180deg,
-    rgba(140,150,170,0.65),
-    rgba(120,110,220,0.55)
-  );
-  border-radius: 10px;
-}
-[data-theme="light"] .sc-log-expand-body::-webkit-scrollbar-thumb {
-  background: linear-gradient(
-    180deg,
-    rgba(0,0,0,0.18),
-    rgba(0,0,0,0.26)
-  );
-}
-
-/* Entry items — reuse your log style */
-.sc-log-expand-body .sc-log-item {
-  border-left: 2px solid var(--border-color, rgba(255,255,255,0.12));
-  padding-left: 0.8rem;
-  margin-bottom: 0.8rem;
-}
-
-.sc-log-expand-body .who {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
-  opacity: 0.9;
-}
-
-.sc-log-expand-body .turn {
-  margin-left: auto;
-  font-size: 0.8rem;
-  opacity: 0.7;
-}
-/* ===========================
-   🎛️ Simulation Control Bar
-   =========================== */
-.sc-sim-controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  justify-content: flex-end;
   gap: 10px;
-  margin-top: 10px;
+
+  /* make the bar span full card width */
+  padding: 12px 18px;
+  margin: 8px -18px -18px;         /* pull into the card padding */
+  border-top: 1px solid var(--glass-bdr);
+  border-bottom-left-radius: 14px;
+  border-bottom-right-radius: 14px;
+
+  /* its own background so underlying content doesn't show through */
+  background: rgb(16, 20, 32);
+  backdrop-filter: blur(10px) saturate(1.15);
+  -webkit-backdrop-filter: blur(10px) saturate(1.15);
+  box-shadow: 0 -6px 16px rgba(0,0,0,.22) inset;
 }
 
-.sc-sim-controls .ws-btn {
-  flex: 0 1 auto;
-  min-width: 130px;
-  justify-content: center;
-  text-align: center;
+/* Optional: lighter footer when your app is in light theme */
+html[data-theme="light"] .ws-modal .ws-modal-actions,
+html[data-theme="light"] .ws-card .modal-actions {
+  background: rgba(255, 255, 255, .86);
 }
 
-@media (max-width: 720px) {
-  .sc-sim-controls {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .sc-sim-controls .ws-btn {
-    width: 100%;
-  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Backdrop (doesn't cover sidebar) */
+.ws-backdrop-content{
+  position: fixed;
+  inset: 0 0 0 var(--sidebar-w);
+  z-index: 8000;
+  background: rgba(6,10,20,.50);           /* default = dark */
+  backdrop-filter: blur(3px) saturate(120%);
+  -webkit-backdrop-filter: blur(3px) saturate(120%);
 }
 
-/* brief pulse when agent gets repositioned */
-.sc-node.moved {
-  animation: pulseEdge 0.5s ease;
+/* ✅ Light mode: use a stronger mask + the right selector */
+[data-theme="light"] .ws-backdrop-content{
+  background: rgba(6,10,20,.32) !important; /* slightly darker so content pops */
+  backdrop-filter: blur(2px) saturate(115%) !important;
+  -webkit-backdrop-filter: blur(2px) saturate(115%) !important;
 }
-@keyframes pulseEdge {
-  0% { box-shadow: 0 0 0 0 rgba(255, 200, 0, 0.6); }
-  100% { box-shadow: 0 0 0 14px rgba(255, 200, 0, 0); }
+
+/* History dialog surface */
+.sc-history-modal{ z-index: 90000; }
+
+/* ✅ Light mode surface & text for the dialog */
+[data-theme="light"] .sc-history-modal{
+  background: rgba(255,255,255,.98) !important;
+  color: #0f1220 !important;
+  border: 1px solid rgba(0,0,0,.12) !important;
+  box-shadow: 0 22px 46px rgba(0,0,0,.20) !important;
 }
+
+/* Make sure headings/body inside are legible in light */
+[data-theme="light"] .sc-history-modal h3,
+[data-theme="light"] .sc-history-modal p,
+[data-theme="light"] .sc-history-modal div{
+  color:#0f1220 !important;
+}
+
+

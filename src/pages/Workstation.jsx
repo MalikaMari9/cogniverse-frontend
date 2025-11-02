@@ -8,7 +8,9 @@ import { createPortal } from "react-dom";
 import { useParams } from "react-router-dom";
 import RelationshipGraph from "./Graph";
 import ScenarioPage from "./ScenarioPage";
-import { AgentSidebar } from "../components/Sidebar";
+import { AgentSidebar, MbtiSelect } from "../components/Sidebar";
+import NavProduct from "../components/NavProduct";
+
 import {
   getAgents,
   createAgent,
@@ -278,14 +280,12 @@ function AgentModal({ open, mode = "add", initial, onClose, onSubmit }) {
               required
             />
           </label>
-          <label>
-            <span>MBTI</span>
-            <input
-              name="agentpersonality"
-              value={form.agentpersonality}
-              onChange={handle}
-            />
-          </label>
+          <MbtiSelect
+            label="MBTI"
+            name="agentpersonality"
+            value={form.agentpersonality}
+            onChange={handle}
+          />
           <label>
             <span>Skills (comma-separated)</span>
             <input
@@ -542,26 +542,6 @@ const handleAdd = async (input) => {
   try {
     // 1️⃣ Create the agent globally
     const newAgent = await createAgent(input);
-    console.groupCollapsed("[Workstation] Agent added");
-    console.log("Agent ID:", newAgent.agentid);
-    console.log("Name:", newAgent.agentname);
-    console.log("Personality:", newAgent.agentpersonality);
-    if (Array.isArray(newAgent.agentskill) && newAgent.agentskill.length) {
-      console.log("Skills:", newAgent.agentskill.join(", "));
-    }
-    if (Array.isArray(newAgent.agentconstraints) && newAgent.agentconstraints.length) {
-      console.log("Constraints:", newAgent.agentconstraints.join(", "));
-    }
-    if (Array.isArray(newAgent.agentquirk) && newAgent.agentquirk.length) {
-      console.log("Quirks:", newAgent.agentquirk.join(", "));
-    }
-    if (newAgent.agentmotivation) {
-      console.log("Motivation:", newAgent.agentmotivation);
-    }
-    if (newAgent.agentbiography) {
-      console.log("Biography:", newAgent.agentbiography);
-    }
-    console.groupEnd();
     setAgents((prev) => [...prev, newAgent]);
 
     // 2️⃣ Immediately link it to this project
@@ -574,8 +554,7 @@ const handleAdd = async (input) => {
           agentsnapshot: newAgent,
           status: "active",
         });
-        console.info(`[Workstation] Linked agent ${newAgent.agentname} (ID ${newAgent.agentid}) to project ${projectID}`);
-        console.log(`?o. Auto-linked new agent ${newAgent.agentname} ?+' project ${projectID}`);
+        console.log(`✅ Auto-linked new agent ${newAgent.agentname} → project ${projectID}`);
       } catch (linkErr) {
         console.warn("⚠️ Failed to auto-link new agent:", linkErr);
       }
@@ -586,7 +565,6 @@ const handleAdd = async (input) => {
 
     // 4️⃣ Close modal
     setOpenModal(false);
-    toast.success(`Agent "${newAgent.agentname}" added`);
   } catch (err) {
    
     toast.error("Error creating agent: " + err.message);
@@ -704,6 +682,7 @@ return (
     ) : (
       <>
         {stage !== "scenario" && (
+<div className="ws-left-only">
 <AgentSidebar
   variant="workstation"
   expanded={expanded}
@@ -714,10 +693,32 @@ return (
   selectedIds={selected.map(a => a.agentid)}
 
   
-/>
+/></div>
         )}
 
         <main className="ws-main">
+          <NavProduct
+                    theme={theme}
+                    onToggleTheme={toggleTheme}
+                    active="workstation"
+                    onGoWorkstation={() => navigate("/workstation")}
+                    onGoGraph={() => navigate("/relationship-explorer")}
+                    onGoHistory={() => navigate("/history")}
+                  />
+
+              {/* MOBILE toolbar clone of the sidebar (≤720px) */}
+              <div className="ws-mobile-after-nav">
+                <AgentSidebar
+                  variant="workstation"
+                  expanded={true}
+                  onToggleExpand={handleExpand}
+                  theme={theme}
+                  onToggleTheme={toggleTheme}
+                  onPickExisting={handlePickExisting}
+                  selectedIds={selected.map(a => a.agentid)}
+                />
+              </div>
+
           {stage !== "scenario" && (
             <header className="ws-header">
               <h1>Agents</h1>
@@ -856,6 +857,3 @@ export { SvgIcon, AgentCard, AgentModal, AgentViewModal };
 // ✅ Default export (guarded version)
 const GuardedWorkstation = withMaintenanceGuard(WorkstationPage, "Workstation");
 export default GuardedWorkstation;
-
-
-

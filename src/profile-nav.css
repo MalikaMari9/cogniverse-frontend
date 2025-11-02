@@ -126,6 +126,64 @@
   backdrop-filter: saturate(120%) blur(8px);
 }
 
+/* 🔔 Notification Container */
+.pf-notif {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 32px;
+  height: 32px;
+  overflow: visible;  /* ✅ important — prevents cutting the SVG bottom */
+}
+
+
+/* 🔴 Notification Badge */
+.notif-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background-color: #ff3b3b;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 9999px;
+  padding: 2px 5px;
+  line-height: 1;
+  box-shadow: 0 0 6px rgba(255, 0, 0, 0.6);
+  animation: notifPulse 1.5s infinite ease-in-out;
+}
+
+/* ✨ Pulse animation */
+@keyframes notifPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 6px rgba(255, 0, 0, 0.6);
+  }
+  50% {
+    transform: scale(1.2);
+    box-shadow: 0 0 12px rgba(255, 0, 0, 0.8);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 6px rgba(255, 0, 0, 0.6);
+  }
+}
+
+/* 🪶 Dropdown styling if you use one */
+.notif-dropdown {
+  position: absolute;
+  top: 48px;
+  right: 0;
+  width: 240px;
+  background: var(--bg-card);
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  padding: 10px;
+  z-index: 1000;
+}
+
 /* moving gradient film (dark by default) */
 .pf-nav-pretty::before{
   content:"";
@@ -281,84 +339,195 @@
 }
 
 
-/* ========== Toast Styling ========== */
-.toast {
-  position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  min-width: 260px;
-  max-width: 380px;
-  background: var(--glass);
-  color: var(--ink-1);
-  border-radius: 10px;
-  padding: 14px 18px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  border: 1px solid var(--glass-bdr);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-  z-index: 9999;
-  animation: toastFadeIn 0.3s ease forwards;
+
+/* Hamburger button */
+.hamburger-btn {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 30px;
+  color: currentColor;
+  cursor: pointer;
 }
 
-.toast.success {
-  border-color: #39d98a;
-  color: #39d98a;
+/* Adjust dropdown positioning */
+.mobile-dropdown {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--navDarkBg);
+  border-radius: 8px;
+  padding: 10px;
+  width: 180px;
+  margin-top: 10px; /* Space between hamburger and dropdown */
+  z-index: 100;
 }
 
-.toast.error {
-  border-color: #ff6b6b;
-  color: #ff6b6b;
+/* Ensure tabs are hidden on mobile */
+.pf-tabs {
+  display: flex;
+  gap: 12px;
 }
 
-.toast.info {
-  border-color: #8ca0bc;
-  color: #8ca0bc;
+@media (max-width: 720px) {
+  /* Hide default tabs on mobile */
+  .pf-tabs {
+    display: none;
+  }
+
+  /* Show hamburger button */
+  .hamburger-btn {
+    display: block;
+  }
+
+  /* Position dropdown below hamburger */
+  .mobile-dropdown {
+    display: block;
+    position: absolute;
+    top: 60px; /* Adjust this value as per the header height */
+    left: 0;
+  }
 }
 
-.toast-bar {
-  height: 3px;
+
+
+/* == Mobile hamburger dropdown: layout + theming == */
+.pf-brand{ position: relative; }          /* anchor for absolute dropdown */
+
+.mobile-dropdown{
+  position: absolute;
+  top: 44px;              /* sits under the hamburger */
+  left: 0;                /* keep aligned with brand area */
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 12px;
+  z-index: 6000;
+
+  /* default (dark-friendly) glass */
+  background: rgba(20,24,38,.96);
+  border: 1px solid rgba(255,255,255,.12);
+  color: #E9EEF7;         /* light ink on dark */
+  backdrop-filter: blur(10px) saturate(120%);
+}
+
+/* light theme variant */
+[data-theme="light"] .mobile-dropdown{
+  background: rgba(255,255,255,.96);
+  border-color: rgba(0,0,0,.10);
+  color: #101420;
+}
+
+/* make tabs fill the dropdown width and look like menu items */
+.mobile-dropdown .pf-tab{
   width: 100%;
-  background: currentColor;
-  opacity: 0.4;
-  border-radius: 0 0 10px 10px;
-  animation: toastProgress 4s linear forwards;
+  text-align: left;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: inherit;                       /* <- picks dark/light correctly */
+}
+.mobile-dropdown .pf-tab:hover{
+  background: rgba(255,255,255,.10);
+  border-color: rgba(255,255,255,.16);
+}
+[data-theme="light"] .mobile-dropdown .pf-tab:hover{
+  background: rgba(0,0,0,.06);
+  border-color: rgba(0,0,0,.10);
 }
 
-@keyframes toastFadeIn {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
+
+/* === Wide-screen nav: dark-mode text + inheritance fix === */
+[data-theme="dark"] .pf-nav-pretty{
+  color: #E9EEF7;                 /* light ink on dark bar */
+  border-color: rgba(255,255,255,.10);
 }
 
-@keyframes toastProgress {
-  from {
-    width: 100%;
-  }
-  to {
-    width: 0%;
-  }
+.pf-tab{ color: inherit; }        /* tabs inherit from the bar */
+.pf-tab.ghost{ color: inherit; }  /* ghost variant too */
+
+/* make icons follow text color in this bar */
+.pf-nav-pretty svg{ fill: currentColor; }
+[data-theme="dark"] .pf-nav-pretty svg{ opacity: .95; }
+
+/* optional: slightly brighter tab on hover in dark */
+[data-theme="dark"] .pf-tab:hover{
+  background: rgba(255,255,255,.12);
+  border-color: rgba(255,255,255,.18);
 }
 
-.sc-spinner.tiny {
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  display: inline-block;
-  vertical-align: middle;
+
+
+/* === Notifications dropdown: footer + button styling === */
+.notif-dropdown{                    /* keeps text color consistent */
+  color: inherit;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+.notif-dropdown .notif-footer{
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-start;      /* or space-between if you add more actions */
+}
+
+.notif-dropdown .mark-read{
+  appearance: none;
+  border: 1px solid rgba(255,255,255,.20);
+  background: rgba(255,255,255,.08);
+  color: #E9EEF7;                   /* dark-mode ink */
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 10px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background .2s ease, border-color .2s ease, transform .05s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,.25) inset, 0 1px 0 rgba(255,255,255,.05);
+}
+
+.notif-dropdown .mark-read:hover{
+  background: rgba(255,255,255,.14);
+  border-color: rgba(255,255,255,.28);
+}
+
+.notif-dropdown .mark-read:active{
+  transform: translateY(1px);
+}
+
+/* Light theme variant */
+[data-theme="light"] .notif-dropdown .mark-read{
+  background: rgba(0,0,0,.05);
+  border-color: rgba(0,0,0,.12);
+  color: #101420;
+}
+[data-theme="light"] .notif-dropdown .mark-read:hover{
+  background: rgba(0,0,0,.08);
+  border-color: rgba(0,0,0,.18);
+}
+
+
+
+/* === Fix: confine hover shine to its own card === */
+.card,
+.card.billing-area{
+  position: relative;      /* anchor ::before to this card */
+  overflow: hidden;        /* clip the film to rounded corners */
+  isolation: isolate;      /* keep film under content only */
+  contain: paint;          /* avoid viewport-wide painting */
+}
+
+/* If your shine uses ::before on the card, force it to be local */
+.card::before,
+.card.billing-area::before{
+  position: absolute !important;  /* not fixed */
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: -1;                    /* sit under card content */
+}
+
+/* (Optional) keep the glow modest so it never floods the viewport */
+.card:hover::before{
+  background-size: 140% 140%, 140% 140%, 100% 100%;
 }

@@ -11,7 +11,7 @@ import { usePermission } from "../hooks/usePermission";
 import "../ws_css.css";
 
 /* ---------- MBTI Dropdown ---------- */
-function MbtiSelect({ label = "Personality (MBTI)", name = "agentpersonality", value, onChange }) {
+export function MbtiSelect({ label = "Personality (MBTI)", name = "agentpersonality", value, onChange }) {
   const options = [
     "INTJ","INTP","ENTJ","ENTP","INFJ","INFP","ENFJ","ENFP",
     "ISTJ","ISFJ","ESTJ","ESFJ","ISTP","ISFP","ESTP","ESFP"
@@ -290,7 +290,7 @@ useEffect(() => {
           {/* Header */}
           <div className="ws-side-top">
             <div className="ws-brand">
-              <span className="logo"><img src="logo.png" alt="" /></span>
+              {/* <span className="logo"><img src="/logo.png" alt="" /></span> */}
               {expanded && (
                 <span
                   className="brand-text"
@@ -458,19 +458,7 @@ useEffect(() => {
               </div>
             )}
 
-            <button className={`ws-theme-switch ${theme}`} onClick={onToggleTheme} />
-            <a className="ws-row-btn" href="#">
-              <span className="ico"><SvgIcon name="clock" /></span>
-              {expanded && <span>History</span>}
-            </a>
-            <a className="ws-row-btn" href="/profile">
-              <span className="ico"><SvgIcon name="user" /></span>
-              {expanded && <span>Profile</span>}
-            </a>
-            <button className="ws-row-btn" onClick={handleLogout}>
-              <span className="ico"><SvgIcon name="lock" /></span>
-              {expanded && <span>Logout</span>}
-            </button>
+            
           </div>
         </div>
 

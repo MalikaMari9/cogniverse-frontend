@@ -1,6 +1,7 @@
 // src/hooks/simulationHelper.js
 // ultra-thin wrapper around your existing api + a bit of normalization.
 import { useState, useEffect } from "react";
+import { saveSimulationResults, createScenarioQuick } from "../api/api";
 
 import { createSimulation, getSimulationById } from "../api/api";
 
@@ -256,4 +257,169 @@ export function useTypewriter(text, speed = 20) {
     return () => clearInterval(interval);
   }, [text, speed]);
   return displayed;
+}
+
+
+
+/**
+ * Save a completed simulation to backend (scenario + results).
+ * @param {object} opts
+ * @param {number} opts.projectid
+ * @param {object} opts.simulation
+ * @param {Array} opts.logs
+ * @param {object} opts.agentLogs
+ * @param {Array} opts.positions - array of agent positions (x, y, facing)
+ * @param {string} [opts.scenarioname]
+ * @param {string} [opts.scenarioprompt]
+ */
+export async function saveSimulationFlow({
+  projectid,
+  simulation,
+  logs,
+  agentLogs,
+  selectedAgents = [],
+  scenarioname,
+  scenarioprompt,
+}) {
+  if (!projectid) throw new Error("projectid required");
+
+  // 1) Create scenario first
+  const scenarioPayload = {
+    scenarioname: scenarioname || "Untitled Simulation",
+    scenarioprompt: scenarioprompt || "Auto-saved from simulation",
+    projectid,
+    status: "active",
+  };
+  const scenarioRes = await createScenarioQuick(scenarioPayload);
+  const scenarioid = scenarioRes?.scenario?.scenarioid || scenarioRes?.scenarioid;
+  if (!scenarioid) throw new Error("Scenario creation failed");
+
+  // 2) Build a robust lookup for projectagentid (pid)
+  const pidByKey = {};
+  (selectedAgents || []).forEach((a) => {
+    const pid = a.projectagentid ?? null;
+    if (!pid) return;
+    const keys = [
+      a.id,
+      a.agentid,
+      a.projectagentid,
+      a.name?.toLowerCase?.(),
+      a.agentname?.toLowerCase?.(),
+      String(a.agentid ?? "").toLowerCase(),
+      (a.agentname || a.name || "").trim().toLowerCase(),
+    ].filter(Boolean);
+    keys.forEach((k) => (pidByKey[k] = pid));
+  });
+
+  // Helper to aggressively resolve a PID for any agent-like object
+  const resolvePid = (ag) => {
+    if (!ag) return null;
+    const candidates = [
+      ag.projectagentid,
+      ag.agentid,
+      ag.id,
+      ag.name?.toLowerCase?.(),
+      ag.agentname?.toLowerCase?.(),
+      String(ag.agentid ?? "").toLowerCase(),
+      (ag.name || ag.agentname || "").trim().toLowerCase(),
+    ].filter(Boolean);
+    for (const k of candidates) {
+      if (k in pidByKey) return pidByKey[k];
+    }
+    return null;
+  };
+
+  // 3) Re-map agentLogs → keys are numeric projectagentid
+  const enrichedAgentLogs = {};
+  const incomingKeys = Object.keys(agentLogs || {});
+  incomingKeys.forEach((k) => {
+    // Try to treat k as an agent identifier and resolve to pid
+    const fakeAg = { id: k, name: k, agentname: k, agentid: k, projectagentid: k };
+    const pidFromKey = resolvePid(fakeAg);
+
+    if (pidFromKey) {
+      enrichedAgentLogs[pidFromKey] = agentLogs[k];
+    } else {
+      // Try to match against live simulation agents
+      const simAg = (simulation?.agents || []).find((a) => {
+        const cands = [
+          a.id,
+          a.agentid,
+          a.projectagentid,
+          a.name?.toLowerCase?.(),
+          a.agentname?.toLowerCase?.(),
+          String(a.agentid ?? "").toLowerCase(),
+          (a.name || a.agentname || "").trim().toLowerCase(),
+        ].filter(Boolean);
+        return cands.includes(k) || cands.includes(String(k).toLowerCase());
+      });
+      const pid = resolvePid(simAg);
+      if (pid) enrichedAgentLogs[pid] = agentLogs[k];
+    }
+  });
+
+  // 4) If agentLogs ended up empty, create a FALLBACK snapshot from live agents
+  if (Object.keys(enrichedAgentLogs).length === 0) {
+    (simulation?.agents || []).forEach((a) => {
+      const pid = resolvePid(a);
+      if (!pid) return;
+      const emotion = a.emotional_state || a.agentemotion || null;
+      const memory = Array.isArray(a.memory) ? a.memory[a.memory.length - 1] : a.memory || null;
+      const corrosion = Array.isArray(a.corroded_memory)
+        ? a.corroded_memory[a.corroded_memory.length - 1]
+        : a.corroded_memory || null;
+      const position = {
+        x: a.position?.x ?? 0,
+        y: a.position?.y ?? 0,
+        facing: a.position?.facing ?? null,
+      };
+      // Only create a snapshot if there's something meaningful OR position not at (0,0)
+      if (emotion || memory || corrosion || position.x !== 0 || position.y !== 0) {
+        if (!enrichedAgentLogs[pid]) enrichedAgentLogs[pid] = [];
+        enrichedAgentLogs[pid].push({
+          time: new Date().toLocaleTimeString(),
+          emotion,
+          memory,
+          corrosion,
+          position,
+        });
+      }
+    });
+  }
+
+  // 5) Positions payload with robust pid mapping
+  const positions = (simulation?.agents || []).map((a) => {
+    const pid =
+      resolvePid(a) ||
+      resolvePid({ id: a.id }) ||
+      resolvePid({ name: a.name, agentname: a.agentname }) ||
+      null;
+    return {
+      agent: a.name || a.agentname || a.id,
+      projectagentid: pid,
+      x: a.position?.x ?? 0,
+      y: a.position?.y ?? 0,
+      facing: a.position?.facing ?? null,
+    };
+  });
+
+  const resultPayload = {
+    scenarioid,
+    projectid,
+    logs,
+    agentLogs: enrichedAgentLogs,
+    positions,
+  };
+
+  // 🔎 Deep debug so we see exactly what we're sending
+  console.log(
+    "🧠 [saveSimulationFlow] agentLogs keys in payload:",
+    Object.keys(enrichedAgentLogs),
+    "positions with pid:",
+    positions.map((p) => ({ agent: p.agent, pid: p.projectagentid }))
+  );
+  console.log("🧩 [saveSimulationFlow] Full payload preview ↓", JSON.stringify(resultPayload, null, 2));
+
+  const res = await saveSimulationResults(resultPayload);
+  return { scenarioid, summary: res };
 }

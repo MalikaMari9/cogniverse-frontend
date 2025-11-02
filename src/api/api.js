@@ -729,3 +729,20 @@ export async function resetPassword(token, new_password) {
   return res.json();
 }
 
+// ===============================
+// 💾 SAVE SIMULATION RESULTS
+// ===============================
+export const saveSimulationResults = async (payload) =>
+  (await api.post("/results/save_simulation", payload)).data;
+
+// Quick-create scenario (used on Stop)
+export const createScenarioQuick = async (payload) =>
+  (await api.post("/scenarios/quick", payload)).data;
+
+// ============================================================
+// 🔹 Get Replay Data
+// ============================================================
+export async function getReplayData(scenarioid) {
+  const res = await api.get(`/results/replay/${scenarioid}`);
+  return res.data;
+}

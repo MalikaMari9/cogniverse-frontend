@@ -2703,3 +2703,15 @@ html[data-theme="light"] .ws-card .modal-actions {
 }
 
 
+/* 🎞 Smooth replay motion */
+.sc-node {
+  transition: left 0.6s ease, top 0.6s ease;
+}
+/* 💭 Emotional pulse */
+.sc-node.pulse {
+  animation: pulseColor 1s ease;
+}
+@keyframes pulseColor {
+  0%   { box-shadow: 0 0 0 0 rgba(255, 174, 66, 0.6); }
+  100% { box-shadow: 0 0 0 20px rgba(255, 174, 66, 0); }
+}

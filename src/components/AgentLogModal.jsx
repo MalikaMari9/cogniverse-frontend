@@ -1,5 +1,5 @@
 // ===============================
-// 🧠 AgentLogModal.jsx — Emotion + Corrosion Timeline (Memory commented out)
+// 🧠 AgentLogModal.jsx — Emotion + Corrosion + Position Timeline
 // ===============================
 import React, { useEffect, useRef } from "react";
 
@@ -24,7 +24,7 @@ export default function AgentLogModal({
         {/* Header */}
         <div className="agent-log-header">
           <h2>
-            {agentName} — Emotion / Corrosion{" "}
+            {agentName} — Emotion / Corrosion / Position{" "}
             {simulation?.status && (
               <span className="dim">({simulation.status.toUpperCase()})</span>
             )}
@@ -47,6 +47,7 @@ export default function AgentLogModal({
                     <th style={{ width: "200px" }}>Emotion</th>
                     {/* <th style={{ width: "240px" }}>Memory</th> */}
                     <th style={{ width: "260px" }}>Corrosion</th>
+                    <th style={{ width: "140px" }}>Position</th> {/* ✅ new */}
                   </tr>
                 </thead>
                 <tbody>
@@ -59,6 +60,15 @@ export default function AgentLogModal({
                         {Array.isArray(row.corrosion)
                           ? row.corrosion.join(", ")
                           : row.corrosion}
+                      </td>
+                      <td className="position-cell">
+                        {row.position
+                          ? `${row.position.x}, ${row.position.y}${
+                              row.position.facing
+                                ? ` (${row.position.facing})`
+                                : ""
+                            }`
+                          : "—"}
                       </td>
                     </tr>
                   ))}

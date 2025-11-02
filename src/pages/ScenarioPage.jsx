@@ -1109,14 +1109,7 @@ useEffect(() => {
   return (
     <div className="sc-page">
       {/* NAV */}
-      <NavProduct
-        theme={theme}
-        onToggleTheme={toggleTheme}
-        active="workstation"
-        onGoWorkstation={() => (window.location.href = "/workstation")}
-        onGoGraph={() => (window.location.href = "/graph")}
-        onGoHistory={() => (window.location.href = "/history")}
-      />
+
 
       {/* Scenario input */}
       <section className="sc-input ws-card">
